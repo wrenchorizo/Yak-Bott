@@ -187,10 +187,15 @@ const prefix = '?';
 
 // Cliente
 const client = new Client({
-    authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage'
+        ],
+        // Esta es la ruta donde Railway instala Chromium con Nixpacks
+        executablePath: '/usr/bin/google-chrome-stable' 
     }
 });
 
@@ -2472,4 +2477,5 @@ client.initialize();
 process.on('uncaughtException', (err) => {
     console.log('🚨 YakBot casi se crashea! (uncaughtException)');
     console.log(err);
+
 });
