@@ -1,0 +1,26 @@
+{
+  "name": "yako-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  "start": "node Yak.js"
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
+    "axios": "^1.13.6",
+    "child_process": "^1.0.2",
+    "fluent-ffmpeg": "^2.1.3",
+    "fs-extra": "^11.3.4",
+    "play-dl": "^1.9.7",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.34.5",
+    "undici": "^7.22.0",
+    "whatsapp-web.js": "^1.23.0",
+    "yt-search": "^2.13.1"
+  }
+}

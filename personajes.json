@@ -1,0 +1,2192 @@
+[
+  {
+    "nombre": "Sakura Haruno",
+    "valor": "17631",
+    "genero": "Mujer",
+    "fuente": "Naruto",
+    "imagen": "https://i.pinimg.com/1200x/ab/f8/f7/abf8f7933d2f950d26f93cdce4b53f62.jpg"
+  },
+  {
+    "nombre": "Goku",
+    "valor": "20000",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/55/f2/de/55f2de23dbc997fb338519eaed81bb13.jpg"
+  },
+  {
+    "nombre": "Vegeta",
+    "valor": "19999",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/a8/51/31/a85131b412f0e53f613126c52b4ef9e0.jpg"
+  },
+  {
+    "nombre": "Jiren",
+    "valor": "20099",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/59/32/64/59326477cfbde634c789930622092640.jpg"
+  },
+  {
+    "nombre": "Bills",
+    "valor": "30000",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/29/ea/0b/29ea0b056b855b3d862c823429199a2e.jpg"
+  },
+  {
+    "nombre": "Whis",
+    "valor": "90000",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/ab/4c/25/ab4c25df0a27d36e85485d0a795650ad.jpg"
+  },
+  {
+    "nombre": "Shenlong",
+    "valor": "23000",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/74/9b/2d/749b2d04e03af484a046fdc9ad1200f4.jpg"
+  },
+  {
+    "nombre": "Saitama",
+    "valor": "18780",
+    "genero": "Hombre",
+    "fuente": "One Punch Man",
+    "imagen": "https://i.pinimg.com/1200x/2c/93/c9/2c93c9471ce98e0b4453763bd5bdc26c.jpg"
+  },
+  {
+    "nombre": "Hitori Goto",
+    "valor": "11965",
+    "genero": "Mujer",
+    "fuente": "Bocchi The Rock",
+    "imagen": "https://i.pinimg.com/736x/5c/9e/26/5c9e26daf2add6c2adeda1e19560b879.jpg"
+  },
+  {
+    "nombre": "Monkey D. Luffy",
+    "valor": "19189",
+    "genero": "Hombre",
+    "fuente": "One Piece",
+    "imagen": "https://i.pinimg.com/736x/f6/00/87/f60087d580207d36931611ae6bee1abf.jpg"
+  },
+  {
+    "nombre": "Naruto Uzumaki",
+    "valor": "19499",
+    "genero": "Hombre",
+    "fuente": "Naruto",
+    "imagen": "https://i.pinimg.com/736x/e0/9e/e9/e09ee9d9ef7f2172d7e7954532b5c2ff.jpg"
+  },
+  {
+    "nombre": "Sasuke Uchiha",
+    "valor": "19499",
+    "genero": "Hombre",
+    "fuente": "Naruto",
+    "imagen": "https://i.pinimg.com/736x/79/ed/2d/79ed2de16f92b5c48f3e6bf718b974da.jpg"
+  },
+  {
+    "nombre": "Satoru Gojo",
+    "valor": "19900",
+    "genero": "Hombre",
+    "fuente": "Jujutsu Kaisen",
+    "imagen": "https://i.pinimg.com/736x/1e/1d/f5/1e1df5de1a628d6d6f4d4a6ad8384a47.jpg"
+  },
+  {
+    "nombre": "Shinji Ikari",
+    "valor": "12673",
+    "genero": "Hombre",
+    "fuente": "Evangelion",
+    "imagen": "https://i.pinimg.com/736x/66/4f/8e/664f8ea93e796c0916877a97898c2b4d.jpg"
+  },
+  {
+    "nombre": "Rei Ayanami",
+    "valor": "14673",
+    "genero": "Mujer",
+    "fuente": "Evangelion",
+    "imagen": "https://i.pinimg.com/736x/3b/13/c0/3b13c0091b3270b9719542e10823cc66.jpg"
+  },
+  {
+    "nombre": "Roronoa Zoro",
+    "valor": "18965",
+    "genero": "Hombre",
+    "fuente": "One Piece",
+    "imagen": "https://i.pinimg.com/1200x/54/58/e9/5458e9dcc042ef9eee2a0287050555b6.jpg"
+  },
+  {
+    "nombre": "Rem",
+    "valor": "16909",
+    "genero": "Mujer",
+    "fuente": "Re:Zero",
+    "imagen": "https://i.pinimg.com/736x/ba/bd/f4/babdf47bd250d190030455b50b86d445.jpg"
+  },
+  {
+    "nombre": "Eren Jaeger",
+    "valor": "15865",
+    "genero": "Hombre",
+    "fuente": "Attack on Titan",
+    "imagen": "https://i.pinimg.com/1200x/ba/5f/8a/ba5f8a3eeb37935c7b74300afcb15317.jpg"
+  },
+  {
+    "nombre": "Pichu",
+    "valor": "236",
+    "genero": "Desconocido",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/1200x/05/b0/fa/05b0fa6ac4ae49944a4acb183c243270.jpg",
+    "evolucion": "Pikachu",
+    "nivelEvo": 10
+  },
+  {
+    "nombre": "Pikachu",
+    "valor": "8236",
+    "genero": "Desconocido",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/1200x/b9/42/36/b94236cb2fb6fd4def12d4ebb744fc8f.jpg",
+    "evolucion": "Raichu",
+    "nivelEvo": 30
+  },
+  {
+    "nombre": "Raichu",
+    "valor": 15860,
+    "genero": "Desconocido",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/1200x/2d/0d/9f/2d0d9f6ae35743530c9599ac0e2eb3b0.jpg"
+  },
+  {
+    "nombre": "Pikachu de Ash",
+    "valor": "14976",
+    "genero": "Hombre",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/736x/ad/65/b6/ad65b669746561313925ffff392518bc.jpg"
+  },
+  {
+    "nombre": "Ash Ketchum",
+    "valor": "10976",
+    "genero": "Hombre",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/474x/fe/25/e1/fe25e153a47e1743b9e69fcb290cffd0.jpg"
+  },
+  {
+    "nombre": "Spike Spiegel",
+    "valor": "14498",
+    "genero": "Hombre",
+    "fuente": "Cowboy Bebop",
+    "imagen": "https://i.pinimg.com/736x/7e/4c/45/7e4c457ae4ba547cd5616aaa825953f6.jpg"
+  },
+  {
+    "nombre": "Tanjiro Kamado",
+    "valor": "19007",
+    "genero": "Hombre",
+    "fuente": "Demon Slayer",
+    "imagen": "https://i.pinimg.com/736x/bd/cb/ab/bdcbab321e32d56049bd674bcff8d913.jpg"
+  },
+  {
+    "nombre": "Anya Forger",
+    "valor": "10009",
+    "genero": "Mujer",
+    "fuente": "Spy x Family",
+    "imagen": "https://i.pinimg.com/736x/07/74/1e/07741e301bb9851dcd3bb891c8336d84.jpg"
+  },
+  {
+    "nombre": "Denji",
+    "valor": "15769",
+    "genero": "Hombre",
+    "fuente": "Chainsaw Man",
+    "imagen": "https://i.pinimg.com/1200x/91/25/fb/9125fb5231cfb09f4799d4979a24d414.jpg"
+  },
+  {
+    "nombre": "Pochita",
+    "valor": "16769",
+    "genero": "Desconocido",
+    "fuente": "Chainsaw Man",
+    "imagen": "https://i.pinimg.com/736x/c6/9c/cb/c69ccb248f42ceea591d79f59481861d.jpg"
+  },
+  {
+    "nombre": "Freddy",
+    "valor": "14769",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/e5/6b/a0/e56ba0ba1516a620d5a621263148b324.jpg"
+  },
+  {
+    "nombre": "Bonnie",
+    "valor": "14369",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/1200x/27/cb/70/27cb70ea70413a7fcec4f53ea90315e9.jpg"
+  },
+  {
+    "nombre": "Chica",
+    "valor": "14369",
+    "genero": "Mujer",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/bb/f6/80/bbf68081e297783c9ec2e195d33fb39d.jpg"
+  },
+  {
+    "nombre": "Foxy",
+    "valor": "14779",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/5e/ac/32/5eac32db7dfdd821ef5802abd1bb95ae.jpg"
+  },
+  {
+    "nombre": "Golden Freddy",
+    "valor": "14999",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/f5/64/70/f56470d8b04d503e8a4fc3aea8860555.jpg"
+  },
+  {
+    "nombre": "Withered Foxy",
+    "valor": "14789",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/92/e7/7c/92e77c04bc06ac45f13d349bce2c855c.jpg"
+  },
+  {
+    "nombre": "Puppet",
+    "valor": "15769",
+    "genero": "Mujer",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/54/eb/df/54ebdf37e36d5750ad261d7803f8f428.jpg"
+  },
+  {
+    "nombre": "Withered Bonnie",
+    "valor": "14650",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/58/72/a5/5872a5eac44a140c28cee8e7530ef83e.jpg"
+  },
+  {
+    "nombre": "Fred",
+    "valor": "10769",
+    "genero": "Hombre",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/7c/5c/00/7c5c009a4af295bc54d40f687d2445cb.jpg"
+  },
+  {
+    "nombre": "Freddy (Fnafhs)",
+    "valor": "9769",
+    "genero": "Hombre",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/28/2a/be/282abe9cc665f234785310ef48f3ae0e.jpg"
+  },
+  {
+    "nombre": "Fox (Fnafhs)",
+    "valor": "1769",
+    "genero": "Hombre",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/56/ce/a6/56cea6078175d0ffc701bac1a6f9829f.jpg"
+  },
+  {
+    "nombre": "Ann Chica",
+    "valor": "1569",
+    "genero": "Mujer",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/bb/3d/a1/bb3da18519dee0c9c4a3c6cf9588bacd.jpg"
+  },
+  {
+    "nombre": "Golden (Fnafhs)",
+    "valor": "1579",
+    "genero": "Hombre",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/65/df/fb/65dffb3b7888ab4d13c7c5df69b0c375.jpg"
+  },
+  {
+    "nombre": "Bonnie (Fnafhs)",
+    "valor": "1769",
+    "genero": "Hombre",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/bb/bd/07/bbbd071c41c066819b43594b21f6b8d9.jpg"
+  },
+  {
+    "nombre": "Springtrap (Fnafhs)",
+    "valor": "8769",
+    "genero": "Hombre",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/f3/4b/d8/f34bd8d2b89a8a4d37433ef11faec7ac.jpg"
+  },
+  {
+    "nombre": "Puppet (Fnafhs)",
+    "valor": "8769",
+    "genero": "Desconocido",
+    "fuente": "Fnafhs",
+    "imagen": "https://i.pinimg.com/736x/90/5b/a0/905ba0488da834d3e35d8764d853f52f.jpg"
+  },
+  {
+    "nombre": "Frieren",
+    "valor": "14989",
+    "genero": "Mujer",
+    "fuente": "Frieren",
+    "imagen": "https://i.pinimg.com/736x/b1/4a/a3/b14aa31308736b1c5c7fe48d91723cc8.jpg"
+  },
+  {
+    "nombre": "Marin Kitagawa",
+    "valor": "11069",
+    "genero": "Mujer",
+    "fuente": "My Dress-Up Darling",
+    "imagen": "https://i.pinimg.com/1200x/1d/f3/75/1df375151d21a9bb8a1fc48bc836b9a5.jpg"
+  },
+  {
+    "nombre": "Sung Jin-woo",
+    "valor": "20000",
+    "genero": "Hombre",
+    "fuente": "Solo Leveling",
+    "imagen": "https://i.pinimg.com/736x/87/25/2e/87252e631cb3bae17175147060e9578e.jpg"
+  },
+  {
+    "nombre": "Power",
+    "valor": "15232",
+    "genero": "Mujer",
+    "fuente": "Chainsaw Man",
+    "imagen": "https://i.pinimg.com/1200x/b8/4c/d7/b84cd7e19758cff608f90e368bb90c9e.jpg"
+  },
+  {
+    "nombre": "Megumin",
+    "valor": "13899",
+    "genero": "Mujer",
+    "fuente": "Konosuba",
+    "imagen": "https://i.pinimg.com/1200x/3d/8b/f5/3d8bf5b8db710da1f27cac30e7ff9ea6.jpg"
+  },
+  {
+    "nombre": "Kasane Teto",
+    "valor": "18501",
+    "genero": "Mujer",
+    "fuente": "UTAU",
+    "imagen": "https://i.pinimg.com/736x/0d/56/f6/0d56f630a623f5dd90adcc69456e3bb6.jpg"
+  },
+  {
+    "nombre": "Killua Zoldyck",
+    "valor": "14566",
+    "genero": "Hombre",
+    "fuente": "Hunter x Hunter",
+    "imagen": "https://i.pinimg.com/736x/8a/33/ad/8a33ad2e4ab48960acbbc404e3e38f32.jpg"
+  },
+  {
+    "nombre": "Shoto Todoroki",
+    "valor": "17996",
+    "genero": "Hombre",
+    "fuente": "My Hero Academia",
+    "imagen": "https://i.pinimg.com/736x/e4/69/5a/e4695a61e1fa7fa4adbcd749ad0918f9.jpg"
+  },
+  {
+    "nombre": "Izuku Midoriya",
+    "valor": "17823",
+    "genero": "Hombre",
+    "fuente": "My Hero Academia",
+    "imagen": "https://i.pinimg.com/736x/c6/29/50/c62950ae06c3e2a47697cfd03a8cd10a.jpg"
+  },
+  {
+    "nombre": "Lawliet (L)",
+    "valor": "16999",
+    "genero": "Hombre",
+    "fuente": "Death Note",
+    "imagen": "https://i.pinimg.com/736x/d5/a4/74/d5a47406ac0210d753c89d73308bf7d9.jpg"
+  },
+  {
+    "nombre": "Alucard",
+    "valor": "17001",
+    "genero": "Hombre",
+    "fuente": "Hellsing",
+    "imagen": "https://i.pinimg.com/736x/0e/80/0e/0e800e7493ecd24211e223b6398ff418.jpg"
+  },
+  {
+    "nombre": "Anko Uguisu",
+    "valor": "11566",
+    "genero": "Mujer",
+    "fuente": "Call of the Night",
+    "imagen": "https://i.pinimg.com/736x/d8/af/82/d8af8270915c56313d0925d037b61a62.jpg"
+  },
+  {
+    "nombre": "Tatsumaki",
+    "valor": "17469",
+    "genero": "Mujer",
+    "fuente": "One Punch Man",
+    "imagen": "https://i.pinimg.com/736x/9c/91/19/9c91191aa7e93fb8418729f6291645fa.jpg"
+  },
+  {
+    "nombre": "N 18",
+    "valor": "18000",
+    "genero": "Mujer",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/c1/c3/42/c1c34251c5580ddfdb99a1332c149251.jpg"
+  },
+  {
+    "nombre": "N 17",
+    "valor": "17000",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/1d/24/c6/1d24c6d04e64ac3c31534d26b5ed5cc2.jpg"
+  },
+  {
+    "nombre": "Chatgpt",
+    "valor": "18999",
+    "genero": "Desconocido",
+    "fuente": "IA",
+    "imagen": "https://i.pinimg.com/736x/f4/59/1b/f4591b8dcd3dbcc6a000436a8591ca8d.jpg"
+  },
+  {
+    "nombre": "Ryo Yamada",
+    "valor": "251",
+    "genero": "Mujer",
+    "fuente": "Bocchi The Rock",
+    "imagen": "https://i.pinimg.com/736x/43/9d/4c/439d4ce423c30b42fbaa13c5ccaed5d8.jpg"
+  },
+  {
+    "nombre": "Meta IA",
+    "valor": "18951",
+    "genero": "Desconocido",
+    "fuente": "IA",
+    "imagen": "https://i.pinimg.com/736x/f6/76/da/f676dab1d421123ef4d98974d1eafb2e.jpg"
+  },
+  {
+    "nombre": "Thorfinn",
+    "valor": "13899",
+    "genero": "Hombre",
+    "fuente": "Vinland Saga",
+    "imagen": "https://i.pinimg.com/1200x/69/26/c1/6926c1833e5a67436b20e9d658363b7c.jpg"
+  },
+  {
+    "nombre": "Seven",
+    "valor": "14251",
+    "genero": "Hombre",
+    "fuente": "Scissor Seven",
+    "imagen": "https://i.pinimg.com/736x/6e/0d/9d/6e0d9dcc316719aa8be3134ac89d532b.jpg"
+  },
+  {
+    "nombre": "Dai bo",
+    "valor": "13252",
+    "genero": "Hombre",
+    "fuente": "Scissor Seven",
+    "imagen": "https://i.pinimg.com/736x/ad/56/68/ad566858be2274227d04530d7754626a.jpg"
+  },
+  {
+    "nombre": "Ladrido Loco",
+    "valor": "13323",
+    "genero": "Hombre",
+    "fuente": "Scissor Seven",
+    "imagen": "https://i.pinimg.com/736x/d6/18/eb/d618eb94fb516e49883b3a34175252d3.jpg"
+  },
+  {
+    "nombre": "Thirteen",
+    "valor": "14158",
+    "genero": "Mujer",
+    "fuente": "Scissor Seven",
+    "imagen": "https://i.pinimg.com/1200x/b8/db/9c/b8db9c0750fc062c67a2435721130971.jpg"
+  },
+  {
+    "nombre": "Invincible",
+    "valor": "16758",
+    "genero": "Hombre",
+    "fuente": "Invincible",
+    "imagen": "https://i.pinimg.com/736x/05/e8/35/05e8357503463ce28244df086a080d37.jpg"
+  },
+  {
+    "nombre": "Omni-Man",
+    "valor": "17768",
+    "genero": "Hombre",
+    "fuente": "Invincible",
+    "imagen": "https://i.pinimg.com/1200x/c7/3d/6e/c73d6e587402ad1b6468a69847d67f8d.jpg"
+  },
+  {
+    "nombre": "Vermeil",
+    "valor": "14258",
+    "genero": "Mujer",
+    "fuente": "Vermeil in Gold",
+    "imagen": "https://i.pinimg.com/736x/c5/03/a7/c503a7a349f8ae176aa4d2dba9458c15.jpg"
+  },
+  {
+    "nombre": "Hatsune Miku",
+    "valor": "20000",
+    "genero": "Mujer",
+    "fuente": "Vocaloid",
+    "imagen": "https://i.pinimg.com/736x/14/88/e1/1488e1119c305b2b739a009e4ac490ac.jpg"
+  },
+{
+  "nombre": "Levi Ackerman",
+  "valor": "13420",
+  "genero": "Hombre",
+  "fuente": "Attack on Titan",
+  "imagen": "https://i.pinimg.com/736x/9a/58/b5/9a58b5bbd459134db834a3d645a47cd0.jpg"
+},
+{
+  "nombre": "Mikasa Ackerman",
+  "valor": "13420",
+  "genero": "Mujer",
+  "fuente": "Attack on Titan",
+  "imagen": "https://i.pinimg.com/736x/3d/4f/ba/3d4fba26abc7c6554e3de814d3eb5149.jpg"
+},
+{
+  "nombre": "The Rumbling",
+  "valor": "14000",
+  "genero": "Hombre",
+  "fuente": "Attack on Titan",
+  "imagen": "https://i.pinimg.com/736x/c2/c6/d3/c2c6d335bb3abe30033de7b506bdda66.jpg"
+},
+{
+  "nombre": "Light Yagami",
+  "valor": "15750",
+  "genero": "Hombre",
+  "fuente": "Death Note",
+  "imagen": "https://i.pinimg.com/736x/2a/43/83/2a43839eeba52eab2ea1badad8efd12b.jpg"
+},
+{
+  "nombre": "Makima",
+  "valor": "15890",
+  "genero": "Mujer",
+  "fuente": "Chainsaw Man",
+  "imagen": "https://i.pinimg.com/736x/ca/3c/f1/ca3cf18fe1065f538c2e38a49a67e75d.jpg"
+},
+{
+  "nombre": "Rengoku",
+  "valor": "18003",
+  "genero": "Hombre",
+  "fuente": "Demon Slayer",
+  "imagen": "https://i.pinimg.com/1200x/73/f0/29/73f029cbfbffa9d0995fad3fcd0edc5d.jpg"
+},
+{
+  "nombre": "Zero Two",
+  "valor": "15920",
+  "genero": "Mujer",
+  "fuente": "Darling in the Franxx",
+  "imagen": "https://i.pinimg.com/736x/6e/35/51/6e355189c8bce8da6d4a8c58acfa4040.jpg"
+},
+{
+  "nombre": "Ayanokoji",
+  "valor": "14056",
+  "genero": "Hombre",
+  "fuente": "Classroom of the Elite",
+  "imagen": "https://i.pinimg.com/736x/5b/49/31/5b49315eb8b7af61c2ff10a44180b93f.jpg"
+},
+{
+  "nombre": "Esdeath",
+  "valor": "10100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/1200x/3c/f0/3b/3cf03b64e9a23c403dc3db353f437595.jpg"
+},
+{
+  "nombre": "Akame",
+  "valor": "11100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/1200x/e6/e2/d8/e6e2d822f673411f54409cee3643f9ba.jpg"
+},
+{
+  "nombre": "Chelsea",
+  "valor": "10100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/20/ca/99/20ca99bb2df89e4e06c03b73678c10cf.jpg"
+},
+{
+  "nombre": "Mine",
+  "valor": "9100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/1200x/2e/0e/27/2e0e276767a45189da9af91a442d6173.jpg"
+},
+{
+  "nombre": "Bulat",
+  "valor": "11100",
+  "genero": "Hombre",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/06/cb/8b/06cb8b22d4de97364cc8f8cc95961908.jpg"
+},
+{
+  "nombre": "Kurome",
+  "valor": "12100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/4f/58/fe/4f58feb76247c16ac7367a1c27b90083.jpg"
+},
+{
+  "nombre": "Sheele",
+  "valor": "9100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/1e/a9/08/1ea908d1f82bebdc2923db1f918b7fa3.jpg"
+},
+{
+  "nombre": "Leone",
+  "valor": "11100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/02/e6/5a/02e65a3da898079406793ffe15348ad1.jpg"
+},
+{
+  "nombre": "Najenda",
+  "valor": "12040",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/1200x/a0/23/7a/a0237a43f81bf77dcf3ec97f065d9d46.jpg"
+},
+{
+  "nombre": "Tatsumi",
+  "valor": "10100",
+  "genero": "Hombre",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/37/10/ca/3710cabf89c36d378d3e675e8d157efb.jpg"
+},
+{
+  "nombre": "Seryu",
+  "valor": "12100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/0d/ee/5c/0dee5c2ee7edaae949f2c6ccff7098da.jpg"
+},
+{
+  "nombre": "Lubbock",
+  "valor": "14100",
+  "genero": "Hombre",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/53/85/0a/53850a9e0de13104d091150b84167dc3.jpg"
+},
+{
+  "nombre": "Wave",
+  "valor": "13100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/19/32/22/193222fe612cf76ea24fe479911b81c6.jpg"
+},
+{
+  "nombre": "Syura",
+  "valor": "14100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/2e/e2/ed/2ee2eddd9a2a33249d70aef53d3e00e3.jpg"
+},
+{
+  "nombre": "Bols",
+  "valor": "14100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/c2/e2/d1/c2e2d13682abad816d58d7dc7c7aba17.jpg"
+},
+{
+  "nombre": "Susanoo",
+  "valor": "14100",
+  "genero": "Mujer",
+  "fuente": "Akame ga Kill",
+  "imagen": "https://i.pinimg.com/736x/f3/11/48/f3114824bbe630c6045a59be2a0231e0.jpg"
+},
+{
+  "nombre": "Itachi Uchiha",
+  "valor": "17480",
+  "genero": "Hombre",
+  "fuente": "Naruto",
+  "imagen": "https://i.pinimg.com/736x/73/54/6c/73546c999961676fcff0664321545393.jpg"
+},
+{
+  "nombre": "Kakashi Hatake",
+  "valor": "18099",
+  "genero": "Hombre",
+  "fuente": "Naruto",
+  "imagen": "https://i.pinimg.com/736x/f1/9a/3a/f19a3a033d411687d9bd9143c4e3f5c4.jpg"
+},
+
+{
+  "nombre": "Yuno Gasai",
+  "valor": "13700",
+  "genero": "Mujer",
+  "fuente": "Mirai Nikki",
+  "imagen": "https://i.pinimg.com/1200x/cd/da/ed/cddaedb7ae8e2b1a51eed142a0256440.jpg"
+},
+{
+  "nombre": "Koro-sensei",
+  "valor": "17010",
+  "genero": "Desconocido",
+  "fuente": "Assassination Classroom",
+  "imagen": "https://i.pinimg.com/736x/8a/c2/62/8ac2626415515ea0e8a71fd64829fe57.jpg"
+},
+{
+  "nombre": "Kaneki Ken",
+  "valor": "18090",
+  "genero": "Hombre",
+  "fuente": "Tokyo Ghoul",
+  "imagen": "https://i.pinimg.com/1200x/42/6a/b2/426ab2734e16e0c993dc4e91e7acca49.jpg"
+},
+{
+  "nombre": "Guts",
+  "valor": "14852",
+  "genero": "Hombre",
+  "fuente": "Berserk",
+  "imagen": "https://i.pinimg.com/736x/54/e3/24/54e32498ea664774d65be7b5195c96de.jpg"
+},
+{
+  "nombre": "Asuka Langley",
+  "valor": "15500",
+  "genero": "Mujer",
+  "fuente": "Evangelion",
+  "imagen": "https://i.pinimg.com/736x/70/0e/c2/700ec2254baad37000d11a6c7f9c7746.jpg"
+},
+
+{
+  "nombre": "Shino Aburame",
+  "valor": "13100",
+  "genero": "Hombre",
+  "fuente": "Naruto",
+  "imagen": "https://i.pinimg.com/736x/23/c5/d4/23c5d410aeddcffd81ad29778b43fcbb.jpg"
+},
+{
+  "nombre": "Tenya Iida",
+  "valor": "14500",
+  "genero": "Hombre",
+  "fuente": "My Hero Academia",
+  "imagen": "https://i.pinimg.com/736x/32/c7/37/32c7374a124e919be1628b0c36341486.jpg"
+},
+{
+  "nombre": "Inosuke Hashibira",
+  "valor": "16500",
+  "genero": "Hombre",
+  "fuente": "Demon Slayer",
+  "imagen": "https://i.pinimg.com/736x/80/24/9f/80249fa29d35434f2e0e609cf9853cb0.jpg"
+},
+{
+  "nombre": "Nobara Kugisaki",
+  "valor": "15040",
+  "genero": "Mujer",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/1200x/0f/c3/39/0fc339b48c2fbec161dc2b80139d77a9.jpg"
+},
+{
+  "nombre": "Momo Yaoyorozu",
+  "valor": "14200",
+  "genero": "Mujer",
+  "fuente": "My Hero Academia",
+  "imagen": "https://i.pinimg.com/736x/23/1f/c6/231fc68893b3991398b5307964a3a8d9.jpg"
+},
+{
+  "nombre": "Ninja de fondo",
+  "valor": "2000",
+  "genero": "Hombre",
+  "fuente": "Naruto",
+  "imagen": "https://i.pinimg.com/1200x/e9/a4/7a/e9a47a2bd24ef7df28a7af12def907d0.jpg"
+},
+{
+  "nombre": "Titan anormal",
+  "valor": "1500",
+  "genero": "Desconocido",
+  "fuente": "Attack on Titan",
+  "imagen": "https://i.pinimg.com/1200x/6b/bf/cb/6bbfcb814bef314ebbcf2ee53a04c8b2.jpg"
+},
+{
+  "nombre": "Aeloria",
+  "valor": "6420",
+  "genero": "Mujer",
+  "fuente": "Stella Sora",
+  "imagen": "https://i.pinimg.com/736x/06/1b/6a/061b6a1ec5a4141917170c26f600b7b6.jpg"
+},
+{
+  "nombre": "Velezark",
+  "valor": "8310",
+  "genero": "Hombre",
+  "fuente": "Fire Emblem",
+  "imagen": "https://i.pinimg.com/1200x/e3/87/ea/e387ea3f1169a55f906ca8e323b31689.jpg"
+},
+{
+  "nombre": "Kamyu",
+  "valor": "7185",
+  "genero": "Mujer",
+  "fuente": "Utawarerumono",
+  "imagen": "https://i.pinimg.com/736x/a4/81/d5/a481d5aa53eb3dbd65e78236f14a1dde.jpg"
+},
+{
+  "nombre": "Kaori Orimoto",
+  "valor": "6890",
+  "genero": "Mujer",
+  "fuente": "Yahari Ore no Seishun Love Comedy wa Machigatteiru",
+  "imagen": "https://i.pinimg.com/736x/c9/e0/e5/c9e0e5f594700f199367d90bb1394889.jpg"
+},
+{
+  "nombre": "Doctor Volga",
+  "valor": "5935",
+  "genero": "Hombre",
+  "fuente": "Chargeman Ken!",
+  "imagen": "https://i.pinimg.com/1200x/b6/39/78/b63978afab5b2925e867fa18e0616b27.jpg"
+},
+{
+  "nombre": "Mio Takanashi",
+  "valor": "6840",
+  "genero": "Mujer",
+  "fuente": "Owarinaki Natsu, Towa Naru Shirabe",
+  "imagen": "https://i.pinimg.com/736x/b3/77/34/b3773404925916d86aaecf5a5772afef.jpg"
+},
+{
+  "nombre": "Kamon Day",
+  "valor": "6125",
+  "genero": "Hombre",
+  "fuente": "B-Daman",
+  "imagen": "https://i.pinimg.com/736x/1b/a5/cc/1ba5cc04046041b2fe2f6b13deec57ef.jpg"
+},
+{
+  "nombre": "Suzuna Kagura",
+  "valor": "7050",
+  "genero": "Mujer",
+  "fuente": "Caligula Series",
+  "imagen": "https://i.pinimg.com/1200x/41/13/85/4113858e40d8cac7955d89e3de5c56fa.jpg"
+},
+{
+  "nombre": "Hatsune Elissu",
+  "valor": "7485",
+  "genero": "Mujer",
+  "fuente": "Saiko No Sutoka",
+  "imagen": "https://i.pinimg.com/736x/f5/7a/dc/f57adc3bef70f8f9f6d1ba349b5a1834.jpg"
+},
+{
+  "nombre": "Ultraman Regulos",
+  "valor": "8890",
+  "genero": "Hombre",
+  "fuente": "Ultraman Series",
+  "imagen": "https://i.pinimg.com/1200x/67/0a/e3/670ae3f3ee2c81dd7f28b868ca38111f.jpg"
+},
+{
+  "nombre": "Selene McGriff",
+  "valor": "8640",
+  "genero": "Mujer",
+  "fuente": "Gundam Series",
+  "imagen": "https://i.pinimg.com/1200x/b7/7d/84/b77d844a9cc7d61436c49a471ac918cc.jpg"
+},
+{
+  "nombre": "Miyu Suzuki",
+  "valor": "6425",
+  "genero": "Mujer",
+  "fuente": "Seihantai na Kimi to Boku",
+  "imagen": "https://i.pinimg.com/736x/eb/6c/cc/eb6ccc1a265eecdcb94ef97d3da7035a.jpg"
+},
+{
+  "nombre": "Radi Jaeger",
+  "valor": "7580",
+  "genero": "Hombre",
+  "fuente": "Senjou no Valkyria Series",
+  "imagen": "https://i.pinimg.com/1200x/86/f4/56/86f456d407e638c4ada12fca99e069c4.jpg"
+},
+{
+  "nombre": "Kaori Murasaki",
+  "valor": "7010",
+  "genero": "Mujer",
+  "fuente": "Triage X",
+  "imagen": "https://i.pinimg.com/736x/2b/c1/0d/2bc10d43004c1a52345e4aabddde9202.jpg"
+},
+{
+  "nombre": "Seiryuu",
+  "valor": "5985",
+  "genero": "Mujer",
+  "fuente": "Kemono Friends Series",
+  "imagen": "https://i.pinimg.com/736x/b8/5b/a2/b85ba236c1eaf14ff03cdd39a6487644.jpg"
+},
+{
+  "nombre": "Riko Tanemura",
+  "valor": "8320",
+  "genero": "Mujer",
+  "fuente": "Persona",
+  "imagen": "https://i.pinimg.com/736x/d0/a6/12/d0a612c51438c054b4cdcd55020b4fa9.jpg"
+},
+{
+  "nombre": "Tupp",
+  "valor": "6785",
+  "genero": "Hombre",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/736x/b9/10/db/b910dbacda88cbb988940710461eb0f5.jpg"
+},
+{
+  "nombre": "Raggucci",
+  "valor": "7210",
+  "genero": "Hombre",
+  "fuente": "Gundam Series",
+  "imagen": "https://i.pinimg.com/736x/cb/16/33/cb1633aa130789dc048def5c9ef51401.jpg"
+},
+{
+  "nombre": "Marine aleatorio",
+  "valor": "1800",
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/4a/83/03/4a830349c84b143660163b97a658dd1e.jpg"
+},
+{
+  "nombre": "Ben Tennyson",
+  "valor": 10000,
+  "genero": "Hombre",
+  "fuente": "Ben 10",
+  "imagen": "https://i.pinimg.com/736x/36/2c/ce/362ccef4e21689c8ed162b4b8016e4d1.jpg"
+},
+{
+  "nombre": "Alien X",
+  "valor": 19870,
+  "genero": "Desconocido",
+  "fuente": "Ben 10",
+  "imagen": "https://i.pinimg.com/736x/3b/f2/e4/3bf2e47805276cb75141daeb153b383d.jpg"
+},
+{
+  "nombre": "Kevin Levin",
+  "valor": 10209,
+  "genero": "Hombre",
+  "fuente": "Ben 10",
+  "imagen": "https://i.pinimg.com/736x/1e/f2/99/1ef29952400cce74b9d0d3620df89a60.jpg"
+},
+{
+  "nombre": "Gwen Tennyson",
+  "valor": 8000,
+  "genero": "Mujer",
+  "fuente": "Ben 10",
+  "imagen": "https://i.pinimg.com/736x/a1/df/13/a1df13d2b14865c925fe9b239431631f.jpg"
+},
+{
+  "nombre": "Vilgax",
+  "valor": 9300,
+  "genero": "Hombre",
+  "fuente": "Ben 10",
+  "imagen": "https://i.pinimg.com/1200x/ea/0e/3d/ea0e3d77f66bddc58e86fdeba68b8aab.jpg"
+},
+{
+  "nombre": "Finn el Humano",
+  "valor": 8800,
+  "genero": "Hombre",
+  "fuente": "Hora de Aventura",
+  "imagen": "https://i.pinimg.com/1200x/b2/a6/82/b2a682c36d57095311cc273648d158c2.jpg"
+},
+{
+  "nombre": "Jake el Perro",
+  "valor": 8200,
+  "genero": "Hombre",
+  "fuente": "Hora de Aventura",
+  "imagen": "https://i.pinimg.com/736x/42/23/5e/42235e84bab88feba7404592558089a8.jpg"
+},
+{
+  "nombre": "BMO (Beemo)",
+  "valor": 1200,
+  "genero": "Desconocido",
+  "fuente": "Hora de Aventura",
+  "imagen": "https://i.pinimg.com/736x/46/62/44/466244e894dc3cef4016e51ed69890d1.jpg"
+},
+{
+  "nombre": "Marceline",
+  "valor": 8700,
+  "genero": "Mujer",
+  "fuente": "Hora de Aventura",
+  "imagen": "https://i.pinimg.com/1200x/b5/e0/bc/b5e0bc5c1e1f308ac56c667385252df1.jpg"
+},
+{
+  "nombre": "Rey Helado",
+  "valor": 9000,
+  "genero": "Hombre",
+  "fuente": "Hora de Aventura",
+  "imagen": "https://i.pinimg.com/1200x/05/e7/8f/05e78f82052f17eda6f58027bf11aa19.jpg"
+},
+{
+  "nombre": "Princesa Flama",
+  "valor": 7400,
+  "genero": "Mujer",
+  "fuente": "Hora de Aventura",
+  "imagen": "https://i.pinimg.com/736x/86/7e/99/867e99d580d1480d60f8ca425cd181ca.jpg"
+},
+{
+  "nombre": "Mordecai",
+  "valor": 8500,
+  "genero": "Hombre",
+  "fuente": "Un Show Más",
+  "imagen": "https://i.pinimg.com/736x/8d/41/f3/8d41f355d99af6bd1d75ba15ddbf06e7.jpg"
+},
+{
+  "nombre": "Rigby",
+  "valor": 8300,
+  "genero": "Hombre",
+  "fuente": "Un Show Más",
+  "imagen": "https://i.pinimg.com/736x/64/82/8f/64828f386f596defb2537d376dce350c.jpg"
+},
+{
+  "nombre": "Skips",
+  "valor": 9805,
+  "genero": "Hombre",
+  "fuente": "Un Show Más",
+  "imagen": "https://i.pinimg.com/736x/36/97/ce/3697cebde85826afeba1d6ba542369a3.jpg"
+},
+{
+  "nombre": "Benson",
+  "valor": 12210,
+  "genero": "Hombre",
+  "fuente": "Un Show Más",
+  "imagen": "https://i.pinimg.com/1200x/37/b3/98/37b398773358556b92e923e47af40837.jpg"
+},
+{
+  "nombre": "Musculoso",
+  "valor": 5000,
+  "genero": "Hombre",
+  "fuente": "Un Show Más",
+  "imagen": "https://i.pinimg.com/1200x/cf/af/c0/cfafc0181f15cbcd03ee7eea7b3f331b.jpg"
+},
+{
+  "nombre": "Gumball",
+  "valor": 8200,
+  "genero": "Hombre",
+  "fuente": "El Increíble Mundo de Gumball",
+  "imagen": "https://i.pinimg.com/1200x/cc/e8/eb/cce8eba510c857c8740735d7ce836bc6.jpg"
+},
+{
+  "nombre": "Darwin",
+  "valor": 7800,
+  "genero": "Hombre",
+  "fuente": "El Increíble Mundo de Gumball",
+  "imagen": "https://i.pinimg.com/736x/26/f9/4b/26f94b699f1bbea732b4b4bc5b710115.jpg"
+},
+{
+  "nombre": "Nicole Watterson",
+  "valor": 15600,
+  "genero": "Mujer",
+  "fuente": "El Increíble Mundo de Gumball",
+  "imagen": "https://i.pinimg.com/736x/95/88/32/958832447418773426ae7f9bd2fdf38b.jpg"
+},
+{
+  "nombre": "Richard Watterson",
+  "valor": 7500,
+  "genero": "Hombre",
+  "fuente": "El Increíble Mundo de Gumball",
+  "imagen": "https://i.pinimg.com/736x/6f/f5/19/6ff519482dfa676a693f5e581f971c55.jpg"
+},
+{
+  "nombre": "Bombon",
+  "valor": 6400,
+  "genero": "Mujer",
+  "fuente": "Las Chicas Superpoderosas (2016)",
+  "imagen": "https://i.pinimg.com/736x/03/30/7a/03307a6eb20eadc01d7d83d8f6fd2bf7.jpg"
+},
+{
+  "nombre": "Burbuja",
+  "valor": 6200,
+  "genero": "Mujer",
+  "fuente": "Las Chicas Superpoderosas (2016)",
+  "imagen": "https://i.pinimg.com/736x/18/0b/ab/180bab62cd54297c68df1fb6f3131ac3.jpg"
+},
+{
+  "nombre": "Bellota",
+  "valor": 6500,
+  "genero": "Mujer",
+  "fuente": "Las Chicas Superpoderosas (2016)",
+  "imagen": "https://i.pinimg.com/736x/78/03/d3/7803d356edad05c3c413a6a019221eac.jpg"
+},
+{
+  "nombre": "Steven Universe",
+  "valor": 8500,
+  "genero": "Hombre",
+  "fuente": "Steven Universe",
+  "imagen": "https://i.pinimg.com/736x/47/57/50/4757506db07e1677bf310912875a8738.jpg"
+},
+{
+  "nombre": "Garnet",
+  "valor": 9000,
+  "genero": "Mujer",
+  "fuente": "Steven Universe",
+  "imagen": "https://i.pinimg.com/1200x/4f/fe/be/4ffebe862798112876e9fec026bef474.jpg"
+},
+{
+  "nombre": "Amatista",
+  "valor": 7600,
+  "genero": "Mujer",
+  "fuente": "Steven Universe",
+  "imagen": "https://i.pinimg.com/736x/08/da/47/08da478d3029369caac028d534268abb.jpg"
+},
+{
+  "nombre": "Perla",
+  "valor": 7700,
+  "genero": "Mujer",
+  "fuente": "Steven Universe",
+  "imagen": "https://i.pinimg.com/736x/ba/57/56/ba575611f4df1d2ca3637d1624131594.jpg"
+},
+{
+  "nombre": "Samurai Jack",
+  "valor": 9800,
+  "genero": "Hombre",
+  "fuente": "Samurai Jack",
+  "imagen": "https://i.pinimg.com/736x/b3/e0/6d/b3e06d56f9819c9d38e4107512ad7f69.jpg"
+},
+{
+  "nombre": "Aku",
+  "valor": 12500,
+  "genero": "Desconocido",
+  "fuente": "Samurai Jack",
+  "imagen": "https://i.pinimg.com/736x/d4/61/8d/d4618d78da2a7c882e00fab3eae98919.jpg"
+},
+{
+  "nombre": "Rex Salazar",
+  "valor": 8600,
+  "genero": "Hombre",
+  "fuente": "Generator Rex",
+  "imagen": "https://i.pinimg.com/1200x/23/1e/65/231e651452ad275eef537fb10f9a592e.jpg"
+},
+{
+  "nombre": "Randy Cunningham",
+  "valor": 8800,
+  "genero": "Hombre",
+  "fuente": "Randy Cunningham 9th Grade Ninja",
+  "imagen": "https://i.pinimg.com/736x/d6/17/d3/d617d302f9b28cab9629518c2f855b40.jpg"
+},
+{
+  "nombre": "Howard Weinerman",
+  "valor": 200,
+  "genero": "Hombre",
+  "fuente": "Randy Cunningham 9th Grade Ninja",
+  "imagen": "https://i.pinimg.com/736x/bd/e6/bd/bde6bdaa8156e32f0927e29361db8faa.jpg"
+},
+{
+  "nombre": "Star Butterfly",
+  "valor": 7800,
+  "genero": "Mujer",
+  "fuente": "Star vs las Fuerzas del Mal",
+  "imagen": "https://i.pinimg.com/1200x/ed/bb/f4/edbbf49aa7da9e8c418088d1aedd6bfb.jpg"
+},
+{
+  "nombre": "Marco Diaz",
+  "valor": 5600,
+  "genero": "Hombre",
+  "fuente": "Star vs las Fuerzas del Mal",
+  "imagen": "https://i.pinimg.com/736x/4a/91/28/4a9128061cbaf4683adb12b4dd794313.jpg"
+},
+{
+  "nombre": "Dipper Pines",
+  "valor": 7000,
+  "genero": "Hombre",
+  "fuente": "Gravity Falls",
+  "imagen": "https://i.pinimg.com/736x/83/9d/a3/839da34964a206a48ff9ac107a55fa76.jpg"
+},
+{
+  "nombre": "Mabel Pines",
+  "valor": 5500,
+  "genero": "Mujer",
+  "fuente": "Gravity Falls",
+  "imagen": "https://i.pinimg.com/1200x/ce/09/0c/ce090c0adf2819eec58f193ad8a44a4f.jpg"
+},
+{
+  "nombre": "Bill Cipher",
+  "valor": 18500,
+  "genero": "Desconocido",
+  "fuente": "Gravity Falls",
+  "imagen": "https://i.pinimg.com/1200x/ca/d3/c5/cad3c58d34b6a9e0cd9c71031fd407c7.jpg"
+},
+{
+  "nombre": "Ryōmen Sukuna",
+  "valor": "19000",
+  "genero": "Hombre",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/736x/7d/f1/f1/7df1f19eaa9c92bdc5df804b7d96216f.jpg"
+},
+{
+  "nombre": "Yuji Itadori",
+  "valor": "15679",
+  "genero": "Hombre",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/1200x/69/e8/d5/69e8d5df3a7dda214399a3c7aa04e3c5.jpg"
+},
+{
+  "nombre": "Yūta Okkotsu",
+  "valor": "18400",
+  "genero": "Hombre",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/736x/04/88/43/048843ff7e5f5906858ac4d785f226c5.jpg"
+},
+{
+  "nombre": "Maki Zenin",
+  "valor": "12600",
+  "genero": "Mujer",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/736x/c8/8b/3e/c88b3ef177ffa6213944c1ad430ed84c.jpg"
+},
+{
+  "nombre": "Garou",
+  "valor": "18702",
+  "genero": "Hombre",
+  "fuente": "One Punch Man",
+  "imagen": "https://i.pinimg.com/736x/1d/0a/31/1d0a313a8cdde2ad64a0c6999b23bce5.jpg"
+},
+{
+  "nombre": "Galactus",
+  "valor": "20000",
+  "genero": "Desconocido",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/1200x/4e/f2/0d/4ef20d5c1cda9f40a51252565718ea59.jpg"
+},
+{
+  "nombre": "Thanos",
+  "valor": "15929",
+  "genero": "Desconocido",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/1200x/1a/55/86/1a55868eaff076dbde27342f7a5ae8c1.jpg"
+},
+{
+  "nombre": "Spider Pork",
+  "valor": "9999",
+  "genero": "Hombre",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/736x/82/0f/6d/820f6d89c5025014f55c9a8e581cd975.jpg"
+},
+{
+  "nombre": "Kang",
+  "valor": "11221",
+  "genero": "Desconocido",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/1200x/1e/19/db/1e19dbcd28d3e3d984a5d9a9b3ad42e4.jpg"
+},
+{
+  "nombre": "Doombot A.I.",
+  "valor": "9000",
+  "genero": "Desconocido",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/1200x/eb/3b/c0/eb3bc04372b536b91e64fa942da15b7e.jpg"
+},
+{
+  "nombre": "Doctor Doom",
+  "valor": "19600",
+  "genero": "Hombre",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/736x/a9/0d/34/a90d341827652db5dbb9d8b8b36f2b34.jpg"
+},
+{
+  "nombre": "Raven",
+  "valor": "10666",
+  "genero": "Mujer",
+  "fuente": "Teen Titans",
+  "imagen": "https://i.pinimg.com/736x/40/4c/73/404c7398a805c3f46f35aeff6fbb1baa.jpg"
+},
+{
+  "nombre": "Ned Flanders",
+  "valor": "70",
+  "genero": "Hombre",
+  "fuente": "Los Simpson",
+  "imagen": "https://i.pinimg.com/736x/7e/b0/cc/7eb0ccba787e2016c33af25b1d435572.jpg"
+},
+{
+  "nombre": "Homero Simpson",
+  "valor": "9070",
+  "genero": "Hombre",
+  "fuente": "Los Simpson",
+  "imagen": "https://i.pinimg.com/1200x/b2/3c/03/b23c0399a04eb983a6ac67131dc3a224.jpg"
+},
+{
+  "nombre": "Shaggy",
+  "valor": "19570",
+  "genero": "Hombre",
+  "fuente": "Scooby Doo",
+  "imagen": "https://i.pinimg.com/1200x/85/7f/b4/857fb47cf5c368b2ba6672b2d32a21bd.jpg"
+},
+{
+  "nombre": "Sanji Vinsmoke",
+  "valor": 17404,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/b4/dd/7f/b4dd7f06d79c46c52bdce1b1f18de019.jpg"
+},
+{
+  "nombre": "Nami",
+  "valor": 12404,
+  "genero": "Mujer",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/52/87/e6/5287e6f0c630ce50d94fdb5e1868903b.jpg"
+},
+{
+  "nombre": "Ussop",
+  "valor": 11404,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/1b/78/32/1b7832d59f502fef9f3a4bd0e0fa9197.jpg"
+},
+{
+  "nombre": "Nico Robin",
+  "valor": 14404,
+  "genero": "Mujer",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/9f/35/08/9f35080b2a0fd7b1fe390307057efca0.jpg"
+},
+{
+  "nombre": "Franky",
+  "valor": 14904,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/48/89/ae/4889aea97d3c33c5af983fc26b996605.jpg"
+},
+{
+  "nombre": "Brook",
+  "valor": 14808,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/1e/c4/59/1ec459b482e8323f8b581816ac90b047.jpg"
+},
+{
+  "nombre": "Jinbei",
+  "valor": 15804,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/37/12/78/3712788179d14a8a08fbe302041028d4.jpg"
+},
+{
+  "nombre": "Tony Tony Chopper",
+  "valor": 9404,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/ff/76/2c/ff762c6accbf333e8a25e57c4c7ff4ad.jpg"
+},
+{
+  "nombre": "Borsalino (Kizaru)",
+  "valor": 17494,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/c0/18/c2/c018c262bb2ae98b6574e0cb2063ee8b.jpg"
+},
+{
+  "nombre": "Sakazuki (Akainu)",
+  "valor": 18894,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/62/39/42/6239427896c8c7c6f448fdfafaee3585.jpg"
+},
+{
+  "nombre": "Issho (Fujitora)",
+  "valor": 17240,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/5c/13/65/5c1365c8e68ee9cfbb80119cae29813a.jpg"
+},
+{
+  "nombre": "Aramaki (Ryokugyu)",
+  "valor": 16940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/c2/ed/89/c2ed8967be41ad16bcbc5c57b4309f62.jpg"
+},
+{
+  "nombre": "Smoker",
+  "valor": 14940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/25/8b/65/258b650c97db008a5ee8723bf3be2290.jpg"
+},
+{
+  "nombre": "Charlotte Katakuri",
+  "valor": 15540,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/28/9f/51/289f519962abbc4ddec5a7330d1bbe4b.jpg"
+},
+{
+  "nombre": "Kaido",
+  "valor": 18990,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/e2/ac/46/e2ac46923a78589581c3990cca56aae8.jpg"
+},
+{
+  "nombre": "Gol D. Roger",
+  "valor": 19921,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/18/a4/06/18a4060c5ef12c5428a14859aa5cb9f7.jpg"
+},
+{
+  "nombre": "Shirohige (Viejo)",
+  "valor": 17540,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/c7/bd/c8/c7bdc8974d2ce1bbe9e24135488f44f3.jpg"
+},
+{
+  "nombre": "Shirohige (Prime)",
+  "valor": 19920,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/ce/4e/f6/ce4ef6a26eb6f45467954cae3ea25046.jpg"
+},
+{
+  "nombre": "Portgas D. Ace",
+  "valor": 14290,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/d1/01/ee/d101ee76d8f9844d573f15dbcf3f189f.jpg"
+},
+{
+  "nombre": "Sabo",
+  "valor": 15940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/1e/97/c1/1e97c137bbaf4de1f1133dae43295dd0.jpg"
+},
+{
+  "nombre": "Marco (One Piece)",
+  "valor": 15940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/a2/be/e1/a2bee1c761588448257fe46f1ba3a9b7.jpg"
+},
+{
+  "nombre": "Garp",
+  "valor": 19920,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/4f/36/ab/4f36ab956ea4ed2760634ce3934a0990.jpg"
+},
+{
+  "nombre": "Big Mom",
+  "valor": 16940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/0c/ff/da/0cffda6096af186fa0d6d7bddd01d2c8.jpg"
+},
+{
+  "nombre": "Gemini",
+  "valor": 7508,
+  "genero": "Desconocido",
+  "fuente": "IA",
+  "imagen": "https://i.pinimg.com/736x/99/6e/07/996e07524a74622538c2152977f2baa2.jpg"
+},
+{
+  "nombre": "Raromagedon",
+  "valor": 12900,
+  "genero": "Desconocido",
+  "fuente": "Gravity Falls",
+  "imagen": "https://i.pinimg.com/1200x/00/25/0f/00250f94ea813bfcbbcbd8fd223c6027.jpg"
+},
+{
+  "nombre": "Nova",
+  "valor": 10600,
+  "genero": "Hombre",
+  "fuente": "Marvel",
+  "imagen": "https://i.pinimg.com/736x/de/09/65/de09657571bd367058dcc08a4489d03f.jpg"
+},
+{
+  "nombre": "Joker",
+  "valor": 10971,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/4c/db/49/4cdb4969b072d9e718f3ff0f58670e76.jpg"
+},
+{
+  "nombre": "Robin",
+  "valor": 9110,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/db/09/51/db09514f8d3d1bb9298b684828b1c968.jpg"
+},
+{
+  "nombre": "Batman",
+  "valor": 12390,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/ec/fe/d4/ecfed456d5043e7ecc7ab486c647a476.jpg"
+},
+{
+  "nombre": "Espantapájaros",
+  "valor": 10360,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/54/6f/e9/546fe95ef1dfc40f9dbe40701f4ba3d0.jpg"
+},
+{
+  "nombre": "Bane",
+  "valor": 9111,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/33/54/ec/3354ecdd4c05b551aa32626ee4127e7b.jpg"
+},
+{
+  "nombre": "Acertijo",
+  "valor": 6666,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/e4/f6/1a/e4f61a69a527a2eb7ea0f039bb0e7c1e.jpg"
+},
+{
+  "nombre": "Señor Frío",
+  "valor": 9000,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/be/33/15/be3315fb39ec8fda8a3411b59ae6a1af.jpg"
+},
+{
+  "nombre": "Catwoman",
+  "valor": 10650,
+  "genero": "Mujer",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/70/35/16/7035165c275249394ff3f156c8ac43eb.jpg"
+},
+{
+  "nombre": "Comisionado Gordon",
+  "valor": 4324,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/46/d6/e5/46d6e589ad5dea39e5c956adfca29221.jpg"
+},
+{
+  "nombre": "Mujer Maravilla",
+  "valor": 10780,
+  "genero": "Mujer",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/77/66/6c/77666c7b636a75328c2325fb3265fc33.jpg"
+},
+{
+  "nombre": "Flash",
+  "valor": 7570,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/2b/c6/be/2bc6be20d9aeffa036177c5db403b1ad.jpg"
+},
+{
+  "nombre": "Megumi Fushiguro",
+  "valor": 14990,
+  "genero": "Hombre",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/1200x/b1/9d/15/b19d155468a4a4e5e7453c46886eb16e.jpg"
+},
+{
+  "nombre": "Shin Godzilla",
+  "valor": 18900,
+  "genero": "Desconocido",
+  "fuente": "Monsterverse",
+  "imagen": "https://i.pinimg.com/1200x/c8/23/11/c823119eefb11a673ff78975759218f8.jpg"
+},
+{
+  "nombre": "Godzilla",
+  "valor": 19200,
+  "genero": "Desconocido",
+  "fuente": "Monsterverse",
+  "imagen": "https://i.pinimg.com/1200x/5a/6b/56/5a6b56bdb6940518a0ccbb47055498eb.jpg"
+},
+{
+  "nombre": "Freezer",
+  "valor": 20002,
+  "genero": "Hombre",
+  "fuente": "Dragon Ball",
+  "imagen": "https://i.pinimg.com/736x/31/14/1a/31141a18fe2eae506cbec4f70ff5b386.jpg"
+},
+{
+  "nombre": "Superman",
+  "valor": 15230,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/eb/a7/a4/eba7a4bb29a1b6d7c28ee654ff4b6ea2.jpg"
+},
+{
+  "nombre": "Linterna Verde",
+  "valor": 5555,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/89/7a/cb/897acb32a715851950e709ceefb05d10.jpg"
+},
+{
+  "nombre": "Aquaman",
+  "valor": 11529,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/80/29/03/802903d67178517dc0a20ee047b0bfb0.jpg"
+},
+{
+  "nombre": "Cyborg",
+  "valor": 10560,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/99/d0/3f/99d03f77ba7f0bcc381ec688bf5198bf.jpg"
+},
+{
+  "nombre": "Toji Fushiguro",
+  "valor": 18500,
+  "genero": "Hombre",
+  "fuente": "Jujutsu Kaisen",
+  "imagen": "https://i.pinimg.com/736x/cd/98/54/cd98548a30fffd18415ea0d280fa3c1b.jpg"
+},
+{
+  "nombre": "Broly (DBZ)",
+  "valor": 16210,
+  "genero": "Hombre",
+  "fuente": "Dragon Ball",
+  "imagen": "https://i.pinimg.com/736x/9c/81/22/9c812287810dc47d2c67b01ec69c57b5.jpg"
+},
+{
+  "nombre": "Broly (DBS)",
+  "valor": 20000,
+  "genero": "Hombre",
+  "fuente": "Dragon Ball",
+  "imagen": "https://i.pinimg.com/1200x/70/ac/54/70ac54ca89ff498b63976b3824318817.jpg"
+},
+{
+  "nombre": "Harley Quinn",
+  "valor": 10679,
+  "genero": "Mujer",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/3e/c5/ff/3ec5ff41a8097b25500899400ab2f90b.jpg"
+},
+{
+  "nombre": "Batgirl",
+  "valor": 9999,
+  "genero": "Mujer",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/10/01/16/1001169abc3ea3f011aeee8654dbbd0b.jpg"
+},
+{
+  "nombre": "Hawkgirl",
+  "valor": 4320,
+  "genero": "Mujer",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/db/41/3d/db413dfcc5a3e91bc18149fb556f4532.jpg"
+},
+{
+  "nombre": "Green Arrow",
+  "valor": 7777,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/5c/29/44/5c29445a1afb4ddd4f1ea004fa96d2f6.jpg"
+},
+{
+  "nombre": "Shazam",
+  "valor": 10783,
+  "genero": "Hombre",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/1200x/b2/54/bb/b254bbac9df6cb5dfc16cd8dfb5df2a7.jpg"
+},
+{
+  "nombre": "Detective Marciano",
+  "valor": 9111,
+  "genero": "Desconocido",
+  "fuente": "DC Comics",
+  "imagen": "https://i.pinimg.com/736x/d7/e1/64/d7e164f6be8c8cc9043e06d81e3f1727.jpg"
+},
+{
+  "nombre": "Thors Snorresson",
+  "valor": 13021,
+  "genero": "Hombre",
+  "fuente": "Vinland Saga",
+  "imagen": "https://i.pinimg.com/1200x/02/44/75/02447561493f7fea798f0060455f5095.jpg"
+},
+{
+  "nombre": "Thorkell",
+  "valor": 12100,
+  "genero": "Hombre",
+  "fuente": "Vinland Saga",
+  "imagen": "https://i.pinimg.com/1200x/50/0d/36/500d36a8fcb2ff0e172af85f2ad61cb9.jpg"
+},
+{
+  "nombre": "Askeladd",
+  "valor": 10850,
+  "genero": "Hombre",
+  "fuente": "Vinland Saga",
+  "imagen": "https://i.pinimg.com/736x/37/ae/c4/37aec4944b2a35a9a3881d65333ce7f1.jpg"
+},
+{
+  "nombre": "Sonic The Hedgehog",
+  "valor": 15250,
+  "genero": "Hombre",
+  "fuente": "Sonic The Hedgehog",
+  "imagen": "https://i.pinimg.com/1200x/0e/82/cc/0e82ccac8bdd470998948c0d81985046.jpg"
+},
+{
+  "nombre": "Miles Tails Prower",
+  "valor": 10250,
+  "genero": "Hombre",
+  "fuente": "Sonic The Hedgehog",
+  "imagen": "https://i.pinimg.com/736x/50/d6/95/50d695a2ec0105c23eddb4de7a39d1bc.jpg"
+},
+{
+  "nombre": "Knuckles the echidna",
+  "valor": 13250,
+  "genero": "Hombre",
+  "fuente": "Sonic The Hedgehog",
+  "imagen": "https://i.pinimg.com/736x/db/e5/57/dbe557dc8871a5a8ef696356beb65390.jpg"
+},
+{
+  "nombre": "Bulbasaur",
+  "valor": 850,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/1200x/47/b0/ff/47b0fff79f7a383e6f88656fbf787ba1.jpg",
+"evolucion": "Ivysaur",
+  "nivelEvo": 14
+},
+{
+  "nombre": "Ivysaur",
+  "valor": 8850,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/1200x/c7/b9/cb/c7b9cbe7cc0078a3123c6764f88e439b.jpg",
+"evolucion": "Venusaur",
+  "nivelEvo": 30
+},
+{
+  "nombre": "Venusaur",
+  "valor": 16850,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/1200x/d8/e5/44/d8e54478d116d9c435ed6f0aed48c3e7.jpg"
+},
+{
+  "nombre": "Charmander",
+  "valor": 860,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/736x/d5/49/3c/d5493cff700c2aec960440a9c975e2c9.jpg",
+  "evolucion": "Charmeleon",
+  "nivelEvo": 16
+},
+{
+  "nombre": "Charmeleon",
+  "valor": 9860,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/736x/b6/bf/6f/b6bf6f7cec17143096bb4fb3831dfb81.jpg",
+  "evolucion": "Charizard",
+  "nivelEvo": 30
+},
+{
+  "nombre": "Charizard",
+  "valor": 18860,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/1200x/d9/ac/b9/d9acb98ca2fab0c97e665e35be67378f.jpg"
+},
+{
+  "nombre": "Squirtle",
+  "valor": 852,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/736x/8b/0a/7f/8b0a7fc6bc58a9686c264f47a1257d12.jpg",
+  "evolucion": "Wartortle",
+  "nivelEvo": 15
+},
+{
+  "nombre": "Wartortle",
+  "valor": 9860,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/736x/e5/11/d1/e511d1fcec7366b80685a38f4519eb6a.jpg",
+  "evolucion": "Blastoise",
+  "nivelEvo": 30
+},
+{
+  "nombre": "Blastoise",
+  "valor": 18060,
+  "genero": "Desconocido",
+  "fuente": "Pokemon",
+  "imagen": "https://i.pinimg.com/1200x/78/7c/a3/787ca3c47ebd9d4bb5888b735be4f5f0.jpg"
+  },
+  {
+    "nombre": "Hulk",
+    "valor": "18457",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/58/12/01/581201b5f20aee678ed603801901f16b.jpg"
+  },
+  {
+    "nombre": "Falcon",
+    "valor": "5057",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/b8/77/67/b87767727fcc023cd20b36b86c8d6574.jpg"
+  },
+  {
+    "nombre": "Capitan America",
+    "valor": "10357",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/e3/4d/a0/e34da0c9cff0890095f32c47fa384ff0.jpg"
+  },
+  {
+    "nombre": "Thor",
+    "valor": "19057",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/b3/f1/a3/b3f1a399d11e269baf2b61e1a1299e7f.jpg"
+  },
+  {
+    "nombre": "Hawkeye",
+    "valor": "7057",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/04/71/36/047136fe7c404aed5f40b757103622de.jpg"
+  },
+  {
+    "nombre": "Black Widow",
+    "valor": "6998",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/be/d9/ad/bed9add9edcd44d9db3b35ea2bf1c7eb.jpg"
+  },
+  {
+    "nombre": "Loki",
+    "valor": "15057",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/cc/c4/2e/ccc42efc695d7631aa59d668d7a456bf.jpg"
+  },
+  {
+    "nombre": "Moonknight",
+    "valor": "10188",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/5c/1e/bc/5c1ebc18c63ccd6b2b311a5e1ce25b54.jpg"
+  },
+  {
+    "nombre": "Konshu",
+    "valor": "17957",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/52/ba/6b/52ba6b8affb4c3d2b443e5967fe879d2.jpg"
+  },
+  {
+    "nombre": "Blade",
+    "valor": "9029",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/49/9d/ce/499dce5ce8e23c4979e3176416352074.jpg"
+  },
+  {
+    "nombre": "Ant-man",
+    "valor": "5029",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/8c/2e/65/8c2e654e19f8bfd2f81549d143cea2e9.jpg"
+  },
+  {
+    "nombre": "Black Panther",
+    "valor": "9029",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/89/95/ad/8995adcc4d0532cd9f1f9750dd9997a7.jpg"
+  },
+  {
+    "nombre": "Profesor X",
+    "valor": "15399",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/8b/82/ab/8b82ab3d61118b621ffcd45feb8325eb.jpg"
+  },
+  {
+    "nombre": "Wolverine",
+    "valor": "10659",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/2a/f7/56/2af756c14bce33f8e5c0103f59c90237.jpg"
+  },
+  {
+    "nombre": "Mr. Fantastic",
+    "valor": "12569",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/f3/f6/95/f3f69509c7190090f789d779c43f8649.jpg"
+  },
+  {
+    "nombre": "Invisible Woman",
+    "valor": "12549",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/94/78/00/947800b2e0e4f8b89979d37737a4d8ad.jpg"
+  },
+  {
+    "nombre": "The thing",
+    "valor": "12469",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/10/14/38/101438cc609133414c11e442842081eb.jpg"
+  },
+  {
+    "nombre": "Human Torch",
+    "valor": "13051",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/a0/16/c2/a016c2c1ddb8a293e4ce9e2415dac679.jpg"
+  },
+  {
+    "nombre": "Magneto",
+    "valor": "14050",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/3c/b9/b3/3cb9b30ef87cc73ad0deac05762c9305.jpg"
+  },
+  {
+    "nombre": "Venom",
+    "valor": "13219",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/8c/15/e5/8c15e5e5095770a0b8bff63922921473.jpg"
+  },
+  {
+    "nombre": "Gambito",
+    "valor": "10051",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/9f/1e/25/9f1e259d431a61ce8ce6a9b858e5cccf.jpg"
+  },
+  {
+    "nombre": "Iron-Man",
+    "valor": "16500",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/47/ae/8f/47ae8f2b9413483ab2b7f9fcc04fdac2.jpg"
+  },
+  {
+    "nombre": "Spider-Man",
+    "valor": "12500",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/1200x/e5/8f/aa/e58faafc2a179c64c154f448610c1931.jpg"
+  },
+  {
+    "nombre": "Spider-Man (Miles Morales)",
+    "valor": "12500",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/0d/97/3f/0d973f4d785f59909cdd0ae84e27c16c.jpg"
+  },
+  {
+    "nombre": "Spider-Gwen",
+    "valor": "12500",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/f5/af/3d/f5af3d0576adc0d84b5b4ff58f0514e4.jpg"
+  },
+  {
+    "nombre": "Madara Uchiha",
+    "valor": "15850",
+    "genero": "Hombre",
+    "fuente": "Naruto",
+    "imagen": "https://i.pinimg.com/1200x/c4/f3/4a/c4f34a623418ef27a173ebe665b87f5d.jpg"
+  },
+  {
+    "nombre": "Kratos",
+    "valor": "16900",
+    "genero": "Hombre",
+    "fuente": "God of War",
+    "imagen": "https://i.pinimg.com/736x/9b/da/b3/9bdab31da1351c676a00c67c0152840a.jpg"
+  },
+  {
+    "nombre": "Minoru Mineta",
+    "valor": "450",
+    "genero": "Hombre",
+    "fuente": "My Hero Academia",
+    "imagen": "https://i.pinimg.com/736x/65/e8/a9/65e8a925efca3f59e126622da0ba8748.jpg"
+  },
+  {
+    "nombre": "Yamcha",
+    "valor": "1200",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/42/58/e5/4258e5cb76a008e743f5602f52815b37.jpg"
+  },
+  {
+    "nombre": "Magikarp",
+    "valor": "1",
+    "genero": "Desconocido",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/736x/e0/2a/7c/e02a7c61c1a65eda2540a1a6c3d66c4e.jpg",
+    "evolucion": "Gyarados",
+    "nivelEvo": 30
+  },
+  {
+    "nombre": "Gyarados",
+    "valor": "14560",
+    "genero": "Desconocido",
+    "fuente": "Pokemon",
+    "imagen": "https://i.pinimg.com/1200x/68/6b/8d/686b8d6f240a103e8ec1f93fc7fe1646.jpg"
+  },
+  {
+    "nombre": "Excalibur",
+    "valor": "1500",
+    "genero": "Desconocido",
+    "fuente": "Soul Eater",
+    "imagen": "https://i.pinimg.com/1200x/1f/01/f3/1f01f3d5ef830fc87e8f8b61cf7fb553.jpg"
+  },
+  {
+    "nombre": "Speedwagon",
+    "valor": "14050",
+    "genero": "Hombre",
+    "fuente": "JoJo's Bizarre Adventure",
+    "imagen": "https://i.pinimg.com/736x/16/58/46/165846d544aa54db5102b1681e5f6e97.jpg"
+  },
+  {
+    "nombre": "Don Patch",
+    "valor": "8900",
+    "genero": "Desconocido",
+    "fuente": "Bobobo-bo Bo-bobo",
+    "imagen": "https://i.pinimg.com/736x/0c/65/d2/0c65d21b806eed67b90ec87acb8365f2.jpg"
+  },
+  {
+    "nombre": "Shou Tucker",
+    "valor": "100",
+    "genero": "Hombre",
+    "fuente": "Fullmetal Alchemist",
+    "imagen": "https://i.pinimg.com/1200x/71/00/20/7100207a7c5ff7c9d54665036f5a03e1.jpg"
+  },
+  {
+    "nombre": "Lanzaguisantes (GW)",
+    "valor": "5684",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/bd/41/61/bd416184c19000351d104457d37a1d51.jpg"
+  },
+  {
+    "nombre": "Planta Carnivora (GW)",
+    "valor": "7457",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/89/13/21/891321e86667ec847946fbad838e06f9.jpg"
+  },
+  {
+    "nombre": "Girasol (GW)",
+    "valor": "3569",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/86/6b/54/866b54837968a155eea393b3ae13b5af.jpg"
+  },
+  {
+    "nombre": "Cactus (GW)",
+    "valor": "6895",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/1200x/a2/97/34/a29734d8ffbead5d45595331eb3b8365.jpg"
+  },
+  {
+    "nombre": "Petaseta",
+    "valor": "15000",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/1200x/82/e3/ce/82e3cea5532a132a456db24d3a9bc7c5.jpg"
+  },
+  {
+    "nombre": "Zombie Soldado",
+    "valor": "5684",
+    "genero": "Hombre",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/c6/ad/50/c6ad500d7daa74f976edaec5e067a53c.jpg"
+  },
+  {
+    "nombre": "Zombie Ingeniero",
+    "valor": "6753",
+    "genero": "Hombre",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/51/b0/fb/51b0fb3ad2127598d46ea763578dc815.jpg"
+  },
+  {
+    "nombre": "Zombie Científico",
+    "valor": "4321",
+    "genero": "Hombre",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/7f/c8/4c/7fc84c70a1efa910cedd6bfa70da7256.jpg"
+  },
+  {
+    "nombre": "Zombie All-Star (GW)",
+    "valor": "7582",
+    "genero": "Hombre",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/dc/f8/f1/dcf8f194e8290a105ef637bace157884.jpg"
+  },
+  {
+    "nombre": "Super Brains",
+    "valor": "15230",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/5f/4e/4e/5f4e4e634225bc74dbe308dc9466b20b.jpg"
+  },
+  {
+    "nombre": "Destello Solar",
+    "valor": "14233",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/a4/29/49/a42949234f6547cd7fe237504dfa7748.jpg"
+  },
+  {
+    "nombre": "Sombra Verde",
+    "valor": "14357",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/32/aa/38/32aa3863b53c1b3f0b8b44c7be81572c.jpg"
+  },
+  {
+    "nombre": "Zombidinfinito",
+    "valor": "11509",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.ytimg.com/vi/NAkkEhuWtPo/maxresdefault.jpg"
+  },
+  {
+    "nombre": "Profesor Tormenta Cerebral",
+    "valor": "14790",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.ytimg.com/vi/AtYwucxsdSM/maxresdefault.jpg"
+  },
+  {
+    "nombre": "Mordiscozilla",
+    "valor": "14230",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/474x/ce/c1/8d/cec18d64e831d2a70f9a9f26a15f6727.jpg"
+  },
+  {
+    "nombre": "Zombies",
+    "valor": "15751",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://plantsvszombies.wiki.gg/images/thumb/All_zombies.png/320px-All_zombies.png"
+  },
+  {
+    "nombre": "Plantas",
+    "valor": "15751",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fu8715x2ib92b1.png"
+  },
+  {
+    "nombre": "Crazy Dave",
+    "valor": "10509",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/736x/cd/93/bc/cd93bc93dc95253ef6f5b42b943702c9.jpg"
+  },
+  {
+    "nombre": "Dr. Zomboss",
+    "valor": "10510",
+    "genero": "Desconocido",
+    "fuente": "Plants vs Zombies",
+    "imagen": "https://i.pinimg.com/1200x/9b/97/b2/9b97b2f4f52e87c06fbea6c11437a418.jpg"
+  },
+  {
+    "nombre": "Shadow The Hedgehog",
+    "valor": "15203",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/736x/6e/8f/70/6e8f7012f4d2e7b4b9fa0acf58ccc77e.jpg"
+  },
+  {
+    "nombre": "Amy Rose",
+    "valor": "10180",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/736x/1c/c1/ef/1cc1ef4481fbbc5d9f7f62c54599922c.jpg"
+  },
+  {
+    "nombre": "Dr. Eggman",
+    "valor": "16780",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/736x/de/7e/f6/de7ef6a27068c92fec5bf4797fe6594e.jpg"
+  },
+  {
+    "nombre": "Badniks",
+    "valor": "3200",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/1200x/b5/78/c8/b578c8f0ed89c9d56fb781767876fe18.jpg"
+  },
+  {
+    "nombre": "Silver The Hedgehog",
+    "valor": "100",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/736x/06/56/6d/06566de867fc123f614e151f8ebdb420.jpg"
+  },
+  {
+    "nombre": "Chaos",
+    "valor": "5789",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/736x/f0/0a/6d/f00a6d6049fc55624ca8039ff91a7826.jpg"
+  },
+  {
+    "nombre": "Perfect Chaos",
+    "valor": "16978",
+    "genero": "Desconocido",
+    "fuente": "Sonic The Hedgehog",
+    "imagen": "https://i.pinimg.com/1200x/96/8c/97/968c9752f30ba2a942966f2ec0689ec6.jpg"
+  }
+]
