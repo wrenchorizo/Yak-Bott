@@ -189,16 +189,11 @@ const prefix = '?';
 const client = new Client({
     puppeteer: {
         headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu'
-        ],
-        // Intenta usar solo el nombre del comando, sin la ruta completa
-        executablePath: 'chromium' 
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        // Sin executablePath, Puppeteer usará el que descargó en node_modules
     }
 });
+
 client.on('code', (code) => {
     console.log('\n Código para vincularte a Yak-bot:');
     console.log(code);
@@ -2479,6 +2474,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
