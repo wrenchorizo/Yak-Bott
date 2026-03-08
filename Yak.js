@@ -194,7 +194,7 @@ const client = new Client({
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage'
         ],
-        // Cambiamos 'google-chrome-stable' por 'chromium'
+        // Cambia la ruta a esta, que es la que usa Nixpacks para Chromium
         executablePath: '/usr/bin/chromium' 
     }
 });
@@ -2479,5 +2479,6 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
