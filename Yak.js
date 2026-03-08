@@ -189,8 +189,12 @@ const prefix = '?';
 const client = new Client({
     puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-        // Sin executablePath, Puppeteer usará el que descargó en node_modules
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu'
+        ]
     }
 });
 
@@ -2474,6 +2478,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
