@@ -192,10 +192,11 @@ const client = new Client({
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage'
+            '--disable-dev-shm-usage',
+            '--disable-gpu'
         ],
-        // Cambia la ruta a esta, que es la que usa Nixpacks para Chromium
-        executablePath: '/usr/bin/chromium' 
+        // Intentamos 'chromium-browser' que es el nombre estándar en Nixpacks
+        executablePath: '/usr/bin/chromium-browser' 
     }
 });
 
@@ -2479,6 +2480,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
