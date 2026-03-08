@@ -189,17 +189,19 @@ const prefix = '?';
 const client = new Client({
     puppeteer: {
         headless: true,
+        // En lugar de una ruta manual, usamos estos argumentos 
+        // que ayudan a Puppeteer a encontrar el binario en Linux
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu'
-        ]
-        // NO pongas executablePath aquí. 
-        // Puppeteer buscará automáticamente en el sistema.
+        ],
+        // PRUEBA 1: Borra la línea de executablePath por completo.
+        // Si no le das una ruta, Puppeteer intentará usar el que 
+        // instaló Nixpacks por defecto.
     }
 });
-
 client.on('code', (code) => {
     console.log('\n Código para vincularte a Yak-bot:');
     console.log(code);
@@ -2480,6 +2482,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
