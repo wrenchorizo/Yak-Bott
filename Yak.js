@@ -189,17 +189,14 @@ const prefix = '?';
 const client = new Client({
     puppeteer: {
         headless: true,
-        // En lugar de una ruta manual, usamos estos argumentos 
-        // que ayudan a Puppeteer a encontrar el binario en Linux
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu'
         ],
-        // PRUEBA 1: Borra la línea de executablePath por completo.
-        // Si no le das una ruta, Puppeteer intentará usar el que 
-        // instaló Nixpacks por defecto.
+        // Intenta usar solo el nombre del comando, sin la ruta completa
+        executablePath: 'chromium' 
     }
 });
 client.on('code', (code) => {
@@ -2482,6 +2479,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
