@@ -194,9 +194,9 @@ const client = new Client({
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu'
-        ],
-        // Intentamos 'chromium-browser' que es el nombre estándar en Nixpacks
-        executablePath: '/usr/bin/chromium-browser' 
+        ]
+        // NO pongas executablePath aquí. 
+        // Puppeteer buscará automáticamente en el sistema.
     }
 });
 
@@ -2480,6 +2480,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
