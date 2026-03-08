@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodePackages.nodejs", "chromium"]
+
+[phases.build]
+cmds = ["npm install"]
+
+[start]
+cmd = "node Yak.js"
