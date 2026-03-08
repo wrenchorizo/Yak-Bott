@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["nodejs-18_x", "chromium", "ffmpeg", "glib", "nss", "nspr", "atk", "at-spi2-atk", "libdrm", "mesa", "libxkbcommon", "libXcomposite", "libXdamage", "libXext", "libXfixes", "libXrandr", "gbm", "pango", "cairo", "asound"]
+nixPkgs = ["nodejs-18_x", "ffmpeg"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = ["npm install", "npx puppeteer install chrome --install-deps"]
 
 [start]
 cmd = "node Yak.js"
