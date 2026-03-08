@@ -189,14 +189,13 @@ const prefix = '?';
 const client = new Client({
     puppeteer: {
         headless: true,
-        // Estos argumentos son obligatorios para entornos de contenedores como Railway
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage'
         ],
-        // Esta ruta apunta al Chromium que Railway instala con tus variables
-        executablePath: '/usr/bin/google-chrome-stable' 
+        // Cambiamos 'google-chrome-stable' por 'chromium'
+        executablePath: '/usr/bin/chromium' 
     }
 });
 
@@ -2480,4 +2479,5 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
