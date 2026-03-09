@@ -2146,8 +2146,7 @@ if (comando.startsWith('fight')) {
     }
 
     // CARGA CORRECTA: Usamos tu lógica de harem por grupo
-    const haremData = cargarHarem(); // Esto lee haremPorGrupo.json
-    const misPersonajes = haremData[message.from]?.[userId] || [];
+    const misPersonajes = haremPorGrupo[grupoId]?.[userId] || [];
 
     if (misPersonajes.length === 0) {
         return message.reply("❏ *Error:* No tienes personajes en este grupo.");
@@ -2185,10 +2184,10 @@ if (comando.startsWith('fight')) {
         
         // DAR EXPERIENCIA: Usamos tu sistema de level y exp
         equipoTemp.forEach(pjPeleador => {
-            const idx = haremData[message.from][userId].findIndex(p => p.nombre === pjPeleador.nombre);
+            const idx = haremPorGrupo[grupoId][userId].findIndex(p => p.nombre === pjPeleador.nombre);
             if (idx !== -1) {
-                let personaje = haremData[message.from][userId][idx];
-                personaje.exp = (personaje.exp || 0) + 50; // Damos 50 de EXP por ganar
+                let personaje = haremPorGrupo[grupoId][userId][idx];
+                personaje.exp = (personaje.exp || 0) + Math.floor(mob.poderTotal / 100);
                 
                 // Lógica de subir nivel que ya usas en duelos
                 let xpReq = Math.floor(100 * Math.pow(1.1, (personaje.level || 1) - 1));
@@ -2201,7 +2200,7 @@ if (comando.startsWith('fight')) {
 
         mobActual[message.from].vencido = true;
         guardarEconomia(economia);
-        guardarHarem(haremData); // Guarda en haremPorGrupo.json
+        guardarHarem(haremPorGrupo);
 
         return message.reply(`
 『  *VICTORIA* 』
@@ -2520,6 +2519,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
