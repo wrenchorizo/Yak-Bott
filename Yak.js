@@ -183,7 +183,8 @@ function actualizarStamina(personaje) {
 }
 
 // Prefijo
-const prefix = '?';
+const prefix = '?'; 
+    if (!message.body.startsWith(prefix)) return;
 
 // Cliente
 const client = new Client({
@@ -2486,6 +2487,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
