@@ -2081,10 +2081,15 @@ if (comando === 'smob') {
     const tiempoEspera = 15 * 60 * 1000; // 15 minutos
 
     // Verificar cooldown en memoria
-    if (cooldownsBuscarmob[userId] && ahora - cooldownsBuscarmob[userId] < tiempoEspera) {
-        const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[userId])) / 1000 / 60);
-        return message.reply(`❏ *Cooldown:* Debes esperar ${restante} minutos para buscar más mobs.`);
-    }
+if (!cooldownsBuscarmob[grupoId]) {
+    cooldownsBuscarmob[grupoId] = {};
+}
+
+if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
+    const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
+    
+    return conn.reply(m.chat, `⏳ Debes esperar ${restante} minutos para volver a buscar un mob en este grupo.`, m);
+}
 
     // Seleccionamos un tipo de mob al azar de tu lista mobsData
     const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
@@ -2107,7 +2112,7 @@ if (comando === 'smob') {
     };
 
     // Actualizar el cooldown en memoria
-    cooldownsBuscarmob[userId] = ahora;
+    cooldownsBuscarmob[grupoId][userId] = ahora;
 
     return message.reply(`
 『  *MOBS DETECTADOS* 』
@@ -2510,6 +2515,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
