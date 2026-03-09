@@ -2159,7 +2159,8 @@ if (comando.startsWith('fight')) {
     for (let nombreBusqueda of nombres) {
         // Buscamos coincidencia exacta o parcial en tu lista de personajes del grupo
         const pj = misPersonajes.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
-        
+
+		
         if (pj) {
             // Calculamos el poder usando tu fórmula de nivel actual: Valor * 1.20^(nivel-1)
             let lvl = pj.level || 1;
@@ -2183,20 +2184,7 @@ if (comando.startsWith('fight')) {
         economia[userId].dinero += premio;
         
         // DAR EXPERIENCIA: Usamos tu sistema de level y exp
-        equipoTemp.forEach(pjPeleador => {
-            const idx = haremPorGrupo[grupoId][userId].findIndex(p => p.nombre === pjPeleador.nombre);
-            if (idx !== -1) {
-                let personaje = haremPorGrupo[grupoId][userId][idx];
-                personaje.exp = (personaje.exp || 0) + Math.floor(mob.poderTotal / 100);
-                
-                // Lógica de subir nivel que ya usas en duelos
-                let xpReq = Math.floor(100 * Math.pow(1.1, (personaje.level || 1) - 1));
-                if (personaje.exp >= xpReq) {
-                    personaje.level = (personaje.level || 1) + 1;
-                    personaje.exp = 0;
-                }
-            }
-        });
+        
 
         mobActual[message.from].vencido = true;
         guardarEconomia(economia);
@@ -2206,21 +2194,126 @@ if (comando.startsWith('fight')) {
 『  *VICTORIA* 』
 
 ↳ Equipo: [ ${equipoTemp.map(p => p.nombre).join(", ")} ]
+// --------- COMANDO ?fight ---------
+if (comando.startsWith('fight')) {
+
+    const mob = mobActual[message.from];
+    if (!mob || mob.vencido) {
+        return message.reply("❏ *Error:* No hay mobs activos. Usa ?buscarmob primero.");
+    }
+
+    const argsF = message.body.slice(prefix.length + 5).trim();
+    const nombres = argsF.split(",").map(n => n.trim().toLowerCase());
+
+    if (!argsF || nombres.length < 1 || nombres.length > 3) {
+        return message.reply(`❏ *Uso:* ${prefix}fight Personaje1, Personaje2, Personaje3`);
+    }
+
+    const haremData = cargarHarem();
+    const misPersonajes = haremData[message.from]?.[userId] || [];
+
+    if (misPersonajes.length === 0) {
+        return message.reply("❏ *Error:* No tienes personajes en este grupo.");
+    }
+
+    let equipoTemp = [];
+    let poderTotalEquipo = 0;
+
+    for (let nombreBusqueda of nombres) {
+
+        const pj = misPersonajes.find(p =>
+            p.nombre.toLowerCase().includes(nombreBusqueda)
+        );
+
+        if (!pj) {
+            return message.reply(`❏ *Error:* No tienes a [ ${nombreBusqueda} ] en tu harem.`);
+        }
+
+        let lvl = pj.level || 1;
+        let valorBase = Number(pj.valor) || 0;
+
+        let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
+
+        equipoTemp.push(pj);
+        poderTotalEquipo += valorReal;
+    }
+
+    const poderFinalUser = Math.floor(poderTotalEquipo);
+
+    // ---------- VICTORIA ----------
+    if (poderFinalUser > mob.poderTotal) {
+
+        const economia = cargarEconomia();
+        asegurarUsuario(economia, userId);
+
+        const premio = mob.recompensa;
+        economia[userId].dinero += premio;
+
+        // EXP basada en el poder del mob
+        const expGanada = Math.floor(mob.poderTotal / 20);
+
+        equipoTemp.forEach(pjPeleador => {
+
+            const idx = haremData[message.from][userId]
+                .findIndex(p => p.nombre === pjPeleador.nombre);
+
+            if (idx !== -1) {
+
+                let personaje = haremData[message.from][userId][idx];
+
+                personaje.exp = (personaje.exp || 0) + expGanada;
+
+                let subio = false;
+
+                while (true) {
+
+                    let xpReq = Math.floor(
+                        100 * Math.pow(1.1, (personaje.level || 1) - 1)
+                    );
+
+                    if (personaje.exp >= xpReq) {
+
+                        personaje.exp -= xpReq;
+                        personaje.level = (personaje.level || 1) + 1;
+
+                        subio = true;
+
+                    } else {
+                        break;
+                    }
+                }
+            }
+        });
+
+        mobActual[message.from].vencido = true;
+
+        guardarEconomia(economia);
+        guardarHarem(haremData);
+
+        return message.reply(`
+『  *VICTORIA* 』
+
+↳ Equipo: [ ${equipoTemp.map(p => p.nombre).join(", ")} ]
 ↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]
 ↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]
 
-> ¡Has derrotado a los ${mob.nombre}!
-> Ganaste: $${premio.toLocaleString()}
-> Tus personajes ganaron EXP y están más cerca del siguiente nivel.
+💰 Dinero ganado: $${premio.toLocaleString()}
+⭐ EXP ganada: ${expGanada}
+
+> Tus personajes se hicieron más fuertes.
 `);
-    } else {
+    }
+
+    // ---------- DERROTA ----------
+    else {
+
         return message.reply(`
 『  *DERROTA* 』
 
 ↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]
 ↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]
 
-> No fue suficiente. Te faltó [ ${(mob.poderTotal - poderFinalUser).toLocaleString()} ] de poder.
+Te faltó ${mob.poderTotal - poderFinalUser} de poder.
 `);
     }
 }
@@ -2519,6 +2612,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
