@@ -187,7 +187,7 @@ function actualizarStamina(personaje) {
 const client = new Client({
     authStrategy: new LocalAuth({
         clientId: "client-one",
-        dataPath: './sesion_yak' // QUITAMOS EL PUNTO inicial para asegurar permisos en Railway
+        dataPath: './sesion_yak'
     }),
     puppeteer: {
         headless: true,
@@ -198,8 +198,7 @@ const client = new Client({
             '--disable-gpu',
             '--no-zygote'
         ],
-        // ESTA LÍNEA ES VITAL: Railway a veces necesita saber dónde está el ejecutable
-        executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable' 
+        executablePath: process.env.CHROME_PATH || '/usr/bin/chromium'
     }
 });
 
@@ -2499,6 +2498,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
