@@ -334,6 +334,8 @@ client.on('message_create', async (message) => {
     // 2. AGREGA ESTE LOG (Para que veas en Railway si el mensaje llega)
     console.log(`[MENSAJE] De: ${message.from} | Texto: ${message.body}`);
 
+	console.log("--> LLEGÓ ALGO:", message.body);
+	
     const prefix = '?';
     
     // 3. VALIDACIÓN DE PREFIJO
@@ -2500,6 +2502,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
