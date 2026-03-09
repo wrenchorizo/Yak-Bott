@@ -326,7 +326,15 @@ function personajeRandom(listaPersonajes) {
 
 // ---------------- MENSAJES ----------------
 
-client.on('message_create', async (message) => {
+client.on("message_create", async msg => {
+
+    if (msg.fromMe) return;
+
+    if (msg.body.startsWith("?")) {
+        await msg.reply("ok");
+    }
+
+});
 	    const prefix = '?';
 	
 if (message.fromMe) return; 
@@ -350,6 +358,18 @@ if (message.isGroup) {
     if (!botSettings[chatId]) {
         botSettings[chatId] = { enabled: true };
     }
+
+	client.on("message_create", async msg => {
+
+    try {
+
+        // comandos
+
+    } catch (err) {
+        console.log("Error en comando:", err);
+    }
+
+});
 
 const isGroup = message.from.endsWith("@g.us");
 
@@ -2496,6 +2516,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
