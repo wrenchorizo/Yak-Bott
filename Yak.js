@@ -209,8 +209,8 @@ client.on('code', (code) => {
 
 // Mostrar QR
 client.on('qr', (qr) => {
-    console.log('Escanea este QR con tu WhatsApp:');
-    qrcode.generate(qr, { small: true });
+    qrcode.generate(qr, { small: true }); 
+    console.log('▲ ESCANEA ESTO RÁPIDO ▲');
 });
 
 // Bot listo
@@ -2480,6 +2480,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
