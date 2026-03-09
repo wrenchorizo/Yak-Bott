@@ -359,18 +359,6 @@ if (message.isGroup) {
         botSettings[chatId] = { enabled: true };
     }
 
-	client.on("message_create", async msg => {
-
-    try {
-
-        // comandos
-
-    } catch (err) {
-        console.log("Error en comando:", err);
-    }
-
-});
-
 const isGroup = message.from.endsWith("@g.us");
 
 let userId;
@@ -2516,6 +2504,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
