@@ -154,7 +154,12 @@ function guardarEconomia(data) {
 function sleep(ms){
     return new Promise(r => setTimeout(r, ms));
 }
-await sleep(1000);
+
+async function esperar() {
+    await sleep(1000);
+}
+
+esperar();
 
 function asegurarUsuario(data, userId) {
     if (!data[userId]) {
@@ -2515,6 +2520,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
