@@ -345,7 +345,6 @@ console.log("fromMe:", message.fromMe);
     const texto = message.body.toLowerCase();
     if (!texto.startsWith(prefix)) return;
 
-    const comando = texto.slice(prefix.length).trim();
 console.log("Comando detectado:", comando);
     const chatId = message.from;
 if (message.isGroup) {
@@ -2498,6 +2497,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
