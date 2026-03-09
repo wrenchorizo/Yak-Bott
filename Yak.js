@@ -182,9 +182,6 @@ function actualizarStamina(personaje) {
     return personaje;
 }
 
-// Prefijo
-const prefix = '?'; 
-    if (!message.body.startsWith(prefix)) return;
 
 // Cliente
 const client = new Client({
@@ -328,6 +325,20 @@ function personajeRandom(listaPersonajes) {
 // ---------------- MENSAJES ----------------
 
 client.on('message_create', async (message) => {
+    // 1. COMENTA ESTA LÍNEA (Poner // al inicio la desactiva)
+    // if (message.fromMe) return; 
+
+    // 2. AGREGA ESTE LOG (Para que veas en Railway si el mensaje llega)
+    console.log(`[MENSAJE] De: ${message.from} | Texto: ${message.body}`);
+
+    const prefix = '?';
+    
+    // 3. VALIDACIÓN DE PREFIJO
+    if (!message.body.startsWith(prefix)) return;
+
+    const args = message.body.slice(prefix.length).trim().split(/ +/);
+    const comando = args.shift().toLowerCase();
+
 
 console.log("fromMe:", message.fromMe);
 
@@ -2487,6 +2498,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
