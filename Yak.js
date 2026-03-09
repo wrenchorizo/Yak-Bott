@@ -2131,69 +2131,6 @@ if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][u
 `);
 }
 
-// --------- COMANDO ?fight (TODO EN UNO) ---------
-if (comando.startsWith('fight')) {
-    const mob = mobActual[message.from];
-    if (!mob || mob.vencido) {
-        return message.reply("❏ *Error:* No hay mobs activos. Usa ?buscarmob primero.");
-    }
-
-    const argsF = message.body.slice(prefix.length + 5).trim();
-    const nombres = argsF.split(",").map(n => n.trim().toLowerCase());
-
-    if (!argsF || nombres.length < 1 || nombres.length > 3) {
-        return message.reply(`❏ *Uso:* ${prefix}fight Personaje1, Personaje2\n> Máximo 3 personajes separados por coma.`);
-    }
-
-    // CARGA CORRECTA: Usamos tu lógica de harem por grupo
-    const misPersonajes = haremPorGrupo[grupoId]?.[userId] || [];
-
-    if (misPersonajes.length === 0) {
-        return message.reply("❏ *Error:* No tienes personajes en este grupo.");
-    }
-
-    let equipoTemp = [];
-    let poderTotalEquipo = 0;
-
-    // Buscar a los personajes
-    for (let nombreBusqueda of nombres) {
-        // Buscamos coincidencia exacta o parcial en tu lista de personajes del grupo
-        const pj = misPersonajes.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
-
-		
-        if (pj) {
-            // Calculamos el poder usando tu fórmula de nivel actual: Valor * 1.20^(nivel-1)
-            let lvl = pj.level || 1;
-            let valorBase = Number(pj.valor) || 0;
-            let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
-            
-            equipoTemp.push(pj);
-            poderTotalEquipo += valorReal;
-        } else {
-            return message.reply(`❏ *Error:* No tienes a [ ${nombreBusqueda} ] en tu harem de este grupo.`);
-        }
-    }
-
-    const poderFinalUser = Math.floor(poderTotalEquipo);
-
-    if (poderFinalUser > mob.poderTotal) {
-        const economia = cargarEconomia();
-        asegurarUsuario(economia, userId);
-        
-        const premio = mob.recompensa;
-        economia[userId].dinero += premio;
-        
-        // DAR EXPERIENCIA: Usamos tu sistema de level y exp
-        
-
-        mobActual[message.from].vencido = true;
-        guardarEconomia(economia);
-        guardarHarem(haremPorGrupo);
-
-        return message.reply(`
-『  *VICTORIA* 』
-
-↳ Equipo: [ ${equipoTemp.map(p => p.nombre).join(", ")} ]
 // --------- COMANDO ?fight ---------
 if (comando.startsWith('fight')) {
 
@@ -2612,6 +2549,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
