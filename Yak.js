@@ -1150,8 +1150,7 @@ if (comando.startsWith('bchar')) {
         }
     }
 
-if (message.body === "?baltop") {
-
+if (message.body.startsWith("?baltop")) {
     if (!message.from.endsWith("@g.us")) {
         return message.reply("Este comando solo funciona en grupos.");
     }
@@ -1159,27 +1158,56 @@ if (message.body === "?baltop") {
     const economia = cargarEconomia();
     const chat = await message.getChat();
     const participantes = chat.participants.map(p => p.id._serialized);
-
+    
     let ranking = [];
-
     participantes.forEach(id => {
-        if (economia[id]) {
-            ranking.push({
-                id: id,
-                dinero: economia[id].dinero
-            });
+        if (economia[id] && (economia[id].dinero > 0 || economia[id].banco > 0)) {
+            const total = (economia[id].dinero || 0) + (economia[id].banco || 0);
+            ranking.push({ id: id, total: total });
         }
     });
 
-    ranking.sort((a, b) => b.dinero - a.dinero);
+    // Ordenar de mayor a menor
+    ranking.sort((a, b) => b.total - a.total);
 
-    let texto = "❏ TOP DINERO \n\n";
+    if (ranking.length === 0) {
+        return message.reply("Nadie en este grupo tiene dinero aún.");
+    }
 
-    ranking.slice(0, 10).forEach((user, index) => {
-        texto += `${index + 1}. $${user.dinero}\n`;
+    // Lógica de paginación
+    const args = message.body.split(' ');
+    let pagina = parseInt(args[1]) || 1;
+    const porPagina = 20;
+    const maxPaginas = Math.ceil(ranking.length / porPagina);
+
+    if (pagina < 1) pagina = 1;
+    if (pagina > maxPaginas) pagina = maxPaginas;
+
+    const inicio = (pagina - 1) * porPagina;
+    const fin = inicio + porPagina;
+    const rankingPagina = ranking.slice(inicio, fin);
+
+    let texto = `✪ *RANKING DE DINERO (Pág. ${pagina}/${maxPaginas})* ✪\n\n`;
+    
+    rankingPagina.forEach((user, index) => {
+        const posicion = inicio + index + 1;
+        const numeroLimpio = user.id.split('@')[0];
+        
+        let medalla = "👤";
+        if (posicion === 1) medalla = "✺";
+        else if (posicion === 2) medalla = "✹";
+        else if (posicion === 3) medalla = "✸";
+
+        texto += `${medalla} ${posicion}. @${numeroLimpio}: *$${user.total.toLocaleString()}*\n`;
     });
 
-    message.reply(texto);
+    if (maxPaginas > 1 && pagina < maxPaginas) {
+        texto += `\n💡 Usa *?baltop ${pagina + 1}* para ver más.`;
+    }
+
+    return client.sendMessage(message.from, texto, {
+        mentions: rankingPagina.map(u => u.id)
+    });
 }
 
 
@@ -1767,66 +1795,47 @@ if (comando.startsWith('dice')) {
     return message.reply(msgDice);
 }
 
-// --------- COMANDO ?ship (MEDIDOR DE AMOR) ---------
 if (comando.startsWith('ship')) {
     const chat = await message.getChat();
-    const participants = chat.isGroup ? chat.participants : [];
-    let user1, user2;
+    if (!chat.isGroup) return message.reply("Este comando solo funciona en grupos.");
 
-    const mentions = await message.getMentions();
+    const participantes = chat.participants;
+    if (participantes.length < 2) return message.reply("No hay suficientes personas para un ship.");
 
-    if (mentions.length >= 2) {
-        // CASO 1: Mencionaste a dos personas
-        user1 = mentions[0];
-        user2 = mentions[1];
-    } else if (mentions.length === 1) {
-        // CASO 2: Mencionaste a uno, el bot elige al otro al azar
-        user1 = mentions[0];
-        if (chat.isGroup) {
-            const randomUser = participants[Math.floor(Math.random() * participants.length)];
-            user2 = await client.getContactById(randomUser.id._serialized);
-        } else {
-            return message.reply("❏ *Error:* En chat privado debes mencionar a dos personas.");
-        }
-    } else {
-        // CASO 3: No mencionaste a nadie, azar total (solo en grupos)
-        if (!chat.isGroup) return message.reply("❏ *Error:* Menciona a alguien o úsalo en un grupo.");
-        
-        const r1 = participants[Math.floor(Math.random() * participants.length)];
-        const r2 = participants[Math.floor(Math.random() * participants.length)];
-        user1 = await client.getContactById(r1.id._serialized);
-        user2 = await client.getContactById(r2.id._serialized);
+    // Seleccionar dos personas al azar
+    const p1 = participantes[Math.floor(Math.random() * participantes.length)];
+    let p2 = participantes[Math.floor(Math.random() * participantes.length)];
+
+    // Evitar que se shipee con sigo mismo
+    while (p2.id._serialized === p1.id._serialized) {
+        p2 = participantes[Math.floor(Math.random() * participantes.length)];
     }
 
-    // Evitar que se shippee consigo mismo
-    if (user1.id._serialized === user2.id._serialized) {
-        return message.reply("❏ *Error:* El amor propio es importante, pero intenta con alguien más.");
-    }
+    // --- AQUÍ ESTÁ EL TRUCO PARA LOS NOMBRES ---
+    const contacto1 = await client.getContactById(p1.id._serialized);
+    const contacto2 = await client.getContactById(p2.id._serialized);
+
+    // Si pushname no existe, usamos el número limpio
+    const nombre1 = contacto1.pushname || p1.id.user;
+    const nombre2 = contacto2.pushname || p2.id.user;
 
     const porcentaje = Math.floor(Math.random() * 101);
-    const nombre1 = user1.pushname || "Usuario 1";
-    const nombre2 = user2.pushname || "Usuario 2";
+    let comentario = "";
 
-    let barra = "▱▱▱▱▱▱▱▱▱▱";
-    const llenos = Math.round(porcentaje / 10);
-    barra = "▰".repeat(llenos) + "▱".repeat(10 - llenos);
+    if (porcentaje < 20) comentario = "💔 Destinados al fracaso... 💔";
+    else if (porcentaje < 50) comentario = "♡ Hay una chispa, pero falta trabajo. ♡";
+    else if (porcentaje < 80) comentario = "♥ ¡Hacen una pareja increíble! ♥";
+    else comentario = "ლ ¡AMOR VERDADERO! Boda pronto. ლ";
 
-    let shipMsg = `
-『  *MEDIDOR DE COMPATIBILIDAD* 』
+    let textoShip = `ღ *SHIP TESTER* ღ\n\n`;
+    textoShip += `*${nombre1}* +  *${nombre2}*\n`;
+    textoShip += `◈ *Resultado:* ${porcentaje}%\n\n`;
+    textoShip += `> ${comentario}`;
 
-↳ [ ${nombre1} ]
-↳ [ ${nombre2} ]
-
-❏ *PORCENTAJE:* [ ${porcentaje}% ]
-↳ [ ${barra} ]
-
-${porcentaje > 80 ? '↳ Nivel: Destinados a estar juntos.' : 
-  porcentaje > 50 ? '↳ Nivel: Hay química aquí.' : 
-  porcentaje > 20 ? '↳ Nivel: Podrían ser amigos.' : 
-  '↳ Nivel: Muy bajo. Ni se miren.'}
-`;
-
-    return message.reply(shipMsg);
+    // Enviamos el mensaje mencionando a ambos para que salgan los nombres
+    return client.sendMessage(message.from, textoShip, {
+        mentions: [p1.id._serialized, p2.id._serialized]
+    });
 }
 
 // --------- ?givechar ---------
@@ -1875,7 +1884,7 @@ if (comando.startsWith('givechar')) {
     message.reply(`◇ ${personaje.nombre} fue regalado correctamente.`);
 
 // Dentro de ?givechar o ?trade, después de encontrar 'personaje'
-if (personaje.nombre === "♛ PERSONAJE DEL ADMIN ♛") {
+if (personaje.nombre === "EL ADMIN") {
     return message.reply("🔒 Este personaje está vinculado a tu alma. No puede ser transferido ni tradeado.");
 }
 
@@ -2186,35 +2195,33 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        // EXP basada en el poder del mob
-        const expGanada = Math.floor(mob.poderTotal / 20);
+        // EXP basada en el poder del mob (mínimo 1 para que siempre ganen algo)
+        const expGanada = Math.max(1, Math.floor(mob.poderTotal / 20));
+        let mensajesSubida = [];
 
+        // Iteramos directamente sobre el array original para asegurar que se guarde
         equipoTemp.forEach(pjPeleador => {
-
             const idx = haremData[message.from][userId]
                 .findIndex(p => p.nombre === pjPeleador.nombre);
 
             if (idx !== -1) {
-
+                // Acceso directo al objeto en el array original
                 let personaje = haremData[message.from][userId][idx];
 
-                personaje.exp = (personaje.exp || 0) + expGanada;
+                // Inicializar valores si no existen
+                if (personaje.level === undefined) personaje.level = 1;
+                if (personaje.exp === undefined) personaje.exp = 0;
 
-                let subio = false;
+                personaje.exp += expGanada;
 
+                // Lógica de subir nivel
                 while (true) {
-
-                    let xpReq = Math.floor(
-                        100 * Math.pow(1.1, (personaje.level || 1) - 1)
-                    );
+                    let xpReq = Math.floor(100 * Math.pow(1.1, (personaje.level) - 1));
 
                     if (personaje.exp >= xpReq) {
-
                         personaje.exp -= xpReq;
-                        personaje.level = (personaje.level || 1) + 1;
-
-                        subio = true;
-
+                        personaje.level += 1;
+                        mensajesSubida.push(`⭐ *${personaje.nombre}* subió al nivel *${personaje.level}*!`);
                     } else {
                         break;
                     }
@@ -2222,25 +2229,27 @@ if (comando.startsWith('fight')) {
             }
         });
 
+        // Marcar mob como vencido y guardar TODO
         mobActual[message.from].vencido = true;
-
+        
         guardarEconomia(economia);
-        guardarHarem(haremData);
+        guardarHarem(haremData); // <-- Esto sobreescribe el JSON con los nuevos niveles/exp
 
-        return message.reply(`
-『  *VICTORIA* 』
+        let textoVictoria = `『  *VICTORIA* 』\n\n`;
+        textoVictoria += `↳ Equipo: [ ${equipoTemp.map(p => p.nombre).join(", ")} ]\n`;
+        textoVictoria += `↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]\n`;
+        textoVictoria += `↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]\n\n`;
+        textoVictoria += `💰 Dinero ganado: $${premio.toLocaleString()}\n`;
+        textoVictoria += `⭐ EXP ganada: ${expGanada}\n`;
 
-↳ Equipo: [ ${equipoTemp.map(p => p.nombre).join(", ")} ]
-↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]
-↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]
+        if (mensajesSubida.length > 0) {
+            textoVictoria += `\n${mensajesSubida.join('\n')}`;
+        }
 
-💰 Dinero ganado: $${premio.toLocaleString()}
-⭐ EXP ganada: ${expGanada}
+        textoVictoria += `\n> Tus personajes se hicieron más fuertes.`;
 
-> Tus personajes se hicieron más fuertes.
-`);
+        return message.reply(textoVictoria);
     }
-
     // ---------- DERROTA ----------
     else {
 
@@ -2549,6 +2558,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
