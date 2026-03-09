@@ -187,7 +187,7 @@ function actualizarStamina(personaje) {
 const client = new Client({
     authStrategy: new LocalAuth({
         clientId: "client-one",
-        dataPath: './sesion_yak' // Quitamos el punto inicial para evitar carpetas ocultas que dan problemas en volúmenes
+        dataPath: './sesion_yak' // QUITAMOS EL PUNTO inicial para asegurar permisos en Railway
     }),
     puppeteer: {
         headless: true,
@@ -195,9 +195,11 @@ const client = new Client({
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--no-zygote',
-            '--disable-gpu'
-        ]
+            '--disable-gpu',
+            '--no-zygote'
+        ],
+        // ESTA LÍNEA ES VITAL: Railway a veces necesita saber dónde está el ejecutable
+        executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable' 
     }
 });
 
@@ -328,17 +330,12 @@ function personajeRandom(listaPersonajes) {
 // ---------------- MENSAJES ----------------
 
 client.on('message_create', async (message) => {
-    // 1. COMENTA ESTA LÍNEA (Poner // al inicio la desactiva)
-    // if (message.fromMe) return; 
-
-    // 2. AGREGA ESTE LOG (Para que veas en Railway si el mensaje llega)
-    console.log(`[MENSAJE] De: ${message.from} | Texto: ${message.body}`);
-
-	console.log("--> LLEGÓ ALGO:", message.body);
+	    const prefix = '?';
 	
-    const prefix = '?';
-    
-    // 3. VALIDACIÓN DE PREFIJO
+if (message.fromMe) return; 
+
+    console.log(`--> RECIBIDO: ${message.body} | DeMe: ${message.fromMe}`);
+
     if (!message.body.startsWith(prefix)) return;
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
@@ -2502,6 +2499,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
