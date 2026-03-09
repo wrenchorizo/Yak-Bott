@@ -151,6 +151,10 @@ function guardarEconomia(data) {
     fs.writeFileSync(economiaFile, JSON.stringify(data, null, 2));
 }
 
+function sleep(ms){
+    return new Promise(r => setTimeout(r, ms));
+}
+await sleep(1000);
 
 function asegurarUsuario(data, userId) {
     if (!data[userId]) {
@@ -338,6 +342,10 @@ client.on('message_create', async (message) => {
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
+
+	client.on("change_state", state => {
+    console.log("Estado:", state);
+});
 
 
    console.log("Comando detectado:", comando);
@@ -2502,6 +2510,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
