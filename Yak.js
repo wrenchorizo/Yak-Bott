@@ -191,14 +191,14 @@ const client = new Client({
     }),
     puppeteer: {
         headless: true,
+        executablePath: process.env.CHROME_PATH || '/nix/store/chromium/bin/chromium',
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu',
             '--no-zygote'
-        ],
-        executablePath: process.env.CHROME_PATH || '/usr/bin/chromium'
+        ]
     }
 });
 
@@ -2498,6 +2498,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
