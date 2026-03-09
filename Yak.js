@@ -2535,7 +2535,7 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
         // Lista de comandos que SÍ existen para que no se confunda
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'bal', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
@@ -2558,6 +2558,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
