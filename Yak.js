@@ -1150,66 +1150,59 @@ if (comando.startsWith('bchar')) {
         }
     }
 
-if (message.body.startsWith("?baltop")) {
-    if (!message.from.endsWith("@g.us")) {
-        return message.reply("Este comando solo funciona en grupos.");
-    }
+// --------- COMANDO ?baltop (CORREGIDO) ---------
+    if (message.body.startsWith("?baltop")) {
+        const chat = await message.getChat();
+        if (!chat.isGroup) return message.reply("Este comando solo funciona en grupos.");
 
-    const economia = cargarEconomia();
-    const chat = await message.getChat();
-    const participantes = chat.participants.map(p => p.id._serialized);
-    
-    let ranking = [];
-    participantes.forEach(id => {
-        if (economia[id] && (economia[id].dinero > 0 || economia[id].banco > 0)) {
-            const total = (economia[id].dinero || 0) + (economia[id].banco || 0);
-            ranking.push({ id: id, total: total });
-        }
-    });
-
-    // Ordenar de mayor a menor
-    ranking.sort((a, b) => b.total - a.total);
-
-    if (ranking.length === 0) {
-        return message.reply("Nadie en este grupo tiene dinero aún.");
-    }
-
-    // Lógica de paginación
-    const args = message.body.split(' ');
-    let pagina = parseInt(args[1]) || 1;
-    const porPagina = 20;
-    const maxPaginas = Math.ceil(ranking.length / porPagina);
-
-    if (pagina < 1) pagina = 1;
-    if (pagina > maxPaginas) pagina = maxPaginas;
-
-    const inicio = (pagina - 1) * porPagina;
-    const fin = inicio + porPagina;
-    const rankingPagina = ranking.slice(inicio, fin);
-
-    let texto = `✪ *RANKING DE DINERO (Pág. ${pagina}/${maxPaginas})* ✪\n\n`;
-    
-    rankingPagina.forEach((user, index) => {
-        const posicion = inicio + index + 1;
-        const numeroLimpio = user.id.split('@')[0];
+        const economia = cargarEconomia();
+        const participantes = chat.participants;
         
-        let medalla = "👤";
-        if (posicion === 1) medalla = "✺";
-        else if (posicion === 2) medalla = "✹";
-        else if (posicion === 3) medalla = "✸";
+        let ranking = [];
+        for (const p of participantes) {
+            const id = p.id._serialized;
+            if (economia[id]) {
+                // Sumamos dinero + banco para un top real
+                const total = (economia[id].dinero || 0) + (economia[id].banco || 0);
+                if (total > 0) {
+                    ranking.push({ id: id, total: total });
+                }
+            }
+        }
 
-        texto += `${medalla} ${posicion}. @${numeroLimpio}: *$${user.total.toLocaleString()}*\n`;
-    });
+        ranking.sort((a, b) => b.total - a.total);
+        if (ranking.length === 0) return message.reply("Nadie tiene dinero aún.");
 
-    if (maxPaginas > 1 && pagina < maxPaginas) {
-        texto += `\n💡 Usa *?baltop ${pagina + 1}* para ver más.`;
+        const args = message.body.split(' ');
+        let pagina = parseInt(args[1]) || 1;
+        const porPagina = 20;
+        const maxPaginas = Math.ceil(ranking.length / porPagina);
+        if (pagina < 1) pagina = 1;
+        if (pagina > maxPaginas) pagina = maxPaginas;
+
+        const inicio = (pagina - 1) * porPagina;
+        const rankingPagina = ranking.slice(inicio, inicio + porPagina);
+
+        let texto = `🏆 *RANKING DE DINERO (Pág. ${pagina}/${maxPaginas})* 🏆\n\n`;
+        
+        for (let i = 0; i < rankingPagina.length; i++) {
+            const user = rankingPagina[i];
+            const posicion = inicio + i + 1;
+            const numeroLimpio = user.id.split('@')[0];
+            
+            let medalla = "👤";
+            if (posicion === 1) medalla = "🥇";
+            else if (posicion === 2) medalla = "🥈";
+            else if (posicion === 3) medalla = "🥉";
+
+            texto += `${medalla} ${posicion}. @${numeroLimpio}: *$${user.total.toLocaleString()}*\n`;
+        }
+
+        // Enviamos las menciones para que WhatsApp convierta los números en nombres
+        return client.sendMessage(message.from, texto, {
+            mentions: rankingPagina.map(u => u.id)
+        });
     }
-
-    return client.sendMessage(message.from, texto, {
-        mentions: rankingPagina.map(u => u.id)
-    });
-}
-
 
 
 // --------- ?duel ---------
@@ -2186,70 +2179,49 @@ if (comando.startsWith('fight')) {
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
-    // ---------- VICTORIA ----------
+  // ---------- VICTORIA (CORREGIDA) ----------
     if (poderFinalUser > mob.poderTotal) {
-
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
 
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        // EXP basada en el poder del mob (mínimo 1 para que siempre ganen algo)
         const expGanada = Math.max(1, Math.floor(mob.poderTotal / 20));
-        let mensajesSubida = [];
+        let avisosLvl = "";
 
-        // Iteramos directamente sobre el array original para asegurar que se guarde
-        equipoTemp.forEach(pjPeleador => {
-            const idx = haremData[message.from][userId]
-                .findIndex(p => p.nombre === pjPeleador.nombre);
+        // RE-CARGAMOS EL HAREM PARA EDITARLO
+        const haremData = cargarHarem(); 
+        const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
 
-            if (idx !== -1) {
-                // Acceso directo al objeto en el array original
-                let personaje = haremData[message.from][userId][idx];
+        if (haremData[message.from] && haremData[message.from][userId]) {
+            haremData[message.from][userId].forEach(pj => {
+                // Buscamos si este personaje es uno de los que peleó
+                if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
+                    pj.level = pj.level || 1;
+                    pj.exp = (pj.exp || 0) + expGanada;
 
-                // Inicializar valores si no existen
-                if (personaje.level === undefined) personaje.level = 1;
-                if (personaje.exp === undefined) personaje.exp = 0;
-
-                personaje.exp += expGanada;
-
-                // Lógica de subir nivel
-                while (true) {
-                    let xpReq = Math.floor(100 * Math.pow(1.1, (personaje.level) - 1));
-
-                    if (personaje.exp >= xpReq) {
-                        personaje.exp -= xpReq;
-                        personaje.level += 1;
-                        mensajesSubida.push(`⭐ *${personaje.nombre}* subió al nivel *${personaje.level}*!`);
-                    } else {
-                        break;
+                    // Lógica de subida de nivel (Asegurada)
+                    let xpReq = Math.floor(100 * Math.pow(1.1, (pj.level || 1) - 1));
+                    while (pj.exp >= xpReq) {
+                        pj.exp -= xpReq;
+                        pj.level = (pj.level || 1) + 1;
+                        xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+                        avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
                     }
                 }
-            }
-        });
-
-        // Marcar mob como vencido y guardar TODO
-        mobActual[message.from].vencido = true;
-        
-        guardarEconomia(economia);
-        guardarHarem(haremData); // <-- Esto sobreescribe el JSON con los nuevos niveles/exp
-
-        let textoVictoria = `『  *VICTORIA* 』\n\n`;
-        textoVictoria += `↳ Equipo: [ ${equipoTemp.map(p => p.nombre).join(", ")} ]\n`;
-        textoVictoria += `↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]\n`;
-        textoVictoria += `↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]\n\n`;
-        textoVictoria += `💰 Dinero ganado: $${premio.toLocaleString()}\n`;
-        textoVictoria += `⭐ EXP ganada: ${expGanada}\n`;
-
-        if (mensajesSubida.length > 0) {
-            textoVictoria += `\n${mensajesSubida.join('\n')}`;
+            });
         }
 
-        textoVictoria += `\n> Tus personajes se hicieron más fuertes.`;
+        mobActual[message.from].vencido = true;
 
-        return message.reply(textoVictoria);
+        // GUARDADO TOTAL
+        guardarEconomia(economia);
+        guardarHarem(haremData); 
+
+        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Los cambios se han guardado correctamente.`);
     }
+		
     // ---------- DERROTA ----------
     else {
 
@@ -2558,6 +2530,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
