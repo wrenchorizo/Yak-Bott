@@ -209,8 +209,14 @@ client.on('code', (code) => {
 
 // Mostrar QR
 client.on('qr', (qr) => {
-    qrcode.generate(qr, { small: true }); 
-    console.log('▲ ESCANEA ESTO RÁPIDO ▲');
+    // 1. Lo seguimos intentando en consola por si acaso
+    qrcode.generate(qr, { small: true });
+
+    // 2. LA SOLUCIÓN: Genera un link para que lo veas en el navegador
+    console.log("--------------------------------------------------");
+    console.log("SI EL QR DE ARRIBA SE VE MAL, ESCANEA ESTE:");
+    console.log(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
+    console.log("--------------------------------------------------");
 });
 
 // Bot listo
@@ -2480,6 +2486,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
