@@ -187,17 +187,16 @@ function actualizarStamina(personaje) {
 const client = new Client({
     authStrategy: new LocalAuth({
         clientId: "client-one",
-        dataPath: './sesion_yak'
+        dataPath: "./sesion_yak"
     }),
     puppeteer: {
         headless: true,
-        executablePath: process.env.CHROME_PATH || '/nix/store/chromium/bin/chromium',
         args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--no-zygote'
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--no-zygote"
         ]
     }
 });
@@ -2498,6 +2497,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
