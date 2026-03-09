@@ -190,15 +190,14 @@ const client = new Client({
         dataPath: "./sesion_yak"
     }),
     puppeteer: {
-        headless: true,
-        args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--no-zygote"
-        ]
-    }
+    headless: "new",
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+    ]
+}
 });
 
 client.on('code', (code) => {
@@ -334,7 +333,7 @@ if (message.fromMe) return;
 
     console.log(`--> RECIBIDO: ${message.body} | DeMe: ${message.fromMe}`);
 
-    if (!message.body.startsWith(prefix)) return;
+    if (message.body.startsWith(prefix)) return;
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
@@ -2497,6 +2496,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
