@@ -189,16 +189,14 @@ const client = new Client({
         clientId: "client-one",
         dataPath: './.wwebjs_auth' // <--- Asegúrate de que coincida con el Mount Path del volumen
     }),
-	puppeteer: {
+    puppeteer: {
         headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-gpu',
-        ],
-        // NO PONGAS executablePath AQUÍ. 
-        // Deja que Puppeteer lo busque solo.
+            '--disable-gpu'
+        ]
     }
 });
 
@@ -2501,6 +2499,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
