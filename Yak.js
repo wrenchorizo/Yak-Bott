@@ -331,9 +331,9 @@ client.on('message_create', async (message) => {
 	
 if (message.fromMe) return; 
 
-    console.log(`--> RECIBIDO: ${message.body} | DeMe: ${message.fromMe}`);
+    console.log("Prefijo detectado:", msg.body.startsWith(prefix));
 
-    if (message.body.startsWith(prefix)) return;
+ if (!msg.body.startsWith(prefix)) return;
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
@@ -2496,6 +2496,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
