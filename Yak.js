@@ -326,28 +326,21 @@ function personajeRandom(listaPersonajes) {
 
 // ---------------- MENSAJES ----------------
 
-client.on("message_create", async msg => {
+const prefix = '?';
 
-    if (msg.fromMe) return;
+client.on('message_create', async (message) => {
 
-    if (msg.body.startsWith("?")) {
-        await msg.reply("ok");
-    }
+    if (message.fromMe) return;
 
-});
-	    const prefix = '?';
-	
-if (message.fromMe) return; 
+    console.log("Mensaje:", message.body);
 
-    console.log("Prefijo detectado:", msg.body.startsWith(prefix));
-
- if (!msg.body.startsWith(prefix)) return;
+    if (!message.body.startsWith(prefix)) return; 
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
 
 
-console.log("fromMe:", message.fromMe);
+   console.log("Comando detectado:", comando);
 
     const texto = message.body.toLowerCase();
     if (!texto.startsWith(prefix)) return;
@@ -2504,6 +2497,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
