@@ -6,3 +6,6 @@ cmds = ["npm install --no-audit --no-fund"]
 
 [start]
 cmd = "node Yak.js"
+
+[variables]
+CHROME_PATH="/nix/store/chromium/bin/chromium"
