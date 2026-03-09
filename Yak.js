@@ -185,7 +185,11 @@ function actualizarStamina(personaje) {
 
 // Cliente
 const client = new Client({
-    puppeteer: {
+    authStrategy: new LocalAuth({
+        clientId: "client-one",
+        dataPath: './.wwebjs_auth' // <--- Asegúrate de que coincida con el Mount Path del volumen
+    }),
+	puppeteer: {
         headless: true,
         args: [
             '--no-sandbox',
@@ -2497,6 +2501,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
