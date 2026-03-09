@@ -187,7 +187,7 @@ function actualizarStamina(personaje) {
 const client = new Client({
     authStrategy: new LocalAuth({
         clientId: "client-one",
-        dataPath: './.wwebjs_auth' // <--- Asegúrate de que coincida con el Mount Path del volumen
+        dataPath: './sesion_yak' // Quitamos el punto inicial para evitar carpetas ocultas que dan problemas en volúmenes
     }),
     puppeteer: {
         headless: true,
@@ -195,6 +195,7 @@ const client = new Client({
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
+            '--no-zygote',
             '--disable-gpu'
         ]
     }
@@ -2499,6 +2500,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
