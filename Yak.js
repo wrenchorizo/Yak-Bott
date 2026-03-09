@@ -422,7 +422,7 @@ if (isGroup) {
             const frase = frasesDeadpool[Math.floor(Math.random() * frasesDeadpool.length)];
             const numeroLimpio = nuevoDueñoId.split('@')[0];
             
-            await client.sendMessage(message.from, `🔴 *DEADPOOL:* ${frase}\n\n_¡Deadpool ha saltado al harem de ${numeroLimpio}!_`, {mentions: [nuevoDueñoId]});
+            await client.sendMessage(message.from, `🔴 *DEADPOOL:* ${frase}\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {mentions: [nuevoDueñoId]});
         }
     }
 
@@ -2504,6 +2504,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
