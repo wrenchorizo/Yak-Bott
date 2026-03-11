@@ -206,7 +206,7 @@ const client = new Client({
     authStrategy: new RemoteAuth({
         clientId: "yakbot",
         store: store,
-        backupSyncIntervalMs: 300000
+        backupSyncIntervalMs: 60000
     }),
     puppeteer: {
         headless: "new",
@@ -217,6 +217,10 @@ const client = new Client({
             "--disable-gpu"
         ]
     }
+});
+
+	client.on("remote_session_saved", () => {
+    console.log("✅ Sesión guardada en Mongo");
 });
 
 client.on('code', (code) => {
@@ -2540,6 +2544,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
