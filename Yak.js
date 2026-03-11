@@ -207,17 +207,16 @@ const client = new Client({
         clientId: "yakbot",
         store: store,
         backupSyncIntervalMs: 300000
-    })
-});
+    }),
     puppeteer: {
-    headless: "new",
-    args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu"
-    ]
-}
+        headless: "new",
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu"
+        ]
+    }
 });
 
 client.on('code', (code) => {
@@ -2541,6 +2540,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
