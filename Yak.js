@@ -8,7 +8,14 @@ if (!global.File) {
         }
     };
 }
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, RemoteAuth } = require('whatsapp-web.js');
+const mongoose = require('mongoose');
+const { MongoStore } = require('wwebjs-mongo');
+mongoose.connect(process.env.MONGO_URL);
+
+const store = new MongoStore({
+    mongoose: mongoose
+});
 const qrcode = require('qrcode-terminal');
 const fs = require('fs');
 
@@ -194,10 +201,10 @@ function actualizarStamina(personaje) {
 
 // Cliente
 const client = new Client({
-    authStrategy: new LocalAuth({
-        clientId: "client-one",
-        dataPath: "./sesion_yak"
-    }),
+authStrategy: new RemoteAuth({
+    store: store,
+    backupSyncIntervalMs: 300000
+}),
     puppeteer: {
     headless: "new",
     args: [
@@ -2530,6 +2537,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
