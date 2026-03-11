@@ -214,18 +214,17 @@ async function startBot() {
 
     sock.ev.on("creds.update", saveCreds);
 
-    sock.ev.on("connection.update", ({ connection }) => {
+sock.ev.on("connection.update", ({ connection }) => {
 
-        if (connection === "open") {
-            console.log("✅ YakBot conectado");
-        }
+    if (connection === "open") {
+        console.log("✅ YakBot conectado");
+    }
 
-        if (connection === "close") {
-            console.log("❌ Conexión cerrada, intentando reconectar...");
-            startBot();
-        }
+    if (connection === "close") {
+        console.log("❌ Conexión cerrada");
+    }
 
-    });
+});
 
 }
 
@@ -2525,6 +2524,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
