@@ -11,11 +11,13 @@ if (!global.File) {
 const { Client, RemoteAuth } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
-mongoose.connect(process.env.MONGO_URL);
+mongoose.connect(process.env.MONGO_URL).then(() => {
 
-const store = new MongoStore({
-    mongoose: mongoose
-});
+    console.log("Mongo conectado");
+
+    const store = new MongoStore({
+        mongoose: mongoose
+    });
 const qrcode = require('qrcode-terminal');
 const fs = require('fs');
 
@@ -2537,6 +2539,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 
 });
+
 
 
 
