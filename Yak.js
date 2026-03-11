@@ -13,8 +13,12 @@ const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
 
-await mongoose.connect(process.env.MONGO_URL);
-console.log("Mongo conectado");
+try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("Mongo conectado");
+} catch (err) {
+    console.log("Error conectando a Mongo:", err);
+}
     const store = new MongoStore({
     mongoose: mongoose
 });
@@ -2545,7 +2549,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 });
 
-});
+})().catch(err => console.error("Error fatal YakBot:", err));
 
 
 
