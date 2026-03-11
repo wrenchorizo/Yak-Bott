@@ -226,7 +226,6 @@ const client = new Client({
     }
 });
 
-})().catch(err => console.error("Error fatal YakBot:", err));
 
 	client.on("remote_session_saved", () => {
     console.log("✅ Sesión guardada en Mongo");
@@ -257,6 +256,10 @@ client.on('ready', () => {
 // Ejecutar limpieza de personajes antiguos al encender
     haremPorGrupo = cargarHarem(); // Recargamos por si acaso
     limpiarHaremNaN(haremPorGrupo);
+});
+
+		client.on("change_state", state => {
+    console.log("Estado:", state);
 });
 
 // ---------------- VARIABLES GLOBALES ----------------
@@ -370,10 +373,6 @@ client.on('message_create', async (message) => {
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
-
-	client.on("change_state", state => {
-    console.log("Estado:", state);
-});
 
 
    console.log("Comando detectado:", comando);
@@ -2551,3 +2550,5 @@ process.on('uncaughtException', (err) => {
     console.log('🚨 YakBot casi se crashea! (uncaughtException)');
     console.log(err);
 });
+
+})().catch(err => console.error("Error fatal YakBot:", err));
