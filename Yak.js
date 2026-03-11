@@ -21,7 +21,6 @@ try {
 }
     const store = new MongoStore({
     mongoose: mongoose
-	}
 });
 
 const qrcode = require('qrcode-terminal');
@@ -2550,7 +2549,8 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 });
 
-})().catch(err => console.error("Error fatal YakBot:", err));
+});
+
 
 
 
