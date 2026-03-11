@@ -1,3 +1,14 @@
+if (!global.File) {
+    const { Blob } = require('buffer');
+    global.File = class extends Blob {
+        constructor(parts, filename, options = {}) {
+            super(parts, options);
+            this.name = filename;
+            this.lastModified = options.lastModified || Date.now();
+        }
+    };
+}
+
 const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
@@ -12,17 +23,6 @@ const axios = require('axios');
 const dns = require('dns');
 
 dns.setServers(['8.8.8.8', '8.8.4.4']);
-
-if (!global.File) {
-    const { Blob } = require('buffer');
-    global.File = class extends Blob {
-        constructor(parts, filename, options = {}) {
-            super(parts, options);
-            this.name = filename;
-            this.lastModified = options.lastModified || Date.now();
-        }
-    };
-}
 
 // ==========================================
 //        ANTI-CRASH GLOBAL (REPARADO)
