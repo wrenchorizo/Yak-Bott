@@ -2536,7 +2536,7 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
         }
     }
 
-	// CIERRE FINAL DE message_create
+}); // CIERRE FINAL DE message_create
 
 // --------- INICIALIZAR ---------
 client.initialize();
@@ -2551,5 +2551,4 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 });
 
-
-
+})().catch(err => console.error("Error fatal YakBot:", err));
