@@ -2550,7 +2550,8 @@ process.on('uncaughtException', (err) => {
     console.log('🚨 YakBot casi se crashea! (uncaughtException)');
     console.log(err);
 });
-})().catch(err => console.error("Error fatal YakBot:", err));
+})().catch(err => console.error("Error fatal YakBot", err));
+
 
 
 
