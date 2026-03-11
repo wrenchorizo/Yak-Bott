@@ -1920,7 +1920,7 @@ if (message.body.startsWith(prefix + 'yt ')) {
 
         // 2. Usamos una API que no depende de tu IP local
         // He seleccionado una que suele ser muy estable para bots
-        const apiUrl = `https://api.lolhuman.xyz/api/ytvideo2?apikey=GataDios&url=${url})}`;
+        const apiUrl = `https://api.lolhuman.xyz/api/ytvideo2?apikey=GataDios&url=${video.url}`;
         
         const res = await axios.get(apiUrl);
         
@@ -2551,6 +2551,7 @@ process.on('uncaughtException', (err) => {
     console.log(err);
 });
 })().catch(err => console.error("Error fatal YakBot", err));
+
 
 
 
