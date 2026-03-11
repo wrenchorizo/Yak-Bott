@@ -8,7 +8,7 @@ if (!global.File) {
         }
     };
 }
-const { Client, RemoteAuth } = require('whatsapp-web.js');
+const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
 mongoose.connect(process.env.MONGO_URL).then(() => {
@@ -2539,6 +2539,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
