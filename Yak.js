@@ -2542,8 +2542,10 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
 client.initialize();
 
 setInterval(() => {
-    console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
-}, 60000);
+        console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
+    }, 60000);
+
+})().catch(err => console.error("Error fatal en YakBot:", err)); // <--- ESTO ES LO QUE FALTA
 
 // ---------------- ANTI-CRASH GLOBAL ----------------
 process.on('uncaughtException', (err) => {
@@ -2552,3 +2554,4 @@ process.on('uncaughtException', (err) => {
 });
 
 })().catch(err => console.error("Error fatal YakBot:", err));
+
