@@ -203,10 +203,12 @@ function actualizarStamina(personaje) {
 
 // Cliente
 const client = new Client({
-authStrategy: new RemoteAuth({
-    store: store,
-    backupSyncIntervalMs: 300000
-}),
+    authStrategy: new RemoteAuth({
+        clientId: "yakbot",
+        store: store,
+        backupSyncIntervalMs: 300000
+    })
+});
     puppeteer: {
     headless: "new",
     args: [
@@ -2539,6 +2541,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
