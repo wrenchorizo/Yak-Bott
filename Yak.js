@@ -2528,7 +2528,6 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
 // --------- INICIALIZAR ---------
 client.initialize();
 
-
 setInterval(() => {
     console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
 }, 60000);
@@ -2537,6 +2536,7 @@ setInterval(() => {
 process.on('uncaughtException', (err) => {
     console.log('🚨 YakBot casi se crashea! (uncaughtException)');
     console.log(err);
+});
 
 });
 
