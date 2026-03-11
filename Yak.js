@@ -328,56 +328,63 @@ function personajeRandom(listaPersonajes) {
 }
 
 // ---------------- MENSAJES ----------------
-
 const prefix = '?';
 
-client.on('message_create', async (message) => {
+sock.ev.on("messages.upsert", async ({ messages }) => {
 
-    if (message.fromMe) return;
+    const msg = messages[0];
+    if (!msg.message) return;
+
+    const chatId = msg.key.remoteJid;
+    const isGroup = chatId.endsWith("@g.us");
+    const fromMe = msg.key.fromMe;
+
+    if (fromMe) return;
+
+    const body =
+        msg.message.conversation ||
+        msg.message.extendedTextMessage?.text ||
+        "";
+
+    const message = {
+        body: body,
+        from: chatId,
+        isGroup: isGroup,
+        author: msg.key.participant,
+        reply: (text) => sock.sendMessage(chatId, { text })
+    };
 
     console.log("Mensaje:", message.body);
 
-    if (!message.body.startsWith(prefix)) return; 
+    if (!message.body.startsWith(prefix)) return;
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
 
-	client.on("change_state", state => {
-    console.log("Estado:", state);
+    console.log("Comando detectado:", comando);
+
+    let userId;
+
+    if (isGroup) {
+        userId = msg.key.participant;
+    } else {
+        userId = chatId;
+    }
+
+    if (isGroup) {
+        if (!botSettings[chatId]) {
+            botSettings[chatId] = { enabled: true };
+        }
+
+        if (!botSettings[chatId].enabled && !body.toLowerCase().startsWith(`${prefix}bot on`)) {
+            return;
+        }
+    }
+
+    // AQUÍ van todos tus comandos
 });
 
-
-   console.log("Comando detectado:", comando);
-
-    const texto = message.body.toLowerCase();
-    if (!texto.startsWith(prefix)) return;
-
-console.log("Comando detectado:", comando);
-    const chatId = message.from;
-if (message.isGroup) {
-    if (!botSettings[chatId]) {
-        botSettings[chatId] = { enabled: true };
-    }
-
-const isGroup = message.from.endsWith("@g.us");
-
-let userId;
-
-if (isGroup) {
-    userId = message.author || message._data.participant;
-} else {
-    userId = message.from;
-}
-
-    if (!botSettings[chatId].enabled && !message.body.toLowerCase().startsWith(`${prefix}bot on`)) {
-        return; // Ignora todos los comandos si está apagado
-    }
-}
-
-    const userId = message.author || message._data.participant || message.from;
-    const grupoId = message.from;
-
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // --- LÓGICA DE DEADPOOL ERRANTE (LIMITADO AL GRUPO) ---
     const chanceDeadpool = Math.random();
@@ -2524,6 +2531,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
