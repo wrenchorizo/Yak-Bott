@@ -262,6 +262,23 @@ client.on('ready', () => {
     console.log("Estado:", state);
 });
 
+// ==========================================
+//        ANTI-CRASH GLOBAL (REPARADO)
+// ==========================================
+process.on('unhandledRejection', (reason, promise) => {
+    console.error(' [ANTI-CRASH] Rechazo no manejado en:', promise, 'razón:', reason);
+});
+
+process.on('uncaughtException', (err, origin) => {
+    console.error(' [ANTI-CRASH] Excepción no capturada:', err);
+    console.error(' [ANTI-CRASH] Origen:', origin);
+});
+
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+    console.error(' [ANTI-CRASH] Monitor de excepción:', err);
+});
+// ==========================================
+	
 // ---------------- VARIABLES GLOBALES ----------------
 
 const personajes = JSON.parse(fs.readFileSync('./personajes.json'));
@@ -996,85 +1013,65 @@ if (comando === 'shop') {
 }
 
 // --------- COMANDO ?buy ---------
+// --------- COMANDO ?buy ---------
 if (comando.startsWith('buy')) {
     const economia = cargarEconomia();
     asegurarUsuario(economia, userId);
-    
     const args = message.body.slice(prefix.length + 3).trim().split(/\s+/);
     const itemNum = args[0];
-    const nombreChar = args.slice(1).join(" ");
+    const targetName = args.slice(1).join(' ').toLowerCase().trim();
 
-    if (!itemNum || !nombreChar) {
-        return message.reply(`❌ Uso correcto: *${prefix}buy [número] [nombre del personaje]*\nEjemplo: *${prefix}buy 1 Goku*`);
-    }
+    if (!itemNum || !targetName) return message.reply(`❌ Uso: ${prefix}buy [número] [nombre del personaje]`);
 
-    const personajesUsuario = haremPorGrupo[grupoId]?.[userId] || [];
-    const personaje = personajesUsuario.find(p => p.nombre.toLowerCase() === nombreChar.toLowerCase());
-if (!personaje) return message.reply("No tienes ese personaje en tu harem.");
+    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) return message.reply("No tienes un harem en este grupo.");
 
-    // --- PARCHE DE EMERGENCIA PARA NaN ---
-    if (isNaN(personaje.level) || !personaje.level) personaje.level = 1;
-    if (isNaN(personaje.exp) || !personaje.exp) personaje.exp = 0;
-    if (isNaN(personaje.stamina) || !personaje.stamina) personaje.stamina = 100;
+    const userHarem = haremPorGrupo[grupoId][userId];
+    const index = userHarem.findIndex(p => p.nombre.toLowerCase() === targetName);
+    if (index === -1) return message.reply(`❌ No tienes a **${targetName}**.`);
 
-    if (!personaje) return message.reply("No tienes ese personaje en tu harem.");
-
-    // --- LÓGICA DE COMPRA ---
+    let personaje = userHarem[index];
 
     if (itemNum === '1') { // POCIÓN
         if (economia[userId].dinero < 15000) return message.reply("No tienes suficiente dinero ($15,000).");
         economia[userId].dinero -= 15000;
         personaje.stamina = Math.min(100, (personaje.stamina || 0) + 50);
-        personaje.lastUpdate = Date.now();
-        message.reply(`🧪 *Poción* usada en ${personaje.nombre}.\n⚡ Stamina: ${personaje.stamina}%`);
-    } 
-    
-    else if (itemNum === '2') { // AMULETO XP
+        message.reply(`🧪 *Poción* usada en ${personaje.nombre}. Stamina: ${personaje.stamina}%`);
+    } else if (itemNum === '2') { // AMULETO
         if (economia[userId].dinero < 35000) return message.reply("No tienes suficiente dinero ($35,000).");
         economia[userId].dinero -= 35000;
-        personaje.exp += 100;
-        
-        // Requisito escalable del 10% que configuramos
-        let xpReq = Math.floor(100 * Math.pow(1.1, personaje.level - 1));
+        personaje.exp = (personaje.exp || 0) + 100;
+        let xpReq = Math.floor(100 * Math.pow(1.1, (personaje.level || 1) - 1));
         let subio = false;
         if (personaje.exp >= xpReq) {
-            personaje.level += 1;
+            personaje.level = (personaje.level || 1) + 1;
             personaje.exp = 0;
             subio = true;
         }
         message.reply(`✨ *Amuleto* usado en ${personaje.nombre}.${subio ? ' \n🆙 ¡SUBIÓ AL NIVEL ' + personaje.level + '!' : ''}`);
-    }
-
-    else if (itemNum === '3') { // PIEDRA EVOLUCIÓN
+    } else if (itemNum === '3') { // PIEDRA
         if (economia[userId].dinero < 80000) return message.reply("No tienes suficiente dinero ($80,000).");
         economia[userId].dinero -= 80000;
-        personaje.level += 1;
+        personaje.level = (personaje.level || 1) + 1;
         message.reply(`⭐ ¡${personaje.nombre} ha evolucionado al nivel ${personaje.level}!`);
-    }
-
-    else if (itemNum === '4') { // BENDICIÓN
+    } else if (itemNum === '4') { // BENDICIÓN
         if (economia[userId].dinero < 150000) return message.reply("No tienes suficiente dinero ($150,000).");
         economia[userId].dinero -= 150000;
         personaje.stamina = 100;
-        personaje.level += 2;
+        personaje.level = (personaje.level || 1) + 2;
         message.reply(`💖 ¡${personaje.nombre} ha sido bendecido!\n🆙 +2 Niveles (Nivel actual: ${personaje.level})\n⚡ Energía al 100%`);
-    }
-
-    else if (itemNum === '5') { // CONTRATO ETERNO
+    } else if (itemNum === '5') { // CONTRATO
         if (economia[userId].dinero < 300000) return message.reply("No tienes suficiente dinero ($300,000).");
         economia[userId].dinero -= 300000;
         personaje.valor = Math.floor(personaje.valor * 1.5);
-        message.reply(`📜 *Contrato Eterno* firmado.\n📈 El valor base de ${personaje.nombre} ha subido permanentemente a $${personaje.valor.toLocaleString()}.`);
+        message.reply(`📜 *Contrato Eterno* firmado.\n📈 El valor base de ${personaje.nombre} ha subido a $${personaje.valor.toLocaleString()}.`);
+    } else {
+        return message.reply("❌ Ese número de objeto no existe.");
     }
 
-    else {
-        return message.reply("Dou! Ese número de objeto no existe en la tienda.");
-    }
-
-    // Guardar cambios en ambos archivos
     guardarEconomia(economia);
     guardarHarem(haremPorGrupo);
-}
+} // CIERRE CORRECTO DE ?buy
+	
 
 // ==========================================
 //          COMANDOS DE CHARSHOP (NUEVO FORMATO)
@@ -1855,57 +1852,36 @@ if (comando.startsWith('ship')) {
 
 // --------- ?givechar ---------
 
-if (comando.startsWith('givechar')) {
+// --------- COMANDO ?givechar ---------
+if (comando === 'givechar') {
+    if (!message.from.endsWith("@g.us")) return message.reply("Solo funciona en grupos.");
+    
+    const partes = message.body.split("|");
+    const targetMention = message.mentionedIds[0];
+    const charName = partes[1] ? partes[1].trim().toLowerCase() : null;
 
-    if (!message.from.endsWith("@g.us")) {
-        return message.reply("Solo funciona en grupos.");
+    if (!targetMention || !charName) {
+        return message.reply(`❌ Uso: ${prefix}givechar @usuario | nombre del personaje`);
     }
 
-    const mentioned = message.mentionedIds[0];
-    if (!mentioned) {
-        return message.reply("Debes mencionar a alguien.");
-    }
+    const giverId = userId;
+    const receiverId = targetMention;
 
-    const args = message.body.split(" ");
-    if (args.length < 3) {
-        return message.reply("Uso: ?givechar @usuario NombreDelPersonaje");
-    }
+    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][giverId]) return message.reply("No tienes personajes.");
 
-    const nombre = args.slice(2).join(" ");
+    const index = haremPorGrupo[grupoId][giverId].findIndex(p => p.nombre.toLowerCase() === charName);
+    if (index === -1) return message.reply("No tienes ese personaje.");
 
-    if (!haremPorGrupo[grupoId] ||
-        !haremPorGrupo[grupoId][userId] ||
-        !haremPorGrupo[grupoId][userId].find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
-
-        return message.reply("No tienes ese personaje.");
-    }
-
-    const personaje = haremPorGrupo[grupoId][userId]
-        .find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
-
-    // Quitar del iniciador
-    haremPorGrupo[grupoId][userId] =
-        haremPorGrupo[grupoId][userId].filter(p => p.nombre !== personaje.nombre);
-
-    // Agregar al receptor
-    if (!haremPorGrupo[grupoId][mentioned]) {
-        haremPorGrupo[grupoId][mentioned] = [];
-    }
-
-    haremPorGrupo[grupoId][mentioned].push(personaje);
+    const pj = haremPorGrupo[grupoId][giverId].splice(index, 1)[0];
+    if (!haremPorGrupo[grupoId][receiverId]) haremPorGrupo[grupoId][receiverId] = [];
+    haremPorGrupo[grupoId][receiverId].push(pj);
 
     guardarHarem(haremPorGrupo);
+    message.reply(`🎁 ¡Has regalado a **${pj.nombre}** a @${receiverId.split('@')[0]}!`, { mentions: [receiverId] });
+} // CIERRE CORRECTO DE ?givechar
 
-    message.reply(`◇ ${personaje.nombre} fue regalado correctamente.`);
-
-// Dentro de ?givechar o ?trade, después de encontrar 'personaje'
-if (personaje.nombre === "EL ADMIN") {
-    return message.reply("🔒 Este personaje está vinculado a tu alma. No puede ser transferido ni tradeado.");
-}
-
-}
-
-
+// ----------COMANDO ?YT--------------
+	
 if (message.body.startsWith(prefix + 'yt ')) {
     const query = message.body.slice(prefix.length + 3).trim();
     if (!query) return message.reply("❌ Uso: `?yt [nombre o link]`");
@@ -2524,34 +2500,24 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
         return;
     }
 
-    // --- DETECTOR DE COMANDO INEXISTENTE ---
-    // Si llegamos aquí y el mensaje empieza con el prefijo, es que no reconoció ningún comando de arriba
+// --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
-        // Lista de comandos que SÍ existen para que no se confunda
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
         }
     }
 
-}); // CIERRE FINAL DE message_create
+}); // CIERRE FINAL DE message_create (client.on)
 
 // --------- INICIALIZAR ---------
 client.initialize();
 
 setInterval(() => {
-        console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
-    }, 60000);
+    console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
+}, 60000);
 
-})().catch(err => console.error("Error fatal en YakBot:", err)); // <--- ESTO ES LO QUE FALTA
-
-// ---------------- ANTI-CRASH GLOBAL ----------------
-process.on('uncaughtException', (err) => {
-    console.log('🚨 YakBot casi se crashea! (uncaughtException)');
-    console.log(err);
-});
-
-})().catch(err => console.error("Error fatal YakBot:", err));
-
+})().catch(err => console.error("Error fatal en YakBot:", err)); 
+// FIN DEL ARCHIVO
