@@ -226,7 +226,8 @@ const client = new Client({
     }
 });
 
-})();
+})().catch(err => console.error("Error fatal YakBot:", err));
+
 	client.on("remote_session_saved", () => {
     console.log("✅ Sesión guardada en Mongo");
 });
@@ -2550,5 +2551,3 @@ process.on('uncaughtException', (err) => {
     console.log('🚨 YakBot casi se crashea! (uncaughtException)');
     console.log(err);
 });
-
-})().catch(err => console.error("Error fatal YakBot:", err));
