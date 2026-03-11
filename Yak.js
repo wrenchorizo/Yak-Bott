@@ -8,17 +8,9 @@ if (!global.File) {
         }
     };
 }
-const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
-const mongoose = require('mongoose');
-const { MongoStore } = require('wwebjs-mongo');
-await mongoose.connect(process.env.MONGO_URL);
-console.log("Mongo conectado");
-    const store = new MongoStore({
-        mongoose: mongoose
-    });
-
-const qrcode = require('qrcode-terminal');
-const fs = require('fs');
+const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const mongoose = require("mongoose");
+const fs = require("fs");
 
 let botSettings = {};
 if (fs.existsSync('./botSettings.json')) {
@@ -201,53 +193,43 @@ function actualizarStamina(personaje) {
 
 
 // Cliente
-const client = new Client({
-    authStrategy: new RemoteAuth({
-        clientId: "yakbot",
-        store: store,
-        backupSyncIntervalMs: 60000
-    }),
-    puppeteer: {
-        headless: "new",
-        args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu"
-        ]
+async function startBot() {
+
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("Mongo conectado");
+
+    const { state, saveCreds } = await useMultiFileAuthState("auth");
+
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false
+    });
+
+    const phoneNumber = "52XXXXXXXXXX"; // tu número con código país
+
+    if (!state.creds.registered) {
+        const code = await sock.requestPairingCode(phoneNumber);
+        console.log("Código de vinculación:", code);
     }
-});
 
-	client.on("remote_session_saved", () => {
-    console.log("✅ Sesión guardada en Mongo");
-});
+    sock.ev.on("creds.update", saveCreds);
 
-client.on('code', (code) => {
-    console.log('\n Código para vincularte a Yak-bot:');
-    console.log(code);
-    console.log('Ve a WhatsApp > Dispositivos vinculados > Vincular con número');
-});
+    sock.ev.on("connection.update", ({ connection }) => {
 
+        if (connection === "open") {
+            console.log("✅ YakBot conectado");
+        }
 
-// Mostrar QR
-client.on('qr', (qr) => {
-    // 1. Lo seguimos intentando en consola por si acaso
-    qrcode.generate(qr, { small: true });
+        if (connection === "close") {
+            console.log("❌ Conexión cerrada, intentando reconectar...");
+            startBot();
+        }
 
-    // 2. LA SOLUCIÓN: Genera un link para que lo veas en el navegador
-    console.log("--------------------------------------------------");
-    console.log("SI EL QR DE ARRIBA SE VE MAL, ESCANEA ESTE:");
-    console.log(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
-    console.log("--------------------------------------------------");
-});
+    });
 
-// Bot listo
-client.on('ready', () => {
-    console.log('✅ YakBot listo y conectado');
-// Ejecutar limpieza de personajes antiguos al encender
-    haremPorGrupo = cargarHarem(); // Recargamos por si acaso
-    limpiarHaremNaN(haremPorGrupo);
-});
+}
+
+startBot();
 
 // ---------------- VARIABLES GLOBALES ----------------
 
@@ -2543,6 +2525,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
