@@ -1,3 +1,4 @@
+(async () => {
 if (!global.File) {
     const { Blob } = require('buffer');
     global.File = class extends Blob {
@@ -7,15 +8,16 @@ if (!global.File) {
             this.lastModified = options.lastModified || Date.now();
         }
     };
-}
+	}
 const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
+
 await mongoose.connect(process.env.MONGO_URL);
 console.log("Mongo conectado");
     const store = new MongoStore({
-        mongoose: mongoose
-    });
+    mongoose: mongoose
+});
 
 const qrcode = require('qrcode-terminal');
 const fs = require('fs');
@@ -218,6 +220,7 @@ const client = new Client({
     }
 });
 
+})();
 	client.on("remote_session_saved", () => {
     console.log("✅ Sesión guardada en Mongo");
 });
@@ -2543,6 +2546,7 @@ process.on('uncaughtException', (err) => {
 });
 
 });
+
 
 
 
