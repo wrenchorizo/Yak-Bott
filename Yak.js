@@ -1,4 +1,17 @@
-(async () => {
+const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
+const mongoose = require('mongoose');
+const { MongoStore } = require('wwebjs-mongo');
+const qrcode = require('qrcode-terminal');
+const fs = require('fs');
+const sharp = require('sharp');
+const path = require('path');
+const ytdl = require('@distube/ytdl-core');
+const play = require('play-dl');
+const { exec } = require('child_process');
+const axios = require('axios');
+const dns = require('dns');
+
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 if (!global.File) {
     const { Blob } = require('buffer');
@@ -11,9 +24,27 @@ if (!global.File) {
     };
 }
 
-const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
-const mongoose = require('mongoose');
-const { MongoStore } = require('wwebjs-mongo');
+// ==========================================
+//        ANTI-CRASH GLOBAL (REPARADO)
+// ==========================================
+process.on('unhandledRejection', (reason, promise) => {
+    console.error(' [ANTI-CRASH] Rechazo no manejado en:', promise, 'razón:', reason);
+});
+
+process.on('uncaughtException', (err, origin) => {
+    console.error(' [ANTI-CRASH] Excepción no capturada:', err);
+    console.error(' [ANTI-CRASH] Origen:', origin);
+});
+
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+    console.error(' [ANTI-CRASH] Monitor de excepción:', err);
+});
+// ==========================================
+	
+
+(async () => {
+
+
 
 try {
     await mongoose.connect(process.env.MONGO_URL);
@@ -25,21 +56,10 @@ try {
     mongoose: mongoose
 });
 
-const qrcode = require('qrcode-terminal');
-const fs = require('fs');
-
 let botSettings = {};
 if (fs.existsSync('./botSettings.json')) {
     botSettings = JSON.parse(fs.readFileSync('./botSettings.json'));
 }
-const sharp = require('sharp');
-const path = require('path');
-const ytdl = require('@distube/ytdl-core');
-const play = require('play-dl');
-const { exec } = require('child_process');
-const axios = require('axios');
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
 const yts = require('yt-search');
 const ffmpeg = require('fluent-ffmpeg');
 const animeGifs = {
@@ -262,23 +282,7 @@ client.on('ready', () => {
     console.log("Estado:", state);
 });
 
-// ==========================================
-//        ANTI-CRASH GLOBAL (REPARADO)
-// ==========================================
-process.on('unhandledRejection', (reason, promise) => {
-    console.error(' [ANTI-CRASH] Rechazo no manejado en:', promise, 'razón:', reason);
-});
 
-process.on('uncaughtException', (err, origin) => {
-    console.error(' [ANTI-CRASH] Excepción no capturada:', err);
-    console.error(' [ANTI-CRASH] Origen:', origin);
-});
-
-process.on('uncaughtExceptionMonitor', (err, origin) => {
-    console.error(' [ANTI-CRASH] Monitor de excepción:', err);
-});
-// ==========================================
-	
 // ---------------- VARIABLES GLOBALES ----------------
 
 const personajes = JSON.parse(fs.readFileSync('./personajes.json'));
@@ -2519,5 +2523,5 @@ setInterval(() => {
     console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
 }, 60000);
 
-})().catch(err => console.error("Error fatal en YakBot:", err)); 
+})().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
