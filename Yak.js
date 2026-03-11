@@ -1,4 +1,5 @@
 (async () => {
+
 if (!global.File) {
     const { Blob } = require('buffer');
     global.File = class extends Blob {
@@ -8,7 +9,8 @@ if (!global.File) {
             this.lastModified = options.lastModified || Date.now();
         }
     };
-	}
+}
+
 const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
@@ -2548,7 +2550,7 @@ process.on('uncaughtException', (err) => {
     console.log('🚨 YakBot casi se crashea! (uncaughtException)');
     console.log(err);
 });
-
+})().catch(err => console.error("Error fatal YakBot:", err));
 
 
 
