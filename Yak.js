@@ -2320,6 +2320,63 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     }
 
 
+// --------- COMANDO ?kick ---------
+if (comando === 'kick') {
+
+    const chat = await message.getChat();
+
+    if (!chat.isGroup) {
+        return message.reply("Este comando solo funciona en grupos.");
+    }
+
+    const senderId = message.author || message.from;
+    const botId = client.info.wid._serialized;
+
+    const participante = chat.participants.find(p => p.id._serialized === senderId);
+    const bot = chat.participants.find(p => p.id._serialized === botId);
+
+    // Verificar admin
+    if (!participante?.isAdmin && !participante?.isSuperAdmin) {
+        return message.reply("❌ Solo los administradores pueden usar este comando.");
+    }
+
+    // Verificar si el bot es admin
+    if (!bot?.isAdmin && !bot?.isSuperAdmin) {
+        return message.reply("Necesito ser admin para expulsar a un miembro del grupo");
+    }
+
+    let objetivo;
+
+    // 1️⃣ Si mencionó usuario
+    if (message.mentionedIds.length > 0) {
+        objetivo = message.mentionedIds[0];
+    }
+
+    // 2️⃣ Si respondió a un mensaje
+    else if (message.hasQuotedMsg) {
+        const quotedMsg = await message.getQuotedMessage();
+        objetivo = quotedMsg.author;
+    }
+
+    if (!objetivo) {
+        return message.reply("Debes mencionar al usuario o responder a su mensaje.");
+    }
+
+    try {
+
+        const contacto = await client.getContactById(objetivo);
+        const nombre = contacto.pushname || contacto.name || contacto.number;
+
+        await chat.removeParticipants([objetivo]);
+
+        await client.sendMessage(message.from, `“${nombre}” ha sido expulsado del grupo`);
+
+    } catch (err) {
+        console.log("Error en kick:", err);
+        message.reply("No pude expulsar a ese usuario.");
+    }
+}
+	
 // --------- ?adminchar (SOLO ADMIN) ---------
 
 if (comando === 'adminchar') {
@@ -2508,6 +2565,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
