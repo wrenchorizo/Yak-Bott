@@ -2321,6 +2321,8 @@ if (message.body.startsWith(prefix + 'addmoney')) {
 
 
 // --------- COMANDO ?kick ---------
+
+	// --------- COMANDO ?kick ---------
 if (comando === 'kick') {
 
     const chat = await message.getChat();
@@ -2329,30 +2331,30 @@ if (comando === 'kick') {
         return message.reply("Este comando solo funciona en grupos.");
     }
 
-    const senderId = message.author || message.from;
+    const senderId = message.author; // quien envió el mensaje
     const botId = client.info.wid._serialized;
 
-    const participante = chat.participants.find(p => p.id._serialized === senderId);
+    const sender = chat.participants.find(p => p.id._serialized === senderId);
     const bot = chat.participants.find(p => p.id._serialized === botId);
 
-    // Verificar admin
-    if (!participante?.isAdmin && !participante?.isSuperAdmin) {
-        return message.reply("❌ Solo los administradores pueden usar este comando.");
+    // verificar si quien ejecuta es admin
+    if (!sender || (!sender.isAdmin && !sender.isSuperAdmin)) {
+        return message.reply("» Solo los administradores pueden usar este comando.");
     }
 
-    // Verificar si el bot es admin
-    if (!bot?.isAdmin && !bot?.isSuperAdmin) {
+    // verificar si el bot es admin
+    if (!bot || (!bot.isAdmin && !bot.isSuperAdmin)) {
         return message.reply("Necesito ser admin para expulsar a un miembro del grupo");
     }
 
     let objetivo;
 
-    // 1️⃣ Si mencionó usuario
+    // si mencionó usuario
     if (message.mentionedIds.length > 0) {
         objetivo = message.mentionedIds[0];
     }
 
-    // 2️⃣ Si respondió a un mensaje
+    // si respondió a un mensaje
     else if (message.hasQuotedMsg) {
         const quotedMsg = await message.getQuotedMessage();
         objetivo = quotedMsg.author;
@@ -2369,10 +2371,10 @@ if (comando === 'kick') {
 
         await chat.removeParticipants([objetivo]);
 
-        await client.sendMessage(message.from, `“${nombre}” ha sido expulsado del grupo`);
+        await chat.sendMessage(`"${nombre}" ha sido expulsado del grupo`);
 
     } catch (err) {
-        console.log("Error en kick:", err);
+        console.log(err);
         message.reply("No pude expulsar a ese usuario.");
     }
 }
@@ -2565,6 +2567,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
