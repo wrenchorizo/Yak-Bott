@@ -2328,18 +2328,12 @@ if (comando === 'kick') {
         return message.reply("Este comando solo funciona en grupos.");
     }
 
-    const senderId = (message.author || message.from).split('@')[0];
-    const botId = client.info.wid._serialized.split('@')[0];
+    const botId = client.info.wid._serialized;
 
-    const sender = chat.participants.find(p =>
-        p.id._serialized.split('@')[0] === senderId
-    );
+    const sender = chat.participants.find(p => p.id._serialized === userId);
+    const bot = chat.participants.find(p => p.id._serialized === botId);
 
-    const bot = chat.participants.find(p =>
-        p.id._serialized.split('@')[0] === botId
-    );
-
-    // verificar si quien ejecuta es admin
+    // verificar si quien usa el comando es admin
     if (!sender || (!sender.isAdmin && !sender.isSuperAdmin)) {
         return message.reply("❌ Solo los administradores pueden usar este comando.");
     }
@@ -2351,13 +2345,15 @@ if (comando === 'kick') {
 
     let objetivo;
 
+    // mencionar
     if (message.mentionedIds.length > 0) {
         objetivo = message.mentionedIds[0];
     }
 
+    // responder mensaje
     else if (message.hasQuotedMsg) {
-        const quotedMsg = await message.getQuotedMessage();
-        objetivo = quotedMsg.author;
+        const quoted = await message.getQuotedMessage();
+        objetivo = quoted.author;
     }
 
     if (!objetivo) {
@@ -2374,7 +2370,7 @@ if (comando === 'kick') {
         await chat.sendMessage(`"${nombre}" ha sido expulsado del grupo`);
 
     } catch (err) {
-        console.log(err);
+        console.log("Error kick:", err);
         message.reply("No pude expulsar a ese usuario.");
     }
 }
@@ -2550,7 +2546,7 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
 // --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'kick', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
@@ -2568,6 +2564,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
