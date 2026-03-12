@@ -2137,19 +2137,19 @@ if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][u
 
 // --------- COMANDO ?fight ---------
 if (comando.startsWith('fight')) {
-
     const mob = mobActual[message.from];
     if (!mob || mob.vencido) {
-        return message.reply("❏ *Error:* No hay mobs activos. Usa ?buscarmob primero.");
+        return message.reply("❏ *Error:* No hay mobs activos. Usa ?smob primero.");
     }
 
     const argsF = message.body.slice(prefix.length + 5).trim();
-    const nombres = argsF.split(",").map(n => n.trim().toLowerCase());
+    const nombresInput = argsF.split(",").map(n => n.trim().toLowerCase());
 
-    if (!argsF || nombres.length < 1 || nombres.length > 3) {
+    if (!argsF || nombresInput.length < 1 || nombresInput.length > 3) {
         return message.reply(`❏ *Uso:* ${prefix}fight Personaje1, Personaje2, Personaje3`);
     }
 
+    // Cargamos el harem UNA SOLA VEZ al principio
     const haremData = cargarHarem();
     const misPersonajes = haremData[message.from]?.[userId] || [];
 
@@ -2160,11 +2160,9 @@ if (comando.startsWith('fight')) {
     let equipoTemp = [];
     let poderTotalEquipo = 0;
 
-    for (let nombreBusqueda of nombres) {
-
-        const pj = misPersonajes.find(p =>
-            p.nombre.toLowerCase().includes(nombreBusqueda)
-        );
+    // Buscamos los personajes en el harem cargado
+    for (let nombreBusqueda of nombresInput) {
+        const pj = misPersonajes.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
 
         if (!pj) {
             return message.reply(`❏ *Error:* No tienes a [ ${nombreBusqueda} ] en tu harem.`);
@@ -2172,7 +2170,6 @@ if (comando.startsWith('fight')) {
 
         let lvl = pj.level || 1;
         let valorBase = Number(pj.valor) || 0;
-
         let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
 
         equipoTemp.push(pj);
@@ -2181,7 +2178,7 @@ if (comando.startsWith('fight')) {
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
-  // ---------- VICTORIA (CORREGIDA) ----------
+    // ---------- LÓGICA DE VICTORIA ----------
     if (poderFinalUser > mob.poderTotal) {
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
@@ -2189,52 +2186,42 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        const expGanada = Math.max(1, Math.floor(mob.poderTotal / 20));
+        // Calculamos la EXP (mínimo 5 para que se note el progreso)
+        const expGanada = Math.max(5, Math.floor(mob.poderTotal / 20));
         let avisosLvl = "";
 
-        // RE-CARGAMOS EL HAREM PARA EDITARLO
-        const haremData = cargarHarem(); 
-        const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
+        // IMPORTANTE: Modificamos directamente sobre 'haremData' que ya tenemos abierto
+        // Buscamos los personajes específicos del equipo dentro del objeto original
+        equipoTemp.forEach(pjEnPelea => {
+            // Buscamos la referencia real en el haremData
+            const pjReal = haremData[message.from][userId].find(p => p.nombre === pjEnPelea.nombre);
+            
+            if (pjReal) {
+                pjReal.level = pjReal.level || 1;
+                pjReal.exp = (pjReal.exp || 0) + expGanada;
 
-        if (haremData[message.from] && haremData[message.from][userId]) {
-            haremData[message.from][userId].forEach(pj => {
-                // Buscamos si este personaje es uno de los que peleó
-                if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
-                    pj.level = pj.level || 1;
-                    pj.exp = (pj.exp || 0) + expGanada;
-
-                    // Lógica de subida de nivel (Asegurada)
-                    let xpReq = Math.floor(100 * Math.pow(1.1, (pj.level || 1) - 1));
-                    while (pj.exp >= xpReq) {
-                        pj.exp -= xpReq;
-                        pj.level = (pj.level || 1) + 1;
-                        xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-                        avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
-                    }
+                // Lógica de subida de nivel
+                let xpReq = Math.floor(100 * Math.pow(1.1, pjReal.level - 1));
+                while (pjReal.exp >= xpReq) {
+                    pjReal.exp -= xpReq;
+                    pjReal.level += 1;
+                    xpReq = Math.floor(100 * Math.pow(1.1, pjReal.level - 1));
+                    avisosLvl += `\n🆙 ¡*${pjReal.nombre}* subió al nivel ${pjReal.level}!`;
                 }
-            });
-        }
+            }
+        });
 
         mobActual[message.from].vencido = true;
 
-        // GUARDADO TOTAL
+        // GUARDADO TOTAL (Escribir en los archivos JSON)
         guardarEconomia(economia);
         guardarHarem(haremData); 
 
-        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Los cambios se han guardado correctamente.`);
+        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Los cambios se han guardado en tu Harem.`);
     }
-		
-    // ---------- DERROTA ----------
+    // ---------- LÓGICA DE DERROTA ----------
     else {
-
-        return message.reply(`
-『  *DERROTA* 』
-
-↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]
-↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]
-
-Te faltó ${mob.poderTotal - poderFinalUser} de poder.
-`);
+        return message.reply(`『  *DERROTA* 』\n\n↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]\n↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]\n\nTe faltó ${mob.poderTotal - poderFinalUser} de poder.`);
     }
 }
 
@@ -2525,3 +2512,4 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
