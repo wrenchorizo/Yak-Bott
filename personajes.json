@@ -179,8 +179,8 @@
     "imagen": "https://i.pinimg.com/736x/7e/4c/45/7e4c457ae4ba547cd5616aaa825953f6.jpg"
   },
   {
-    "nombre": "Tanjiro Kamado",
-    "valor": "19007",
+    "nombre": "Tanjiro K.",
+    "valor": "15007",
     "genero": "Hombre",
     "fuente": "Demon Slayer",
     "imagen": "https://i.pinimg.com/736x/bd/cb/ab/bdcbab321e32d56049bd674bcff8d913.jpg"
@@ -2247,4 +2247,5 @@
   }
 
 ]
+
 
