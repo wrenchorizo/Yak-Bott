@@ -2362,12 +2362,9 @@ if (comando === 'kick') {
     else if (message.hasQuotedMsg) {
 
     const quoted = await message.getQuotedMessage();
+    const contact = await quoted.getContact();
 
-    if (quoted.id.participant) {
-        objetivo = quoted.id.participant;
-    } else {
-        objetivo = quoted.from;
-    }
+    objetivo = contact.id._serialized;
 
 	}
 
@@ -2599,6 +2596,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
