@@ -2361,14 +2361,15 @@ if (comando === 'kick') {
     // ✅ responder mensaje
     else if (message.hasQuotedMsg) {
 
-        const quoted = await message.getQuotedMessage();
+    const quoted = await message.getQuotedMessage();
 
-        objetivo =
-            quoted.author ||
-            quoted.from ||
-            quoted.id.participant;
-
+    if (quoted.id.participant) {
+        objetivo = quoted.id.participant;
+    } else {
+        objetivo = quoted.from;
     }
+
+	}
 
     if (!objetivo) {
         return message.reply("Debes mencionar al usuario o responder a su mensaje.");
@@ -2598,6 +2599,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
