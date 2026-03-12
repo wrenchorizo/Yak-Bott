@@ -669,9 +669,11 @@ ${prefix}hola | ${prefix}ping | ${prefix}info | ${prefix}creador`;
         return client.sendMessage(message.from, loQueDijo);
     }
 
-    if (comando === 'ping') {
-        return message.reply('🏓 Pong! Estoy activo.');
-    }
+    // --- COMANDO PING ---
+if (comando === 'ping') {
+    const latencia = Date.now() - (message.timestamp * 1000); // Diferencia en ms
+    return message.reply(`¡Pong!\n> *Tiempo:* ${latencia}ms`);
+}
 
 // --- COMANDO POKEVO REPARADO ---
     if (comando === 'pokevo') {
@@ -2649,6 +2651,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
