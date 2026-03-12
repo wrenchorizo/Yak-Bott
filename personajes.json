@@ -14,6 +14,13 @@
     "imagen": "https://i.pinimg.com/1200x/55/f2/de/55f2de23dbc997fb338519eaed81bb13.jpg"
   },
   {
+    "nombre": "Zen Oh Sama",
+    "valor": "50000",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/f4/1b/07/f41b075615f297f15060ba4b72807b31.jpg"
+  },
+  {
     "nombre": "Vegeta",
     "valor": "19999",
     "genero": "Hombre",
@@ -2188,5 +2195,40 @@
     "genero": "Desconocido",
     "fuente": "Sonic The Hedgehog",
     "imagen": "https://i.pinimg.com/1200x/96/8c/97/968c9752f30ba2a942966f2ec0689ec6.jpg"
+  },
+  {
+    "nombre": "Edd",
+    "valor": "10876",
+    "genero": "Hombre",
+    "fuente": "Eddsworld",
+    "imagen": "https://i.pinimg.com/736x/68/3c/ce/683cceeb49b838d6d3a61d2937b19128.jpg"
+  },
+  {
+    "nombre": "Tom",
+    "valor": "12876",
+    "genero": "Hombre",
+    "fuente": "Eddsworld",
+    "imagen": "https://i.pinimg.com/736x/eb/58/b2/eb58b2f177e2914fe9988a5e80ca1e30.jpg"
+  },
+  {
+    "nombre": "Matt",
+    "valor": "9876",
+    "genero": "Hombre",
+    "fuente": "Eddsworld",
+    "imagen": "https://i.pinimg.com/736x/5f/d0/d3/5fd0d3e779815bc0ac7ef2c23537f14f.jpg"
+  },
+  {
+    "nombre": "Tord",
+    "valor": "11979",
+    "genero": "Hombre",
+    "fuente": "Eddsworld",
+    "imagen": "https://i.pinimg.com/736x/e8/2f/fb/e82ffb8540d0327b7db625ccfae12e26.jpg"
+  },
+  {
+    "nombre": "Zanta Claws",
+    "valor": "12996",
+    "genero": "Hombre",
+    "fuente": "Eddsworld",
+    "imagen": "https://static.wikia.nocookie.net/eddsworld/images/f/f8/ZantaClaws3_-_Zord.png"
   }
 ]
