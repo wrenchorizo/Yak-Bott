@@ -2528,59 +2528,70 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
 // ==========================================
     // REACCIONES ANIME (MP4 CONVERTIDO - MODO GIF)
     // ==========================================
-    const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'kiss'];
-    const comandoLimpio = comando.split(/\s+/)[0];
+const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'kiss'];
+const comandoLimpio = comando.split(/\s+/)[0];
 
-    if (listaReacciones.includes(comandoLimpio)) {
-        const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
-const gifPath = path.join(__dirname, rawGifPath);
-        const outputPath = `./temp_${Date.now()}.mp4`; // Archivo temporal
-        
-        const authorContact = await message.getContact();
-        const authorName = authorContact.pushname || 'Usuario';
-        const mencionadoId = message.mentionedIds[0];
-        
-        let nombreMencionado = "";
-        if (mencionadoId) {
-            const contactMencionado = await client.getContactById(mencionadoId);
-            nombreMencionado = `@${contactMencionado.pushname || contactMencionado.number.split('@')[0]}`;
-        }
-
-        let textoFinal = mencionadoId 
-            ? `*${authorName}* hizo un ${comandoLimpio} con ${nombreMencionado}` 
-            : `*${authorName}* hizo un ${comandoLimpio}`;
-
-        // Personalización rápida de frases
-        if (comandoLimpio === 'kiss') textoFinal = mencionadoId ? `*${authorName}* le dio un beso a ${nombreMencionado} 💋` : `*${authorName}* lanzó un beso al aire... 💋`;
-        if (comandoLimpio === 'hug') textoFinal = mencionadoId ? `*${authorName}* le dio un abrazo a ${nombreMencionado} 🤗` : `*${authorName}* dio un abrazo al aire... 🤗`;
-
-        // USAMOS FFMPEG DE FORMA SEGURA
-ffmpeg(gifPath)
-    .setFfmpegPath(ffmpegPath)
-    .outputOptions([
-        '-pix_fmt yuv420p',
-        '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'
-    ])
-            .toFormat('mp4')
-            .on('end', async () => {
-                try {
-                    const media = MessageMedia.fromFilePath(outputPath);
-                    await client.sendMessage(message.from, media, {
-                        caption: textoFinal,
-                        sendVideoAsGif: true,
-                        mentions: mencionadoId ? [mencionadoId] : []
-                    });
-                    if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); // Borra el temporal
-                } catch (e) { console.log("Error enviando:", e); }
-            })
-            .on('error', (err) => {
-                console.log("Error FFMPEG:", err);
-                message.reply("❌ Error estético: No pude procesar el movimiento.");
-            })
-            .save(outputPath);
-
-        return;
+if (listaReacciones.includes(comandoLimpio)) {
+    const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
+    const gifPath = path.join(__dirname, rawGifPath);
+    const outputPath = `./temp_${Date.now()}.mp4`; 
+    
+    const authorContact = await message.getContact();
+    const authorName = authorContact.pushname || 'Usuario';
+    const mencionadoId = message.mentionedIds[0];
+    
+    let nombreMencionado = "";
+    if (mencionadoId) {
+        const contactMencionado = await client.getContactById(mencionadoId);
+        nombreMencionado = `@${contactMencionado.pushname || contactMencionado.number.split('@')[0]}`;
     }
+
+    // --- MAPEO DE FRASES PERSONALIZADAS ---
+    const frases = {
+        cry: { solo: `*${authorName}* se puso a llorar... `, con: `*${authorName}* está llorando por culpa de ${nombreMencionado}` },
+        sad: { solo: `*${authorName}* está triste...`, con: `*${authorName}* se siente triste por ${nombreMencionado}` },
+        happy: { solo: `*${authorName}* está muy feliz!`, con: `*${authorName}* sonríe junto a ${nombreMencionado}` },
+        angry: { solo: `*${authorName}* está de mal humor`, con: `*${authorName}* está enojado por culpa de ${nombreMencionado}` },
+        laugh: { solo: `*${authorName}* se está riendo a carcajadas`, con: `*${authorName}* se ríe con ${nombreMencionado}` },
+        dance: { solo: `*${authorName}* se sacó los pasos prohibídos`, con: `*${authorName}* está bailando con ${nombreMencionado}` },
+        scared: { solo: `*${authorName}* tiene mucho miedo 😱`, con: `*${authorName}* se asustó con ${nombreMencionado} 😱` },
+        eat: { solo: `*${authorName}* está comiendo algo rico`, con: `*${authorName}* come junto a ${nombreMencionado}` },
+        sleep: { solo: `*${authorName}* se quedó dormido... 💤`, con: `*${authorName}* duerme junto a ${nombreMencionado} 💤` },
+        cafe: { solo: `*${authorName}* toma cafe caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
+        hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
+        kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` }
+    };
+
+    // Elegimos la frase según si hay mención o no
+    let textoFinal = mencionadoId ? frases[comandoLimpio].con : frases[comandoLimpio].solo;
+
+    // PROCESAMIENTO FFMPEG
+    ffmpeg(gifPath)
+        .setFfmpegPath(ffmpegPath)
+        .outputOptions([
+            '-pix_fmt yuv420p',
+            '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'
+        ])
+        .toFormat('mp4')
+        .on('end', async () => {
+            try {
+                const media = MessageMedia.fromFilePath(outputPath);
+                await client.sendMessage(message.from, media, {
+                    caption: textoFinal,
+                    sendVideoAsGif: true,
+                    mentions: mencionadoId ? [mencionadoId] : []
+                });
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+            } catch (e) { console.log("Error enviando:", e); }
+        })
+        .on('error', (err) => {
+            console.log("Error FFMPEG:", err);
+            message.reply("❌ Error al procesar el GIF.");
+        })
+        .save(outputPath);
+
+    return;
+}
 
 // --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
@@ -2603,3 +2614,4 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
