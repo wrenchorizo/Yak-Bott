@@ -671,8 +671,10 @@ ${prefix}hola | ${prefix}ping | ${prefix}info | ${prefix}creador`;
 
     // --- COMANDO PING ---
 if (comando === 'ping') {
-    const latencia = Date.now() - (message.timestamp * 1000); // Diferencia en ms
-    return message.reply(`¡Pong!\n> *Tiempo:* ${latencia}ms`);
+    const latencia = Date.now() - (message.timestamp * 1000);
+    const memoria = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2); // Memoria RAM usada en MB
+    
+    return message.reply(`¡Pong!\n\n> *Latencia:* ${latencia}ms\n> *RAM:* ${memoria} MB\n> *Estado:* Online`);
 }
 
 // --- COMANDO POKEVO REPARADO ---
@@ -2651,6 +2653,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
