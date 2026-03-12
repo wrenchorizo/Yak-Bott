@@ -2334,47 +2334,50 @@ if (comando === 'kick') {
     const sender = chat.participants.find(p => p.id._serialized === senderContact.id._serialized);
     const bot = chat.participants.find(p => p.id._serialized === botId);
 
-    // verificar si quien ejecuta es admin
+    // verificar admin
     if (!sender || (!sender.isAdmin && !sender.isSuperAdmin)) {
-        return message.reply("» Solo los administradores pueden usar este comando.");
+        return message.reply("❌ Solo los administradores pueden usar este comando.");
     }
 
-    // verificar si el bot es admin
+    // verificar bot admin
     if (!bot || (!bot.isAdmin && !bot.isSuperAdmin)) {
-        return message.reply("⊹ Necesito ser admin para expulsar a un miembro del grupo");
+        return message.reply("Necesito ser admin para expulsar a un miembro del grupo");
     }
 
     let objetivo;
 
-    // mencionar
+    // si mencionó usuario
     if (message.mentionedIds.length > 0) {
         objetivo = message.mentionedIds[0];
     }
 
-    // responder mensaje
+    // si respondió mensaje
     else if (message.hasQuotedMsg) {
-        const quotedMsg = await message.getQuotedMessage();
-        objetivo = quotedMsg.author || quotedMsg.from;
+        const quoted = await message.getQuotedMessage();
+        objetivo = quoted.author || quoted.from;
     }
 
     if (!objetivo) {
-        return message.reply("✧ Debes mencionar al usuario o responder a su mensaje.");
+        return message.reply("Debes mencionar al usuario o responder a su mensaje.");
     }
 
-    // evitar expulsar al bot
+    // limpiar ID
+    objetivo = objetivo.replace("@c.us", "@s.whatsapp.net");
+
+    // evitar expulsar bot
     if (objetivo === botId) {
-        return message.reply("⊹ No puedo expulsarme a mí mismo.");
+        return message.reply("❌ No puedo expulsarme a mí mismo.");
     }
 
     const target = chat.participants.find(p => p.id._serialized === objetivo);
 
     if (!target) {
-        return message.reply("» No encontré a ese usuario en el grupo.");
+        return message.reply("❌ No encontré a ese usuario en el grupo.");
     }
 
     // evitar expulsar admins
     if (target.isAdmin || target.isSuperAdmin) {
-        return message.reply("» No puedes expulsar a otro administrador.");
+        return message.reply("❌ No puedes expulsar a otro administrador.");
     }
 
     try {
@@ -2388,7 +2391,7 @@ if (comando === 'kick') {
 
     } catch (err) {
         console.log("Error kick:", err);
-        message.reply("» No pude expulsar a ese usuario.");
+        message.reply("No pude expulsar a ese usuario.");
     }
 }
 
@@ -2581,6 +2584,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
