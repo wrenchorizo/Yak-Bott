@@ -2331,8 +2331,26 @@ if (comando === 'kick') {
     const senderContact = await message.getContact();
     const botId = client.info.wid._serialized;
 
-    const sender = chat.participants.find(p => p.id._serialized === senderContact.id._serialized);
-    const bot = chat.participants.find(p => p.id._serialized === botId);
+// --------- COMANDO ?kick ---------
+if (comando === 'kick') {
+
+    const chat = await message.getChat();
+
+    // solo grupos
+    if (!chat.isGroup) {
+        return message.reply("Este comando solo funciona en grupos.");
+    }
+
+    const senderContact = await message.getContact();
+    const botId = client.info.wid._serialized;
+
+    const sender = chat.participants.find(p => 
+        p.id._serialized === senderContact.id._serialized
+    );
+
+    const bot = chat.participants.find(p => 
+        p.id._serialized === botId
+    );
 
     // verificar admin
     if (!sender || (!sender.isAdmin && !sender.isSuperAdmin)) {
@@ -2344,14 +2362,13 @@ if (comando === 'kick') {
         return message.reply("Necesito ser admin para expulsar a un miembro del grupo");
     }
 
+    // obtener objetivo
     let objetivo;
 
-    // si mencionó usuario
     if (message.mentionedIds.length > 0) {
         objetivo = message.mentionedIds[0];
     }
 
-    // si respondió mensaje
     else if (message.hasQuotedMsg) {
         const quoted = await message.getQuotedMessage();
         objetivo = quoted.author || quoted.from;
@@ -2361,18 +2378,20 @@ if (comando === 'kick') {
         return message.reply("Debes mencionar al usuario o responder a su mensaje.");
     }
 
-    // limpiar ID
-    objetivo = objetivo.replace("@c.us", "@s.whatsapp.net");
+    // buscar participante por número
+    const numeroObjetivo = objetivo.split('@')[0];
 
-    // evitar expulsar bot
-    if (objetivo === botId) {
-        return message.reply("❌ No puedo expulsarme a mí mismo.");
-    }
-
-    const target = chat.participants.find(p => p.id._serialized === objetivo);
+    const target = chat.participants.find(p =>
+        p.id._serialized.split('@')[0] === numeroObjetivo
+    );
 
     if (!target) {
         return message.reply("❌ No encontré a ese usuario en el grupo.");
+    }
+
+    // evitar expulsar bot
+    if (target.id._serialized === botId) {
+        return message.reply("❌ No puedo expulsarme a mí mismo.");
     }
 
     // evitar expulsar admins
@@ -2382,14 +2401,15 @@ if (comando === 'kick') {
 
     try {
 
-        const contacto = await client.getContactById(objetivo);
+        const contacto = await client.getContactById(target.id._serialized);
         const nombre = contacto.pushname || contacto.name || contacto.number;
 
-        await chat.removeParticipants([objetivo]);
+        await chat.removeParticipants([target.id._serialized]);
 
         await chat.sendMessage(`"${nombre}" ha sido expulsado del grupo`);
 
     } catch (err) {
+
         console.log("Error kick:", err);
         message.reply("No pude expulsar a ese usuario.");
     }
@@ -2584,6 +2604,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
