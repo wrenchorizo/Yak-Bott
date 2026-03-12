@@ -492,9 +492,9 @@ if (comando === 'reload') {
 
 
 if (['menu', 'help'].includes(comando)) {
-            const menuText = `📜 *MENÚ DE YAKBOT*
+            const menuText = `『 *MENÚ DE YAKBOT* 』
 
-🎴 *GACHA & RPG*
+✦ *GACHA & RPG*
 
 ${prefix}rw
 > Tira un personaje aleatorio (15 min CD).
@@ -527,7 +527,7 @@ ${prefix}cooldowns
 > Consulta tus tiempos de espera.
 
 
-⚔️ *PVP 3v3 (NIVELES)*
+✧ *PVP 3v3 (NIVELES)*
 
 ${prefix}duel @usuario
 > Reta a alguien (5 min para aceptar).
@@ -539,7 +539,7 @@ ${prefix}pick [char1, char2, char3]
 > Elige equipo. ¡Los niveles aumentan tu poder!
 
 
-💰 *ECONOMÍA & TIENDAS*
+✦ *ECONOMÍA & TIENDAS*
 
 ${prefix}w
 > Trabaja para ganar dinero (1 min CD).
@@ -572,7 +572,7 @@ ${prefix}buy [número] [nombre]
 > Compra y usa un objeto en un personaje.
 
 
-🎬 *REACCIONES ANIME*
+✧ *REACCIONES ANIME*
 
 ⌁ ${prefix}cry
     ╰┈─ ➤ Llorar por algo.
@@ -600,13 +600,13 @@ ${prefix}buy [número] [nombre]
     ╰┈─ ➤ Dar un beso.
 
 
-🖼 *STICKERS*
+✦ *STICKERS*
 
 ${prefix}s
 > Convierte imagen, GIF o video en sticker.
 
 
-⚙️ *ADMIN & OTROS*
+✧ *ADMIN & OTROS*
 
 ${prefix}reload
 > Reinicia el bot (Solo dueño).
@@ -2505,6 +2505,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
