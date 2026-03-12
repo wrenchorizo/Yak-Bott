@@ -2324,18 +2324,6 @@ if (comando === 'kick') {
 
     const chat = await message.getChat();
 
-    if (!chat.isGroup) {
-        return message.reply("Este comando solo funciona en grupos.");
-    }
-
-    const senderContact = await message.getContact();
-    const botId = client.info.wid._serialized;
-
-// --------- COMANDO ?kick ---------
-if (comando === 'kick') {
-
-    const chat = await message.getChat();
-
     // solo grupos
     if (!chat.isGroup) {
         return message.reply("Este comando solo funciona en grupos.");
@@ -2604,6 +2592,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
