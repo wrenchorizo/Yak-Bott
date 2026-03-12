@@ -1731,49 +1731,51 @@ if (comando.startsWith('wimage')) {
         }
     }
 
+
+
 // --------- ?charinfo ---------
-
 if (comando.startsWith('charinfo')) {
-    // 1. Extraer el nombre correctamente
     const nombreBusqueda = message.body.slice(prefix.length + 8).trim(); 
-    
-    if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.\nEjemplo: `?charinfo Goku`.");
+    if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) {
-        return message.reply("❒ Tu harem está vacío.");
+    // Refrescar memoria desde el archivo antes de buscar
+    haremPorGrupo = cargarHarem(); 
+
+    if (!haremPorGrupo[message.from] || !haremPorGrupo[message.from][userId]) {
+        return message.reply("❒ Tu harem está vacío en este grupo.");
     }
 
-    const personaje = haremPorGrupo[grupoId][userId].find(p => p.nombre.toLowerCase() === nombreBusqueda.toLowerCase());
+    const personaje = haremPorGrupo[message.from][userId].find(p => 
+        p.nombre.toLowerCase() === nombreBusqueda.toLowerCase() || 
+        p.nombre.toLowerCase().includes(nombreBusqueda.toLowerCase())
+    );
 
     if (!personaje) return message.reply(`❌ No tienes a "${nombreBusqueda}" en tu colección.`);
 
-    // 2. Asegurar que los stats existan (por si es un personaje viejo)
-    if (personaje.level === undefined) personaje.level = 1;
-    if (personaje.exp === undefined) personaje.exp = 0;
-
-    // 3. Cálculos de XP y Poder
-    const xpSiguienteNivel = Math.floor(100 * Math.pow(1.1, personaje.level - 1));
-    const poderReal = Math.floor(Number(personaje.valor) * Math.pow(1.20, (personaje.level - 1)));
+    // Asegurar valores por defecto
+    const lvl = personaje.level || 1;
+    const exp = personaje.exp || 0;
+    const stamina = personaje.stamina !== undefined ? personaje.stamina : 100;
+    
+    const xpSiguienteNivel = Math.floor(100 * Math.pow(1.1, lvl - 1));
+    const poderReal = Math.floor(Number(personaje.valor) * Math.pow(1.20, (lvl - 1)));
 
     let infoMsg = `👤 *DETALLES DEL PERSONAJE*\n`;
     infoMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
     infoMsg += `⭐ *Nombre:* ${personaje.nombre}\n`;
     infoMsg += `🎬 *Serie:* ${personaje.fuente}\n`;
-    infoMsg += `📊 *Nivel:* ${personaje.level}\n`;
-    infoMsg += `✨ *XP:* ${personaje.exp} / ${xpSiguienteNivel}\n`;
+    infoMsg += `📊 *Nivel:* ${lvl}\n`;
+    infoMsg += `✨ *XP:* ${exp} / ${xpSiguienteNivel}\n`;
     infoMsg += `⚔️ *Poder Real:* ${poderReal.toLocaleString()}\n`;
-    infoMsg += `⚡ *Energía:* ${personaje.stamina || 100}%\n\n`;
+    infoMsg += `⚡ *Energía:* ${stamina}%\n\n`;
     infoMsg += `━━━━━━━━━━━━━━━━━━━━`;
 
     try {
-        const response = await fetch(personaje.imagen);
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'char.jpg');
-        
+        const response = await axios.get(personaje.imagen, { responseType: 'arraybuffer' });
+        const media = new MessageMedia('image/jpeg', Buffer.from(response.data).toString('base64'), 'char.jpg');
         await client.sendMessage(message.from, media, { caption: infoMsg });
     } catch (error) {
-        console.log("Error cargando imagen en charinfo:", error.message);
-        message.reply(infoMsg); // Si falla la imagen, envía al menos el texto
+        message.reply(infoMsg);
     }
 }
 
@@ -2149,9 +2151,9 @@ if (comando.startsWith('fight')) {
         return message.reply(`❏ *Uso:* ${prefix}fight Personaje1, Personaje2, Personaje3`);
     }
 
-    // Cargamos el harem UNA SOLA VEZ al principio
-    const haremData = cargarHarem();
-    const misPersonajes = haremData[message.from]?.[userId] || [];
+    // Cargamos la data actualizada
+    const hData = cargarHarem();
+    const misPersonajes = hData[message.from]?.[userId] || [];
 
     if (misPersonajes.length === 0) {
         return message.reply("❏ *Error:* No tienes personajes en este grupo.");
@@ -2160,13 +2162,9 @@ if (comando.startsWith('fight')) {
     let equipoTemp = [];
     let poderTotalEquipo = 0;
 
-    // Buscamos los personajes en el harem cargado
     for (let nombreBusqueda of nombresInput) {
         const pj = misPersonajes.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
-
-        if (!pj) {
-            return message.reply(`❏ *Error:* No tienes a [ ${nombreBusqueda} ] en tu harem.`);
-        }
+        if (!pj) return message.reply(`❏ *Error:* No tienes a [ ${nombreBusqueda} ] en tu harem.`);
 
         let lvl = pj.level || 1;
         let valorBase = Number(pj.valor) || 0;
@@ -2178,72 +2176,54 @@ if (comando.startsWith('fight')) {
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
-// ---------- RESULTADOS DEL COMBATE (REPARADO AL 100%) ----------
     if (poderFinalUser > mob.poderTotal) {
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
-
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        // Calculamos la EXP (mínimo 5 para que siempre sume algo)
-        const expGanada = Math.max(5, Math.floor(mob.poderTotal / 20));
+        const expGanada = Math.max(10, Math.floor(mob.poderTotal / 15));
         let avisosLvl = "";
 
-        // CARGAMOS EL HAREM DIRECTAMENTE PARA EDITAR LA "FUENTE DE LA VERDAD"
-        const hData = cargarHarem(); 
-        const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
+        // EDITAR DIRECTAMENTE EL HAREM
+        hData[message.from][userId].forEach(pj => {
+            const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
+            if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
+                pj.level = pj.level || 1;
+                pj.exp = (pj.exp || 0) + expGanada;
+                pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
 
-        if (hData[message.from] && hData[message.from][userId]) {
-            // Buscamos en el array real del archivo
-            hData[message.from][userId].forEach(pj => {
-                // Si el nombre del personaje en el archivo coincide con uno de los que peleó...
-                if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
-                    
-                    // 1. Sumar EXP al objeto REAL
-                    pj.level = pj.level || 1;
-                    pj.exp = (pj.exp || 0) + expGanada;
-
-                    // 2. Lógica de subida de nivel (dentro del objeto real)
-                    let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-                    while (pj.exp >= xpReq) {
-                        pj.exp -= xpReq;
-                        pj.level += 1;
-                        xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-                        avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
-                    }
+                let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+                while (pj.exp >= xpReq) {
+                    pj.exp -= xpReq;
+                    pj.level += 1;
+                    xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+                    avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
                 }
-            });
-        }
+            }
+        });
 
-        // Marcamos el mob como vencido en memoria
         mobActual[message.from].vencido = true;
-
-        // GUARDADO CRÍTICO: Aquí es donde se escribe el archivo .json
+        
+        // SINCRONIZACIÓN CRÍTICA
+        haremPorGrupo = hData; 
+        guardarHarem(hData);
         guardarEconomia(economia);
-        guardarHarem(hData); // Guardamos 'hData', que es donde inyectamos la EXP
 
-        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> ✅ Datos guardados correctamente.`);
-
+        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Datos guardados en tu Harem.`);
     } else {
-        // ---------- DERROTA ----------
-        const hDataDerrota = cargarHarem();
-        const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
-
-        if (hDataDerrota[message.from] && hDataDerrota[message.from][userId]) {
-            hDataDerrota[message.from][userId].forEach(pj => {
-                if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
-                    // Pierden stamina por la derrota
-                    pj.stamina = Math.max(0, (pj.stamina || 100) - 5);
-                }
-            });
-            guardarHarem(hDataDerrota);
-        }
+        // DERROTA
+        hData[message.from][userId].forEach(pj => {
+            const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
+            if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
+                pj.stamina = Math.max(0, (pj.stamina || 100) - 10);
+            }
+        });
+        haremPorGrupo = hData;
+        guardarHarem(hData);
 
         const faltaPoder = mob.poderTotal - poderFinalUser;
-        const porcentaje = Math.floor((poderFinalUser / mob.poderTotal) * 100);
-
-        return message.reply(`『  *DERROTA* 』\n\n↳ Poder: ${porcentaje}%\n↳ Faltó: ${faltaPoder.toLocaleString()}\n⚡ -5% Stamina`);
+        return message.reply(`『  *DERROTA* 』\n\n⚡ -10% Energía\n📉 Faltó ${faltaPoder.toLocaleString()} de poder.`);
     }
 }
 
@@ -2533,6 +2513,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
