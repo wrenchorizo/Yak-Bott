@@ -10,7 +10,6 @@ if (!global.File) {
 }
 
 const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
-const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
 const qrcode = require('qrcode-terminal');
 const dataFolder = './data/';
@@ -46,16 +45,6 @@ process.on('uncaughtExceptionMonitor', (err, origin) => {
 (async () => {
 
 
-
-try {
-    await mongoose.connect(process.env.MONGO_URL);
-    console.log("Mongo conectado");
-} catch (err) {
-    console.log("Error conectando a Mongo:", err);
-}
-    const store = new MongoStore({
-    mongoose: mongoose
-});
 
 let botSettings = {};
 if (fs.existsSync('./botSettings.json')) {
@@ -237,10 +226,8 @@ function actualizarStamina(personaje) {
 
 // Cliente
 const client = new Client({
-    authStrategy: new RemoteAuth({
-        clientId: "yakbot",
-        store: store,
-        backupSyncIntervalMs: 60000
+    authStrategy: new LocalAuth({
+        dataPath: './data/session' // <--- Esto guarda la sesión dentro de /data/
     }),
     puppeteer: {
         headless: "new",
@@ -254,9 +241,6 @@ const client = new Client({
 });
 
 
-	client.on("remote_session_saved", () => {
-    console.log("✅ Sesión guardada en Mongo");
-});
 
 client.on('code', (code) => {
     console.log('\n Código para vincularte a Yak-bot:');
@@ -2520,6 +2504,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
