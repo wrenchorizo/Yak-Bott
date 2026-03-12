@@ -124,6 +124,24 @@ const animeGifs = {
         './gifs/scared2.gif',
         './gifs/scared3.gif',
         './gifs/scared4.gif'
+    ],
+	punch: [
+        './gifs/punch1.gif',
+        './gifs/punch2.gif',
+        './gifs/punch3.gif',
+        './gifs/punch4.gif'
+    ],
+	run: [
+        './gifs/run1.gif',
+        './gifs/run2.gif',
+        './gifs/run3.gif',
+        './gifs/run4.gif'
+    ],
+	kill: [
+        './gifs/kill1.gif',
+        './gifs/kill2.gif',
+        './gifs/kill3.gif',
+        './gifs/kill4.gif'
     ]
 };
 
@@ -2528,7 +2546,7 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
 // ==========================================
     // REACCIONES ANIME (MP4 CONVERTIDO - MODO GIF)
     // ==========================================
-const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'kiss'];
+const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'];
 const comandoLimpio = comando.split(/\s+/)[0];
 
 if (listaReacciones.includes(comandoLimpio)) {
@@ -2559,7 +2577,10 @@ if (listaReacciones.includes(comandoLimpio)) {
         sleep: { solo: `*${authorName}* se quedó dormido... 💤`, con: `*${authorName}* duerme junto a ${nombreMencionado} 💤` },
         cafe: { solo: `*${authorName}* toma cafe caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
         hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
-        kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` }
+        kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` },
+		punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
+		run: { solo: `*${authorName}* salió corriendo lejos de aquí... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
+		kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató a sin piedad ${nombreMencionado}` }
     };
 
     // Elegimos la frase según si hay mención o no
@@ -2614,4 +2635,5 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
