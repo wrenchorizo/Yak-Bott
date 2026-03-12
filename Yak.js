@@ -9,7 +9,7 @@ if (!global.File) {
     };
 }
 
-const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const { MongoStore } = require('wwebjs-mongo');
 const qrcode = require('qrcode-terminal');
 const dataFolder = './data/';
@@ -227,7 +227,8 @@ function actualizarStamina(personaje) {
 // Cliente
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: './data/session' // <--- Esto guarda la sesión dentro de /data/
+        clientId: "client-one",
+        dataPath: './data/session' // <--- AQUÍ se guarda tu QR escaneado para siempre
     }),
     puppeteer: {
         headless: "new",
@@ -2504,6 +2505,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
