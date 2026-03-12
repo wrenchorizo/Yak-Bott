@@ -1696,7 +1696,10 @@ if (comando.startsWith('wimage')) {
         }
 
         // Buscamos en la base de datos global 'personajes'
-        const pj = personajes.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
+        const pj = personajes.find(p =>
+    p.nombre.toLowerCase() === nombreBusqueda ||
+    p.nombre.toLowerCase().startsWith(nombreBusqueda)
+);
 
         if (!pj) {
             return message.reply(`❌ No encontré a "${nombreBusqueda}" en la base de datos.`);
@@ -2505,6 +2508,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
