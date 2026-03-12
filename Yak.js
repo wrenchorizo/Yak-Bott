@@ -2324,53 +2324,59 @@ if (comando === 'kick') {
 
     const chat = await message.getChat();
 
-    // solo grupos
     if (!chat.isGroup) {
         return message.reply("Este comando solo funciona en grupos.");
     }
 
-    const senderContact = await message.getContact();
+    const sender = await message.getContact();
     const botId = client.info.wid._serialized;
 
-    const sender = chat.participants.find(p => 
-        p.id._serialized === senderContact.id._serialized
+    const senderParticipant = chat.participants.find(p =>
+        p.id._serialized === sender.id._serialized
     );
 
-    const bot = chat.participants.find(p => 
+    const botParticipant = chat.participants.find(p =>
         p.id._serialized === botId
     );
 
     // verificar admin
-    if (!sender || (!sender.isAdmin && !sender.isSuperAdmin)) {
+    if (!senderParticipant?.isAdmin && !senderParticipant?.isSuperAdmin) {
         return message.reply("❌ Solo los administradores pueden usar este comando.");
     }
 
     // verificar bot admin
-    if (!bot || (!bot.isAdmin && !bot.isSuperAdmin)) {
+    if (!botParticipant?.isAdmin && !botParticipant?.isSuperAdmin) {
         return message.reply("Necesito ser admin para expulsar a un miembro del grupo");
     }
 
-    // obtener objetivo
     let objetivo;
 
-    if (message.mentionedIds.length > 0) {
-        objetivo = message.mentionedIds[0];
+    // ✅ menciones reales
+    const mentions = await message.getMentions();
+
+    if (mentions.length > 0) {
+        objetivo = mentions[0].id._serialized;
     }
 
+    // ✅ responder mensaje
     else if (message.hasQuotedMsg) {
+
         const quoted = await message.getQuotedMessage();
-        objetivo = quoted.author || quoted.from;
+
+        objetivo =
+            quoted.author ||
+            quoted.from ||
+            quoted.id.participant;
+
     }
 
     if (!objetivo) {
         return message.reply("Debes mencionar al usuario o responder a su mensaje.");
     }
 
-    // buscar participante por número
-    const numeroObjetivo = objetivo.split('@')[0];
-
+    // buscar participante
     const target = chat.participants.find(p =>
-        p.id._serialized.split('@')[0] === numeroObjetivo
+        p.id._serialized === objetivo
     );
 
     if (!target) {
@@ -2592,6 +2598,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
