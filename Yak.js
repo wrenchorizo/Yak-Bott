@@ -13,6 +13,7 @@ const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const mongoose = require('mongoose');
 const { MongoStore } = require('wwebjs-mongo');
 const qrcode = require('qrcode-terminal');
+const dataFolder = './data/';
 const fs = require('fs');
 const sharp = require('sharp');
 const path = require('path');
@@ -161,14 +162,14 @@ function msToTime(ms) {
 }
 
 function cargarHarem() {
-    if (!fs.existsSync(haremFile)) {
-        fs.writeFileSync(haremFile, JSON.stringify({}));
-    }
-    return JSON.parse(fs.readFileSync(haremFile));
+    const path = dataFolder + 'harem.json';
+    if (fs.existsSync(path)) return JSON.parse(fs.readFileSync(path, 'utf-8'));
+    return {};
 }
 
 function guardarHarem(data) {
-    fs.writeFileSync(haremFile, JSON.stringify(data, null, 2));
+    haremPorGrupo = data; 
+    fs.writeFileSync(dataFolder + 'harem.json', JSON.stringify(data, null, 2));
 }
 
 const duelosActivos = {};
@@ -177,14 +178,20 @@ const tradesPendientes = {};
 const economiaFile = './economia.json';
 
 function cargarEconomia() {
-    if (!fs.existsSync(economiaFile)) {
-        fs.writeFileSync(economiaFile, JSON.stringify({}));
+    const path = dataFolder + 'economia.json';
+    try {
+        if (fs.existsSync(path)) {
+            return JSON.parse(fs.readFileSync(path, 'utf-8'));
+        }
+    } catch (error) {
+        console.log("Error leyendo economía, creando una nueva...");
     }
-    return JSON.parse(fs.readFileSync(economiaFile));
+    return {}; // Si no existe, devuelve carteras vacías
 }
 
 function guardarEconomia(data) {
-    fs.writeFileSync(economiaFile, JSON.stringify(data, null, 2));
+    // Guardamos en ./data/economia.json
+    fs.writeFileSync(dataFolder + 'economia.json', JSON.stringify(data, null, 2));
 }
 
 function sleep(ms){
@@ -2513,6 +2520,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
