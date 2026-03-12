@@ -2131,7 +2131,7 @@
     "valor": "15751",
     "genero": "Desconocido",
     "fuente": "Plants vs Zombies",
-    "imagen": "https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fu8715x2ib92b1.png"
+    "imagen": "https://cdna.artstation.com/p/assets/images/images/078/547/872/large/liam-robinson-pvz2-team-tryptich-01c.jpg"
   },
   {
     "nombre": "Crazy Dave",
@@ -2230,7 +2230,21 @@
     "genero": "Hombre",
     "fuente": "Eddsworld",
     "imagen": "https://static.wikia.nocookie.net/eddsworld/images/f/f8/ZantaClaws3_-_Zord.png"
+  },
+  {
+    "nombre": "Ado",
+    "valor": "20000",
+    "genero": "Mujer",
+    "fuente": "Music",
+    "imagen": "https://cdn-images.dzcdn.net/images/artist/858e14d0f8ee062253851aaf3b31daef/1900x1900-000000-80-0-0.jpg"
+  },
+  {
+    "nombre": "Uta",
+    "valor": "17523",
+    "genero": "Mujer",
+    "fuente": "One Piece",
+    "imagen": "https://jumpichiban.com/cdn/shop/products/71-msmiCWPL._AC_SL1269.jpg"
   }
-]
 
+]
 
