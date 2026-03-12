@@ -16,6 +16,11 @@ const dataFolder = './data/';
 const fs = require('fs');
 const sharp = require('sharp');
 const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 const ytdl = require('@distube/ytdl-core');
 const play = require('play-dl');
 const { exec } = require('child_process');
@@ -51,11 +56,7 @@ if (fs.existsSync('./botSettings.json')) {
     botSettings = JSON.parse(fs.readFileSync('./botSettings.json'));
 }
 const yts = require('yt-search');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
 
-// ESTA LÍNEA ES LA MÁS IMPORTANTE:
-ffmpeg.setFfmpegPath(ffmpegPath);
 const animeGifs = {
     cry: [
         './gifs/cry1.gif',
@@ -2531,7 +2532,8 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
     const comandoLimpio = comando.split(/\s+/)[0];
 
     if (listaReacciones.includes(comandoLimpio)) {
-        const gifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
+        const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
+const gifPath = path.join(__dirname, rawGifPath);
         const outputPath = `./temp_${Date.now()}.mp4`; // Archivo temporal
         
         const authorContact = await message.getContact();
@@ -2553,11 +2555,12 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
         if (comandoLimpio === 'hug') textoFinal = mencionadoId ? `*${authorName}* le dio un abrazo a ${nombreMencionado} 🤗` : `*${authorName}* dio un abrazo al aire... 🤗`;
 
         // USAMOS FFMPEG DE FORMA SEGURA
-        ffmpeg(gifPath)
-            .outputOptions([
-                '-pix_fmt yuv420p', // Formato compatible con todos los celulares
-                '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2' // Asegura dimensiones pares para MP4
-            ])
+ffmpeg(gifPath)
+    .setFfmpegPath(ffmpegPath)
+    .outputOptions([
+        '-pix_fmt yuv420p',
+        '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'
+    ])
             .toFormat('mp4')
             .on('end', async () => {
                 try {
@@ -2600,26 +2603,3 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
