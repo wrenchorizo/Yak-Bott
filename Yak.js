@@ -2178,7 +2178,7 @@ if (comando.startsWith('fight')) {
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
-  // ---------- VICTORIA (REPARADA) ----------
+// ---------- RESULTADOS DEL COMBATE (REPARADO AL 100%) ----------
     if (poderFinalUser > mob.poderTotal) {
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
@@ -2186,22 +2186,25 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
+        // Calculamos la EXP (mínimo 5 para que siempre sume algo)
         const expGanada = Math.max(5, Math.floor(mob.poderTotal / 20));
         let avisosLvl = "";
 
-        // RE-CARGAMOS EL HAREM PARA EDITARLO DESDE LA RAIZ
+        // CARGAMOS EL HAREM DIRECTAMENTE PARA EDITAR LA "FUENTE DE LA VERDAD"
         const hData = cargarHarem(); 
         const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
 
         if (hData[message.from] && hData[message.from][userId]) {
-            // Buscamos directamente en el array original del archivo
+            // Buscamos en el array real del archivo
             hData[message.from][userId].forEach(pj => {
+                // Si el nombre del personaje en el archivo coincide con uno de los que peleó...
                 if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
-                    // APLICAR EXP REAL
+                    
+                    // 1. Sumar EXP al objeto REAL
                     pj.level = pj.level || 1;
                     pj.exp = (pj.exp || 0) + expGanada;
 
-                    // Lógica de subida de nivel
+                    // 2. Lógica de subida de nivel (dentro del objeto real)
                     let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
                     while (pj.exp >= xpReq) {
                         pj.exp -= xpReq;
@@ -2213,26 +2216,24 @@ if (comando.startsWith('fight')) {
             });
         }
 
-        // Marcar mob como vencido
+        // Marcamos el mob como vencido en memoria
         mobActual[message.from].vencido = true;
 
-        // GUARDADO TOTAL - Aquí es donde se hace la magia
+        // GUARDADO CRÍTICO: Aquí es donde se escribe el archivo .json
         guardarEconomia(economia);
-        guardarHarem(hData); // Guardamos la variable hData que es la que editamos arriba
+        guardarHarem(hData); // Guardamos 'hData', que es donde inyectamos la EXP
 
-        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Los cambios se han guardado en la base de datos.`);
-    }
-		
-// ---------- DERROTA (REPARADA Y MEJORADA) ----------
-    else {
-        // Opcional: Bajamos un poco de Stamina por el cansancio de perder
+        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> ✅ Datos guardados correctamente.`);
+
+    } else {
+        // ---------- DERROTA ----------
         const hDataDerrota = cargarHarem();
         const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
 
         if (hDataDerrota[message.from] && hDataDerrota[message.from][userId]) {
             hDataDerrota[message.from][userId].forEach(pj => {
                 if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
-                    // Pierden 5 de stamina por la paliza
+                    // Pierden stamina por la derrota
                     pj.stamina = Math.max(0, (pj.stamina || 100) - 5);
                 }
             });
@@ -2242,21 +2243,8 @@ if (comando.startsWith('fight')) {
         const faltaPoder = mob.poderTotal - poderFinalUser;
         const porcentaje = Math.floor((poderFinalUser / mob.poderTotal) * 100);
 
-        return message.reply(`『  *DERROTA* 』
-
-💔 *Tus personajes han sido derrotados...*
-
-📊 *Estadísticas del combate:*
-↳ Tu Poder Total: [ ${poderFinalUser.toLocaleString()} ]
-↳ Poder del Mob:  [ ${mob.poderTotal.toLocaleString()} ]
-↳ Diferencia:     [ -${faltaPoder.toLocaleString()} ]
-
-📉 *Progreso:* Has alcanzado el ${porcentaje}% del poder necesario.
-⚡ *Efecto:* Tus personajes han perdido **5% de Stamina** por el esfuerzo.
-
-> 💡 *Consejo:* Mejora a tus personajes con ${prefix}buy o entrena con mobs más débiles.`);
+        return message.reply(`『  *DERROTA* 』\n\n↳ Poder: ${porcentaje}%\n↳ Faltó: ${faltaPoder.toLocaleString()}\n⚡ -5% Stamina`);
     }
-}
 
 
 
@@ -2545,5 +2533,6 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
