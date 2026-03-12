@@ -532,10 +532,10 @@ ${prefix}wtired [n]
 > Estado de energía y cansancio de tu harem.
 
 ${prefix}charinfo [Nombre]
-> Stats detallados: Nivel, EXP y Poder Real.
+> Stats detallados de los personajes de tu harem: Nivel, EXP y Poder Real.
 
 ${prefix}wimage [Nombre]
-> Muestra la imagen de un personaje de tu harem.
+> Muestra la imagen de un personaje.
 
 ${prefix}charlist [Fuente]
 > Lista de personajes disponibles por serie.
@@ -546,8 +546,11 @@ ${prefix}givechar @usuario [Nombre]
 ${prefix}trade @usuario [MiChar] | [SuChar]
 > Intercambio de personajes.
 
-${prefix}cooldowns
-> Consulta tus tiempos de espera.
+${prefix}smob
+> Busca mobs para pelear contra ellos y conseguir recompensas.
+
+${prefix}fight personaje1, personaje2, personaje3
+> Pelea contra los mobs que salieron en smob.
 
 
 ✧ *PVP 3v3 (NIVELES)*
@@ -576,11 +579,11 @@ ${prefix}daily
 ${prefix}bal
 > Consulta tu dinero actual.
 
-${prefix}baltop
-> Ranking de millonarios del grupo.
-
 ${prefix}pay [cantidad] @usuario
 > Transfiere dinero a otro usuario.
+
+${prefix}dice [cantidad]
+> Apuesta tu dinero al dado.
 
 ${prefix}charshop
 > Mercado rotativo de personajes nuevos.
@@ -593,6 +596,9 @@ ${prefix}shop
 
 ${prefix}buy [número] [nombre]
 > Compra y usa un objeto en un personaje.
+
+${prefix}cooldowns
+> Consulta tus tiempos de espera.
 
 
 ✧ *REACCIONES ANIME*
@@ -607,6 +613,12 @@ ${prefix}buy [número] [nombre]
     ╰┈─ ➤ Expresar enojo.
 ⌁ ${prefix}laugh
     ╰┈─ ➤ Reírse a carcajadas.
+⌁ ${prefix}run
+    ╰┈─ ➤ Salír corriendo.
+⌁ ${prefix}punch @usuario
+    ╰┈─ ➤ Golpear a alguien.
+⌁ ${prefix}kill @usuario
+    ╰┈─ ➤ Asesinar a alguien	
 ⌁ ${prefix}dance
     ╰┈─ ➤ Echarse unos pasos.
 ⌁ ${prefix}scared
@@ -631,12 +643,14 @@ ${prefix}s
 
 ✧ *ADMIN & OTROS*
 
-${prefix}reload
-> Reinicia el bot (Solo dueño).
+${prefix}kick
+> Saca a un integrante del grupo (Solo admins).
 ${prefix}tr
 > Traduce un texto.
+${prefix}say
+> Haz que el bot diga algo.
 
-${prefix}ping | ${prefix}info | ${prefix}creador`;
+${prefix}hola | ${prefix}ping | ${prefix}info | ${prefix}creador`;
 
             return message.reply(menuText);
         }
@@ -2635,5 +2649,6 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
