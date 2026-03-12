@@ -1965,7 +1965,7 @@
   },
   {
     "nombre": "Yamcha",
-    "valor": "1200",
+    "valor": "10200",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/736x/42/58/e5/4258e5cb76a008e743f5602f52815b37.jpg"
@@ -2177,7 +2177,7 @@
   },
   {
     "nombre": "Silver The Hedgehog",
-    "valor": "100",
+    "valor": "10690",
     "genero": "Desconocido",
     "fuente": "Sonic The Hedgehog",
     "imagen": "https://i.pinimg.com/736x/06/56/6d/06566de867fc123f614e151f8ebdb420.jpg"
@@ -2232,4 +2232,5 @@
     "imagen": "https://static.wikia.nocookie.net/eddsworld/images/f/f8/ZantaClaws3_-_Zord.png"
   }
 ]
+
 
