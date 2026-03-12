@@ -2178,7 +2178,7 @@ if (comando.startsWith('fight')) {
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
-    // ---------- LÓGICA DE VICTORIA ----------
+  // ---------- VICTORIA (REPARADA) ----------
     if (poderFinalUser > mob.poderTotal) {
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
@@ -2186,42 +2186,75 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        // Calculamos la EXP (mínimo 5 para que se note el progreso)
         const expGanada = Math.max(5, Math.floor(mob.poderTotal / 20));
         let avisosLvl = "";
 
-        // IMPORTANTE: Modificamos directamente sobre 'haremData' que ya tenemos abierto
-        // Buscamos los personajes específicos del equipo dentro del objeto original
-        equipoTemp.forEach(pjEnPelea => {
-            // Buscamos la referencia real en el haremData
-            const pjReal = haremData[message.from][userId].find(p => p.nombre === pjEnPelea.nombre);
-            
-            if (pjReal) {
-                pjReal.level = pjReal.level || 1;
-                pjReal.exp = (pjReal.exp || 0) + expGanada;
+        // RE-CARGAMOS EL HAREM PARA EDITARLO DESDE LA RAIZ
+        const hData = cargarHarem(); 
+        const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
 
-                // Lógica de subida de nivel
-                let xpReq = Math.floor(100 * Math.pow(1.1, pjReal.level - 1));
-                while (pjReal.exp >= xpReq) {
-                    pjReal.exp -= xpReq;
-                    pjReal.level += 1;
-                    xpReq = Math.floor(100 * Math.pow(1.1, pjReal.level - 1));
-                    avisosLvl += `\n🆙 ¡*${pjReal.nombre}* subió al nivel ${pjReal.level}!`;
+        if (hData[message.from] && hData[message.from][userId]) {
+            // Buscamos directamente en el array original del archivo
+            hData[message.from][userId].forEach(pj => {
+                if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
+                    // APLICAR EXP REAL
+                    pj.level = pj.level || 1;
+                    pj.exp = (pj.exp || 0) + expGanada;
+
+                    // Lógica de subida de nivel
+                    let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+                    while (pj.exp >= xpReq) {
+                        pj.exp -= xpReq;
+                        pj.level += 1;
+                        xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+                        avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
+                    }
                 }
-            }
-        });
+            });
+        }
 
+        // Marcar mob como vencido
         mobActual[message.from].vencido = true;
 
-        // GUARDADO TOTAL (Escribir en los archivos JSON)
+        // GUARDADO TOTAL - Aquí es donde se hace la magia
         guardarEconomia(economia);
-        guardarHarem(haremData); 
+        guardarHarem(hData); // Guardamos la variable hData que es la que editamos arriba
 
-        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Los cambios se han guardado en tu Harem.`);
+        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Los cambios se han guardado en la base de datos.`);
     }
-    // ---------- LÓGICA DE DERROTA ----------
+		
+// ---------- DERROTA (REPARADA Y MEJORADA) ----------
     else {
-        return message.reply(`『  *DERROTA* 』\n\n↳ Tu Poder: [ ${poderFinalUser.toLocaleString()} ]\n↳ Poder Mob: [ ${mob.poderTotal.toLocaleString()} ]\n\nTe faltó ${mob.poderTotal - poderFinalUser} de poder.`);
+        // Opcional: Bajamos un poco de Stamina por el cansancio de perder
+        const hDataDerrota = cargarHarem();
+        const nombresEnPelea = equipoTemp.map(p => p.nombre.toLowerCase());
+
+        if (hDataDerrota[message.from] && hDataDerrota[message.from][userId]) {
+            hDataDerrota[message.from][userId].forEach(pj => {
+                if (nombresEnPelea.includes(pj.nombre.toLowerCase())) {
+                    // Pierden 5 de stamina por la paliza
+                    pj.stamina = Math.max(0, (pj.stamina || 100) - 5);
+                }
+            });
+            guardarHarem(hDataDerrota);
+        }
+
+        const faltaPoder = mob.poderTotal - poderFinalUser;
+        const porcentaje = Math.floor((poderFinalUser / mob.poderTotal) * 100);
+
+        return message.reply(`『  *DERROTA* 』
+
+💔 *Tus personajes han sido derrotados...*
+
+📊 *Estadísticas del combate:*
+↳ Tu Poder Total: [ ${poderFinalUser.toLocaleString()} ]
+↳ Poder del Mob:  [ ${mob.poderTotal.toLocaleString()} ]
+↳ Diferencia:     [ -${faltaPoder.toLocaleString()} ]
+
+📉 *Progreso:* Has alcanzado el ${porcentaje}% del poder necesario.
+⚡ *Efecto:* Tus personajes han perdido **5% de Stamina** por el esfuerzo.
+
+> 💡 *Consejo:* Mejora a tus personajes con ${prefix}buy o entrena con mobs más débiles.`);
     }
 }
 
@@ -2512,4 +2545,5 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
