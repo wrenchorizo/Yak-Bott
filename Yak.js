@@ -2245,7 +2245,7 @@ if (comando.startsWith('fight')) {
 
         return message.reply(`『  *DERROTA* 』\n\n↳ Poder: ${porcentaje}%\n↳ Faltó: ${faltaPoder.toLocaleString()}\n⚡ -5% Stamina`);
     }
-
+}
 
 
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
@@ -2533,6 +2533,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
