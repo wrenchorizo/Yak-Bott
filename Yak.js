@@ -2319,10 +2319,7 @@ if (message.body.startsWith(prefix + 'addmoney')) {
         return client.sendMessage(message.from, `🔴 *DEADPOOL:* ${fraseElegida}\n\n_¡Deadpool ha invadido el harem de @${targetClean}!_`, { mentions: [mencionado] });
     }
 
-
 // --------- COMANDO ?kick ---------
-
-	// --------- COMANDO ?kick ---------
 if (comando === 'kick') {
 
     const chat = await message.getChat();
@@ -2331,15 +2328,20 @@ if (comando === 'kick') {
         return message.reply("Este comando solo funciona en grupos.");
     }
 
-    const senderId = message.author; // quien envió el mensaje
-    const botId = client.info.wid._serialized;
+    const senderId = (message.author || message.from).split('@')[0];
+    const botId = client.info.wid._serialized.split('@')[0];
 
-    const sender = chat.participants.find(p => p.id._serialized === senderId);
-    const bot = chat.participants.find(p => p.id._serialized === botId);
+    const sender = chat.participants.find(p =>
+        p.id._serialized.split('@')[0] === senderId
+    );
+
+    const bot = chat.participants.find(p =>
+        p.id._serialized.split('@')[0] === botId
+    );
 
     // verificar si quien ejecuta es admin
     if (!sender || (!sender.isAdmin && !sender.isSuperAdmin)) {
-        return message.reply("» Solo los administradores pueden usar este comando.");
+        return message.reply("❌ Solo los administradores pueden usar este comando.");
     }
 
     // verificar si el bot es admin
@@ -2349,12 +2351,10 @@ if (comando === 'kick') {
 
     let objetivo;
 
-    // si mencionó usuario
     if (message.mentionedIds.length > 0) {
         objetivo = message.mentionedIds[0];
     }
 
-    // si respondió a un mensaje
     else if (message.hasQuotedMsg) {
         const quotedMsg = await message.getQuotedMessage();
         objetivo = quotedMsg.author;
@@ -2378,6 +2378,7 @@ if (comando === 'kick') {
         message.reply("No pude expulsar a ese usuario.");
     }
 }
+
 	
 // --------- ?adminchar (SOLO ADMIN) ---------
 
@@ -2567,6 +2568,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
