@@ -52,6 +52,10 @@ if (fs.existsSync('./botSettings.json')) {
 }
 const yts = require('yt-search');
 const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+
+// ESTA LÍNEA ES LA MÁS IMPORTANTE:
+ffmpeg.setFfmpegPath(ffmpegPath);
 const animeGifs = {
     cry: [
         './gifs/cry1.gif',
@@ -2596,6 +2600,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
