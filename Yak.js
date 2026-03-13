@@ -1901,45 +1901,49 @@ if (comando === 'givechar') {
         return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre del Personaje`);
     }
 
-    // Limpiamos el nombre del personaje eliminando la mención del texto
+    // Limpiar el nombre del personaje de la mención
     const personajeNombre = args.replace(/@\d+/g, '').trim();
+    const soyYo = message.author || message.from;
 
     try {
-        const user = await User.findOne({ userId: message.author || message.from });
-        const targetUser = await User.findOne({ userId: mencionadoId });
+        // RUTAS DE LOS ARCHIVOS (Asegúrate de que estas sean las carpetas que usas)
+        const pathYo = `./data/${soyYo.replace('@c.us', '.json')}`;
+        const pathDestino = `./data/${mencionadoId.replace('@c.us', '.json')}`;
 
-        if (!user || !user.harem || user.harem.length === 0) {
-            return message.reply("❌ No tienes personajes en tu harem.");
+        if (!fs.existsSync(pathYo)) return message.reply("❌ No tienes un perfil creado.");
+        if (!fs.existsSync(pathDestino)) return message.reply("❌ El usuario mencionado no tiene un perfil.");
+
+        // Leer datos
+        let datosYo = JSON.parse(fs.readFileSync(pathYo, 'utf-8'));
+        let datosDestino = JSON.parse(fs.readFileSync(pathDestino, 'utf-8'));
+
+        if (!datosYo.harem || datosYo.harem.length === 0) {
+            return message.reply("❌ Tu harem está vacío.");
         }
 
-        if (!targetUser) {
-            return message.reply("❌ El usuario mencionado no está registrado en la base de datos.");
-        }
-
-        // Buscar el personaje en el harem del que regala (ignorando mayúsculas/minúsculas)
-        const charIndex = user.harem.findIndex(c => c.name.toLowerCase() === personajeNombre.toLowerCase());
+        // Buscar personaje
+        const charIndex = datosYo.harem.findIndex(c => c.name.toLowerCase() === personajeNombre.toLowerCase());
 
         if (charIndex === -1) {
             return message.reply(`❌ No tienes a *${personajeNombre}* en tu harem.`);
         }
 
-        // Transferencia
-        const personajeTraspasado = user.harem.splice(charIndex, 1)[0];
-        targetUser.harem.push(personajeTraspasado);
+        // Transferir
+        const personaje = datosYo.harem.splice(charIndex, 1)[0];
+        if (!datosDestino.harem) datosDestino.harem = [];
+        datosDestino.harem.push(personaje);
 
-        await user.save();
-        await targetUser.save();
+        // Guardar cambios
+        fs.writeFileSync(pathYo, JSON.stringify(datosYo, null, 2));
+        fs.writeFileSync(pathDestino, JSON.stringify(datosDestino, null, 2));
 
-        // REPARACIÓN DEL ERROR DE ENVÍO:
-        // Enviamos la confirmación al grupo/chat donde se usó el comando, 
-        // no al privado del mencionado para evitar el error de Puppeteer.
-        await client.sendMessage(message.from, `✅ *¡Transferencia Exitosa!*\n\n@${(message.author || message.from).split('@')[0]} le ha dado a *${personajeTraspasado.name}* a @${mencionadoId.split('@')[0]}`, {
-            mentions: [message.author || message.from, mencionadoId]
+        await client.sendMessage(message.from, `✅ *¡Intercambio realizado!*\n\nSe ha entregado a *${personaje.name}* a la colección de @${mencionadoId.split('@')[0]}`, {
+            mentions: [mencionadoId]
         });
 
     } catch (error) {
-        console.error("Error en givechar:", error);
-        message.reply("❌ Hubo un error interno al transferir el personaje.");
+        console.error(error);
+        message.reply("❌ Error al acceder a los archivos de datos.");
     }
     return;
 }
@@ -2675,6 +2679,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
