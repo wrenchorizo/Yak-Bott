@@ -1945,7 +1945,7 @@ if (comando === 'givechar') {
 //      OPERACIÓN YT: MISIÓN SOBREVIVIR
 // ==========================================
 
-if (command === "yt") {
+if (comando === "yt") {
 
 if (!args.length) {
 return chat.sendMessage("❌ Escribe algo para buscar.\nEjemplo:\n?yt musica phonk");
@@ -2653,6 +2653,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
