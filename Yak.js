@@ -1901,19 +1901,23 @@ if (comando === 'givechar') {
         return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre del Personaje`);
     }
 
-    // Limpiar el nombre del personaje de la mención
+    // Limpiar el nombre del personaje eliminando la mención
     const personajeNombre = args.replace(/@\d+/g, '').trim();
-    const soyYo = message.author || message.from;
+    
+    // EXTRACCIÓN DEL NÚMERO (Como lo hace tu bot)
+    const miNumero = (message.author || message.from).split('@')[0];
+    const numeroDestino = mencionadoId.split('@')[0];
 
     try {
-        // RUTAS DE LOS ARCHIVOS (Asegúrate de que estas sean las carpetas que usas)
-        const pathYo = `./data/${soyYo.replace('@c.us', '.json')}`;
-        const pathDestino = `./data/${mencionadoId.replace('@c.us', '.json')}`;
+        const pathYo = `./data/${miNumero}.json`;
+        const pathDestino = `./data/${numeroDestino}.json`;
 
-        if (!fs.existsSync(pathYo)) return message.reply("❌ No tienes un perfil creado.");
+        // Consola para que veas en Railway qué archivos está buscando si falla
+        console.log(`Buscando archivos: ${pathYo} y ${pathDestino}`);
+
+        if (!fs.existsSync(pathYo)) return message.reply("❌ No tienes un perfil creado (Archivo no encontrado).");
         if (!fs.existsSync(pathDestino)) return message.reply("❌ El usuario mencionado no tiene un perfil.");
 
-        // Leer datos
         let datosYo = JSON.parse(fs.readFileSync(pathYo, 'utf-8'));
         let datosDestino = JSON.parse(fs.readFileSync(pathDestino, 'utf-8'));
 
@@ -1921,14 +1925,14 @@ if (comando === 'givechar') {
             return message.reply("❌ Tu harem está vacío.");
         }
 
-        // Buscar personaje
+        // Buscar el personaje
         const charIndex = datosYo.harem.findIndex(c => c.name.toLowerCase() === personajeNombre.toLowerCase());
 
         if (charIndex === -1) {
             return message.reply(`❌ No tienes a *${personajeNombre}* en tu harem.`);
         }
 
-        // Transferir
+        // --- EL TRASPASO ---
         const personaje = datosYo.harem.splice(charIndex, 1)[0];
         if (!datosDestino.harem) datosDestino.harem = [];
         datosDestino.harem.push(personaje);
@@ -1937,77 +1941,100 @@ if (comando === 'givechar') {
         fs.writeFileSync(pathYo, JSON.stringify(datosYo, null, 2));
         fs.writeFileSync(pathDestino, JSON.stringify(datosDestino, null, 2));
 
-        await client.sendMessage(message.from, `✅ *¡Intercambio realizado!*\n\nSe ha entregado a *${personaje.name}* a la colección de @${mencionadoId.split('@')[0]}`, {
-            mentions: [mencionadoId]
+        await client.sendMessage(message.from, `✅ *¡Intercambio realizado!*\n\n@${miNumero} le ha dado a *${personaje.name}* a @${numeroDestino}`, {
+            mentions: [message.author || message.from, mencionadoId]
         });
 
     } catch (error) {
-        console.error(error);
-        message.reply("❌ Error al acceder a los archivos de datos.");
+        console.error("Error en givechar:", error);
+        message.reply("❌ Error al procesar los archivos.");
     }
     return;
 }
 
 // ----------COMANDO ?YT--------------
 	
-if (message.body.startsWith(prefix + 'yt ')) {
-    const query = message.body.slice(prefix.length + 3).trim();
-    if (!query) return message.reply("❌ Uso: `?yt [nombre o link]`");
+// ==========================================
+//      OPERACIÓN YT: MISIÓN SOBREVIVIR
+// ==========================================
+if (comando === 'yt') {
+    const args = message.body.slice(prefix.length + comando.length).trim();
+    if (!args) return message.reply(`❌ Uso: ${prefix}yt (nombre o link del video)`);
 
     try {
-        // 1. Buscamos el video para tener la URL y el título
-        const r = await yts(query);
-        const video = r.videos[0];
-        if (!video) return message.reply("❌ No encontré el video.");
-
-        message.reply(`⏳ Bajando *${video.title}* de servidores externos...`);
-
-        // 2. Usamos una API que no depende de tu IP local
-        // He seleccionado una que suele ser muy estable para bots
-        const apiUrl = `https://api.lolhuman.xyz/api/ytvideo2?apikey=GataDios&url=${video.url}`;
+        const yts = require('yt-search');
+        const ytdl = require('@distube/ytdl-core');
         
-        const res = await axios.get(apiUrl);
-        
-        if (!res.data || !res.data.download_url) {
-            return message.reply("⚠️ Los servidores externos de YouTube están saturados. Intenta en un momento.");
+        message.reply("🚀 *Iniciando descarga...* Preparando suministros.");
+
+        let videoUrl = args;
+
+        // --- FASE 1: BÚSQUEDA ---
+        if (!args.includes('youtube.com') && !args.includes('youtu.be')) {
+            const search = await yts(args);
+            if (!search.videos.length) return message.reply("❌ No encontré el objetivo en el radar (sin resultados).");
+            videoUrl = search.videos[0].url;
         }
 
-        const downloadUrl = res.data.download_url;
-        const tempFile = path.resolve(__dirname, `video_${Date.now()}.mp4`);
+        const info = await ytdl.getBasicInfo(videoUrl);
+        const titulo = info.videoDetails.title;
+        const duracion = info.videoDetails.lengthSeconds;
 
-        // 3. Descargamos el archivo que la API ya procesó por nosotros
-        const response = await axios({
-            method: 'get',
-            url: downloadUrl,
-            responseType: 'stream'
+        // Si dura más de 10 minutos, es probable que WhatsApp lo bloquee por peso
+        if (duracion > 600) {
+            return message.reply("⚠️ *Advertencia:* El video dura más de 10 minutos. Es muy probable que exceda el límite de 16MB de WhatsApp.");
+        }
+
+        const outputPath = path.join(__dirname, `video_${Date.now()}.mp4`);
+
+        // --- FASE 2: DESCARGA ---
+        // Usamos cookies o agentes de usuario si fuera necesario, pero distube lo suele manejar solo
+        const downloadStream = ytdl(videoUrl, { 
+            quality: 'highestvideo',
+            filter: 'itemandvideo' 
         });
 
-        const writer = fs.createWriteStream(tempFile);
-        response.data.pipe(writer);
+        const fileStream = fs.createWriteStream(outputPath);
+        downloadStream.pipe(fileStream);
 
-        writer.on('finish', async () => {
+        fileStream.on('finish', async () => {
             try {
-                // Verificamos que el archivo no esté vacío
-                if (fs.existsSync(tempFile) && fs.statSync(tempFile).size > 0) {
-                    const media = MessageMedia.fromFilePath(tempFile);
-                    await client.sendMessage(message.from, media, { 
-                        caption: `🎬 *${video.title}*\n🔗 ${video.url}` 
-                    });
-                } else {
-                    message.reply("❌ El servidor externo entregó un archivo vacío.");
+                // --- FASE 3: ENVÍO ---
+                const stats = fs.statSync(outputPath);
+                const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+
+                if (sizeMB > 16) {
+                    message.reply(`📦 El video pesa ${sizeMB}MB. Intentando enviarlo, pero WhatsApp podría rechazarlo...`);
                 }
-            } catch (e) {
-                console.error("Error al enviar WA:", e);
-                message.reply("❌ WhatsApp no pudo procesar el archivo enviado por el servidor.");
-            } finally {
-                if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+
+                const media = MessageMedia.fromFilePath(outputPath);
+                
+                await client.sendMessage(message.from, media, {
+                    caption: `✅ *Misión Cumplida*\n🎬 *Título:* ${titulo}\n⚖️ *Peso:* ${sizeMB} MB\n🔗 *Link:* ${videoUrl}`,
+                    sendVideoAsGif: false
+                });
+
+                // Limpieza de restos de guerra (borrar archivo)
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+
+            } catch (err) {
+                console.error("Error en envío:", err);
+                message.reply("❌ El enemigo (WhatsApp) bloqueó el video por ser muy pesado.");
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
             }
         });
 
-    } catch (err) {
-        console.error("Error en API:", err);
-        message.reply("⚠️ Error crítico en el servidor de descarga. YouTube ha bloqueado incluso esta ruta.");
+        downloadStream.on('error', (err) => {
+            console.error("Error en descarga:", err);
+            message.reply("❌ Error en la descarga: YouTube ha bloqueado la conexión.");
+            if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+        });
+
+    } catch (e) {
+        console.error("Fallo general:", e);
+        message.reply("❌ Error crítico en el sistema de búsqueda.");
     }
+    return;
 }
 
 // --- COMANDO TRADUCTOR ---
@@ -2679,6 +2706,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
