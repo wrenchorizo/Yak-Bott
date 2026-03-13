@@ -1893,34 +1893,56 @@ if (comando.startsWith('ship')) {
 }
 
 // --------- ?givechar ---------
-
-// --------- COMANDO ?givechar ---------
 if (comando === 'givechar') {
-    if (!message.from.endsWith("@g.us")) return message.reply("Solo funciona en grupos.");
-    
-    const partes = message.body.split("|");
-    const targetMention = message.mentionedIds[0];
-    const charName = partes[1] ? partes[1].trim().toLowerCase() : null;
+    const args = message.body.slice(prefix.length + comando.length).trim();
+    const mencionadoId = message.mentionedIds[0];
 
-    if (!targetMention || !charName) {
-        return message.reply(`❌ Uso: ${prefix}givechar @usuario | nombre del personaje`);
+    if (!mencionadoId || !args) {
+        return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre del Personaje`);
     }
 
-    const giverId = userId;
-    const receiverId = targetMention;
+    // Limpiamos el nombre del personaje eliminando la mención del texto
+    const personajeNombre = args.replace(/@\d+/g, '').trim();
 
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][giverId]) return message.reply("No tienes personajes.");
+    try {
+        const user = await User.findOne({ userId: message.author || message.from });
+        const targetUser = await User.findOne({ userId: mencionadoId });
 
-    const index = haremPorGrupo[grupoId][giverId].findIndex(p => p.nombre.toLowerCase() === charName);
-    if (index === -1) return message.reply("No tienes ese personaje.");
+        if (!user || !user.harem || user.harem.length === 0) {
+            return message.reply("❌ No tienes personajes en tu harem.");
+        }
 
-    const pj = haremPorGrupo[grupoId][giverId].splice(index, 1)[0];
-    if (!haremPorGrupo[grupoId][receiverId]) haremPorGrupo[grupoId][receiverId] = [];
-    haremPorGrupo[grupoId][receiverId].push(pj);
+        if (!targetUser) {
+            return message.reply("❌ El usuario mencionado no está registrado en la base de datos.");
+        }
 
-    guardarHarem(haremPorGrupo);
-    message.reply(`🎁 ¡Has regalado a **${pj.nombre}** a @${receiverId.split('@')[0]}!`, { mentions: [receiverId] });
-} // CIERRE CORRECTO DE ?givechar
+        // Buscar el personaje en el harem del que regala (ignorando mayúsculas/minúsculas)
+        const charIndex = user.harem.findIndex(c => c.name.toLowerCase() === personajeNombre.toLowerCase());
+
+        if (charIndex === -1) {
+            return message.reply(`❌ No tienes a *${personajeNombre}* en tu harem.`);
+        }
+
+        // Transferencia
+        const personajeTraspasado = user.harem.splice(charIndex, 1)[0];
+        targetUser.harem.push(personajeTraspasado);
+
+        await user.save();
+        await targetUser.save();
+
+        // REPARACIÓN DEL ERROR DE ENVÍO:
+        // Enviamos la confirmación al grupo/chat donde se usó el comando, 
+        // no al privado del mencionado para evitar el error de Puppeteer.
+        await client.sendMessage(message.from, `✅ *¡Transferencia Exitosa!*\n\n@${(message.author || message.from).split('@')[0]} le ha dado a *${personajeTraspasado.name}* a @${mencionadoId.split('@')[0]}`, {
+            mentions: [message.author || message.from, mencionadoId]
+        });
+
+    } catch (error) {
+        console.error("Error en givechar:", error);
+        message.reply("❌ Hubo un error interno al transferir el personaje.");
+    }
+    return;
+}
 
 // ----------COMANDO ?YT--------------
 	
@@ -2653,6 +2675,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
