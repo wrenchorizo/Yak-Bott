@@ -1944,54 +1944,44 @@ if (comando === 'givechar') {
 // ==========================================
 //      OPERACIÓN YT: MISIÓN SOBREVIVIR
 // ==========================================
-if (comando === 'yt') {
-    const args = message.body.slice(prefix.length + comando.length).trim();
-    if (!args) return message.reply(`❌ Uso: ${prefix}yt (nombre o link)`);
 
-    try {
-        const yts = require('yt-search');
-        // Usamos play-dl que ya está en tus constantes globales
-        
-        message.reply("⏳ Buscando en los servidores de YouTube...");
+if (command === "yt") {
 
-        let url = args;
-        if (!play.yt_validate(args)) {
-            const buscar = await yts(args);
-            if (!buscar.videos.length) return message.reply("❌ No encontré el video.");
-            url = buscar.videos[0].url;
-        }
+if (!args.length) {
+return chat.sendMessage("❌ Escribe algo para buscar.\nEjemplo:\n?yt musica phonk");
+}
 
-        const videoInfo = await play.video_info(url);
-        if (videoInfo.video_details.durationInSec > 900) { // Límite de 15 min
-            return message.reply("❌ El video es demasiado largo.");
-        }
+try {
 
-        const pathVideo = `./temp_yt_${Date.now()}.mp4`;
-        
-        // Obtenemos el stream de play-dl
-        let stream = await play.stream(url, { quality: 2 }); // Calidad media/alta
-        let writer = fs.createWriteStream(pathVideo);
-        
-        stream.stream.pipe(writer);
+const busqueda = args.join(" ");
 
-        writer.on('finish', async () => {
-            try {
-                const media = MessageMedia.fromFilePath(pathVideo);
-                await client.sendMessage(message.from, media, {
-                    caption: `🎬 *${videoInfo.video_details.title}*\n🔗 ${url}`,
-                    sendVideoAsGif: false
-                });
-                if (fs.existsSync(pathVideo)) fs.unlinkSync(pathVideo);
-            } catch (err) {
-                console.error(err);
-                message.reply("❌ Error al enviar el archivo.");
-                if (fs.existsSync(pathVideo)) fs.unlinkSync(pathVideo);
-            }
-        });
-    } catch (error) {
-        console.error("Error YT:", error);
-        message.reply("❌ Error: YouTube bloqueó la petición o el video no está disponible.");
-    }
+const resultados = await play.search(busqueda, {
+limit: 1
+});
+
+if (!resultados.length) {
+return chat.sendMessage("❌ No encontré ese video.");
+}
+
+const url = resultados[0].url;
+
+await chat.sendMessage("🔎 Descargando:\n" + resultados[0].title);
+
+const info = await play.video_info(url);
+
+const stream = await play.stream(url);
+
+await client.sendMessage(chat.id, stream.stream, {
+sendAudioAsVoice: false
+});
+
+} catch (err) {
+
+console.log("Error YT:", err);
+chat.sendMessage("❌ Error descargando el video.");
+
+}
+
 }
 	
 // --- COMANDO TRADUCTOR ---
@@ -2663,6 +2653,7 @@ setInterval(() => {
 
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
+
 
 
 
