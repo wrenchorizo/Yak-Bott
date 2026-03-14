@@ -144,19 +144,19 @@ const animeGifs = {
         './gifs/kill4.gif'
     ],
 	preg: [
-        './gifs/preg1.gif',
-        './gifs/preg2.gif',
-        './gifs/preg3.gif',
-        './gifs/preg4.gif',
-		'./gifs/preg5.gif',
-		'./gifs/preg6.gif'
+        './gifs/Preg1.gif',
+        './gifs/Preg2.gif',
+        './gifs/Preg3.gif',
+        './gifs/Preg4.gif',
+		'./gifs/Preg5.gif',
+		'./gifs/Preg6.gif'
     ],
 	pat: [
-        './gifs/pat1.gif',
-        './gifs/pat2.gif',
-        './gifs/pat3.gif',
-        './gifs/pat4.gif',
-		'./gifs/pat5.gif'
+        './gifs/Pat1.gif',
+        './gifs/Pat2.gif',
+        './gifs/Pat3.gif',
+        './gifs/Pat4.gif',
+		'./gifs/Pat5.gif'
     ]
 };
 
