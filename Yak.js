@@ -649,12 +649,57 @@ ${prefix}tr
 > Traduce un texto.
 ${prefix}say
 > Haz que el bot diga algo.
+${prefix}cal
+> Calculadora.
 
 ${prefix}hola | ${prefix}ping | ${prefix}info | ${prefix}creador`;
 
             return message.reply(menuText);
         }
 
+// --------- COMANDO ?cal (Calculadora Pro) ---------
+if (comando === 'cal') {
+    const args = message.body.slice(prefix.length + 3).trim();
+
+    if (!args) {
+        return message.reply(`『 🧮 *AYUDA CALCULADORA* 』\n\nUso: *${prefix}cal [operación]*\n\n*Operadores:* \n+ , - , * , /\n*Potencia:* ^  (Ej: 2^3)\n*Raíz:* raíz(n) (Ej: raíz(25))\n*Constante:* pi\n\n_Ejemplo: ${prefix}cal (5 + 5) * pi_`);
+    }
+
+    try {
+        // 1. Limpieza y normalización
+        let operacion = args.toLowerCase()
+            .replace(/x/g, '*')        // x -> *
+            .replace(/÷/g, '/')        // ÷ -> /
+            .replace(/\^/g, '**')      // ^ -> potencia en JS
+            .replace(/raíz|raiz/g, 'Math.sqrt') // raíz -> Math.sqrt
+            .replace(/pi/g, 'Math.PI') // pi -> 3.1415...
+            .replace(/,/g, '.');       // , -> .
+
+        // 2. SEGURIDAD: Solo permitir números, operadores matemáticos y Math.
+        // Esto evita que alguien intente hackear el bot con eval()
+        if (/[^-()\d/*+.\s]|Math\.(sqrt|PI)/g.test(operacion)) {
+            // Si después de limpiar queda algo que no sea Math. o números/signos, rechazamos
+            const caracteresRaros = operacion.replace(/[0-9+\-*/().]|Math\.(sqrt|PI)/g, '');
+            if (caracteresRaros.trim().length > 0) {
+                 return message.reply("❌ *Error:* La operación contiene caracteres no permitidos.");
+            }
+        }
+
+        // 3. Cálculo
+        const resultado = eval(operacion);
+
+        // 4. Formateo (evitar chorros de decimales infinitos)
+        const resultadoFinal = Number.isInteger(resultado) 
+            ? resultado.toLocaleString() 
+            : parseFloat(resultado.toFixed(4)).toLocaleString();
+
+        return message.reply(`『 🧮 *RESULTADO* 』\n\n✨ *Entrada:* ${args}\n✅ *Cálculo:* ${resultadoFinal}`);
+
+    } catch (e) {
+        return message.reply("❌ *Error:* Operación inválida. Revisa los paréntesis o signos.");
+    }
+}
+	
 // --------- COMANDO ?say ---------
     if (comando.startsWith('say')) {
         // Obtenemos el texto después del comando ?say
@@ -855,7 +900,8 @@ Balance actual: $${economia[senderId].dinero}`
     }
 }
 
-
+// ============== COMANDO ?cooldowns ====================
+	
 if (comando === 'cooldowns') {
 
     const ahora = Date.now();
@@ -2610,7 +2656,7 @@ if (listaReacciones.includes(comandoLimpio)) {
         laugh: { solo: `*${authorName}* se está riendo a carcajadas`, con: `*${authorName}* se ríe con ${nombreMencionado}` },
         dance: { solo: `*${authorName}* se sacó los pasos prohibídos`, con: `*${authorName}* está bailando con ${nombreMencionado}` },
         scared: { solo: `*${authorName}* tiene mucho miedo 😱`, con: `*${authorName}* se asustó con ${nombreMencionado} 😱` },
-        eat: { solo: `*${authorName}* está comiendo algo rico`, con: `*${authorName}* come junto a ${nombreMencionado}` },
+        eat: { solo: `*${authorName}* está comiendo algo delicioso`, con: `*${authorName}* come junto a ${nombreMencionado} algo muy delicioso` },
         sleep: { solo: `*${authorName}* se quedó dormido... 💤`, con: `*${authorName}* duerme junto a ${nombreMencionado} 💤` },
         cafe: { solo: `*${authorName}* toma cafe caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
         hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
@@ -2654,7 +2700,7 @@ if (listaReacciones.includes(comandoLimpio)) {
 // --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'kick', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'shop', 'kick', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
