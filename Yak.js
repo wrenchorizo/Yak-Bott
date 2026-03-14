@@ -657,38 +657,60 @@ ${prefix}hola | ${prefix}ping | ${prefix}info | ${prefix}creador`;
             return message.reply(menuText);
         }
 
-// --------- COMANDO ?cal (Calculadora Pro) ---------
+// --------- COMANDO ?cal (Calculadora Universal Gboard) ---------
 if (comando === 'cal') {
     const args = message.body.slice(prefix.length + 3).trim();
 
     if (!args) {
-        return message.reply(`『 🧮 *AYUDA CALCULADORA* 』\n\nUso: *${prefix}cal [operación]*\n\n*Operadores:* \n+ , - , * , /\n*Potencia:* ^  (Ej: 2^3)\n*Raíz:* raíz(n) (Ej: raíz(25))\n*Constante:* pi\n\n_Ejemplo: ${prefix}cal (5 + 5) * pi_`);
+        return message.reply(`『 🧮 *CALCULADORA* 』\n\nUso: *${prefix}cal [operación]*\n\n*Soportados:* \n√ , π , ÷ , × , ± , % , \nExponentes: ² , ³ , ⁴ ... ⁿ\nFracciones: ½ , ¼ , ¾\n\n_Ejemplo: ${prefix}cal √64 + ½_`);
     }
 
     try {
-        // 1. Limpieza y normalización
-        let operacion = args.toLowerCase()
-            .replace(/x/g, '*')        // x -> *
-            .replace(/÷/g, '/')        // ÷ -> /
-            .replace(/\^/g, '**')      // ^ -> potencia en JS
-            .replace(/raíz|raiz/g, 'Math.sqrt') // raíz -> Math.sqrt
-            .replace(/pi/g, 'Math.PI') // pi -> 3.1415...
-            .replace(/,/g, '.');       // , -> .
+        let operacion = args.toLowerCase();
 
-        // 2. SEGURIDAD: Solo permitir números, operadores matemáticos y Math.
-        // Esto evita que alguien intente hackear el bot con eval()
-        if (/[^-()\d/*+.\s]|Math\.(sqrt|PI)/g.test(operacion)) {
-            // Si después de limpiar queda algo que no sea Math. o números/signos, rechazamos
-            const caracteresRaros = operacion.replace(/[0-9+\-*/().]|Math\.(sqrt|PI)/g, '');
-            if (caracteresRaros.trim().length > 0) {
-                 return message.reply("❌ *Error:* La operación contiene caracteres no permitidos.");
-            }
+        // 1. DICCIONARIO DE TRADUCCIÓN (Gboard & Unicode)
+        const mapaGboard = {
+            // Operadores básicos
+            '×': '*', '÷': '/', '×': '*', '÷': '/', '±': '+', 
+            'π': 'Math.PI', '√': 'Math.sqrt', ',': '.', ':': '/',
+            // Superíndices (Exponentes de Gboard)
+            '⁰': '**0', '¹': '**1', '²': '**2', '³': '**3', '⁴': '**4', 
+            '⁵': '**5', '⁶': '**6', '⁷': '**7', '⁸': '**8', '⁹': '**9',
+            'ⁿ': '**n', // Por si acaso
+            // Fracciones comunes de Gboard
+            '½': '0.5', '⅓': '(1/3)', '⅔': '(2/3)', '¼': '0.25', '¾': '0.75', 
+            '⅕': '0.2', '⅖': '0.4', '⅗': '0.6', '⅘': '0.8', '⅙': '(1/6)', 
+            '⅚': '(5/6)', '⅛': '0.125', '⅜': '0.375', '⅝': '0.625', '⅞': '0.875'
+        };
+
+        // 2. Aplicar traducciones
+        Object.keys(mapaGboard).forEach(simbolo => {
+            operacion = operacion.split(simbolo).join(mapaGboard[simbolo]);
+        });
+
+        // 3. Limpieza de caracteres comunes
+        operacion = operacion
+            .replace(/x/g, '*')
+            .replace(/\^/g, '**')
+            .replace(/%/g, '/100'); // Convierte 10% en 10/100
+
+        // 4. Corrección de Raíz (si ponen √25 sin paréntesis)
+        if (operacion.includes('Math.sqrt')) {
+            // Envuelve números que siguen a Math.sqrt en paréntesis
+            operacion = operacion.replace(/Math\.sqrt\s*(\d+(\.\d+)?)/g, 'Math.sqrt($1)');
         }
 
-        // 3. Cálculo
+        // 5. SEGURIDAD: Bloqueo de código malicioso
+        // Permitimos números, operadores básicos y la librería Math de JS
+        const validacion = operacion.replace(/[0-9+\-*/().\s]|Math\.(sqrt|PI)/g, '');
+        if (validacion.trim().length > 0) {
+            return message.reply("❌ *Error:* Caracteres no permitidos detectados.");
+        }
+
+        // 6. EJECUCIÓN
         const resultado = eval(operacion);
 
-        // 4. Formateo (evitar chorros de decimales infinitos)
+        // Formateo de salida
         const resultadoFinal = Number.isInteger(resultado) 
             ? resultado.toLocaleString() 
             : parseFloat(resultado.toFixed(4)).toLocaleString();
@@ -696,7 +718,7 @@ if (comando === 'cal') {
         return message.reply(`『 🧮 *RESULTADO* 』\n\n✨ *Entrada:* ${args}\n✅ *Cálculo:* ${resultadoFinal}`);
 
     } catch (e) {
-        return message.reply("❌ *Error:* Operación inválida. Revisa los paréntesis o signos.");
+        return message.reply("❌ *Error:* Operación inválida. Revisa los signos.");
     }
 }
 	
