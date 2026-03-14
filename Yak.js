@@ -142,6 +142,21 @@ const animeGifs = {
         './gifs/kill2.gif',
         './gifs/kill3.gif',
         './gifs/kill4.gif'
+    ],
+	preg: [
+        './gifs/preg1.gif',
+        './gifs/preg2.gif',
+        './gifs/preg3.gif',
+        './gifs/preg4.gif',
+		'./gifs/preg5.gif',
+		'./gifs/preg6.gif'
+    ],
+	pat: [
+        './gifs/pat1.gif',
+        './gifs/pat2.gif',
+        './gifs/pat3.gif',
+        './gifs/pat4.gif',
+		'./gifs/pat5.gif'
     ]
 };
 
@@ -2651,7 +2666,7 @@ if (media.filesize && media.filesize > 8 * 1024 * 1024) {
 // ==========================================
     // REACCIONES ANIME (MP4 CONVERTIDO - MODO GIF)
     // ==========================================
-const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'];
+const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'];
 const comandoLimpio = comando.split(/\s+/)[0];
 
 if (listaReacciones.includes(comandoLimpio)) {
@@ -2685,7 +2700,9 @@ if (listaReacciones.includes(comandoLimpio)) {
         kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` },
 		punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
 		run: { solo: `*${authorName}* salió corriendo lejos de aquí... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
-		kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató a sin piedad ${nombreMencionado}` }
+		kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató a sin piedad a ${nombreMencionado}` },
+		pat: { solo: `*${authorName}* se da palmadas en la cabeza a sí mismo`, con: `*${authorName}* le da palmadas en la cabeza a ${nombreMencionado} con cariño` },
+		preg: { solo: `*${authorName}* se embarazó solito... misterioso... `, con: `*${authorName}* embarazó a ${nombreMencionado} y ahora deben pensar en nombres` }
     };
 
     // Elegimos la frase según si hay mención o no
