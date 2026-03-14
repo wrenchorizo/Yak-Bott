@@ -2123,20 +2123,21 @@ if (message.body.startsWith(prefix + 'wtired')) {
     return message.reply(respuesta);
 }
 
+// =============== COMANDO ?SMOB====================
+	
 if (comando === 'smob') {
     const ahora = Date.now();
     const tiempoEspera = 15 * 60 * 1000; // 15 minutos
 
     // Verificar cooldown en memoria
-if (!cooldownsBuscarmob[grupoId]) {
-    cooldownsBuscarmob[grupoId] = {};
-}
+    if (!cooldownsBuscarmob[grupoId]) {
+        cooldownsBuscarmob[grupoId] = {};
+    }
 
-if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
-    const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
-    
-    return conn.reply(m.chat, `⏳ Debes esperar ${restante} minutos para volver a buscar un mob en este grupo.`, m);
-}
+    if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
+        const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
+        return message.reply(`⏳ Debes esperar ${restante} minutos para volver a buscar un mob en este grupo.`);
+    }
 
     // Seleccionamos un tipo de mob al azar de tu lista mobsData
     const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
@@ -2161,6 +2162,16 @@ if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][u
     // Actualizar el cooldown en memoria
     cooldownsBuscarmob[grupoId][userId] = ahora;
 
+    // --- TEMPORIZADOR DE 5 MINUTOS ---
+    setTimeout(() => {
+        // Si después de 5 min el mob sigue existiendo y no ha sido vencido, lo borramos
+        if (mobActual[message.from] && !mobActual[message.from].vencido) {
+            delete mobActual[message.from];
+            // Opcional: avisar al grupo que el mob se fue
+            // message.reply(`🕒 El mob *${mobTemplate.nombre}* se ha escapado.`);
+        }
+    }, 5 * 60 * 1000); // 5 minutos en milisegundos
+
     return message.reply(`
 『  *MOBS DETECTADOS* 』
 
@@ -2173,11 +2184,15 @@ if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][u
 `);
 }
 
+// ============ COMANDO ?fight ====================
+
 // --------- COMANDO ?fight ---------
 if (comando.startsWith('fight')) {
     const mob = mobActual[message.from];
-    if (!mob || mob.vencido) {
-        return message.reply("❏ *Error:* No hay mobs activos. Usa ?smob primero.");
+    
+    // Si el mob no existe (porque pasaron los 5 min o alguien ya peleó), da error
+    if (!mob) {
+        return message.reply("❏ *Error:* No hay mobs activos.\n> Usa ?smob primero.");
     }
 
     const argsF = message.body.slice(prefix.length + 5).trim();
@@ -2212,7 +2227,12 @@ if (comando.startsWith('fight')) {
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
+    // --- CAMBIO CLAVE: BORRAMOS EL MOB AQUÍ ---
+    // Esto hace que el mob desaparezca para siempre, gane o pierda el usuario.
+    delete mobActual[message.from];
+
     if (poderFinalUser > mob.poderTotal) {
+        // VICTORIA
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
         const premio = mob.recompensa;
@@ -2238,8 +2258,6 @@ if (comando.startsWith('fight')) {
                 }
             }
         });
-
-        mobActual[message.from].vencido = true;
         
         // SINCRONIZACIÓN CRÍTICA
         haremPorGrupo = hData; 
@@ -2259,7 +2277,8 @@ if (comando.startsWith('fight')) {
         guardarHarem(hData);
 
         const faltaPoder = mob.poderTotal - poderFinalUser;
-        return message.reply(`『  *DERROTA* 』\n\n⚡ -10% Energía\n📉 Faltó ${faltaPoder.toLocaleString()} de poder.`);
+        // Mensaje indicando que el mob escapó
+        return message.reply(`『  *DERROTA* 』\n\n⚡ -10% Energía\n📉 Faltó ${faltaPoder.toLocaleString()} de poder.\n\n> El mob ha escapado tras la batalla.`);
     }
 }
 
@@ -2267,7 +2286,7 @@ if (comando.startsWith('fight')) {
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
 if (message.body.startsWith(prefix + 'addmoney')) {
     const adminID = '232246195839008@lid'; 
-    if (userId !== adminID) return message.reply("⚠️ No tienes permiso para usar la impresora de billetes.");
+    if (userId !== adminID) return message.reply("⚠️ No tienes permiso para crear dinero.");
 
     // Extraer la cantidad del mensaje
     const parts = message.body.split(/\s+/); // Divide por espacios
