@@ -642,6 +642,10 @@ ${prefix}cooldowns
     ╰┈─ ➤ Hora de la comida.
 ⌁ ${prefix}sleep
     ╰┈─ ➤ Irse a dormir.
+⌁ ${prefix}pat
+    ╰┈─ ➤ Darle cariño a alguien.
+⌁ ${prefix}preg
+    ╰┈─ ➤ Embarazar a alguien.
 ⌁ ${prefix}cafe
     ╰┈─ ➤ Tomar un cafecito.
 ⌁ ${prefix}hug @usuario
