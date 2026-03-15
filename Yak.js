@@ -614,25 +614,26 @@ if (dinero >= 100000) {
 
 	const harem = cargarHarem();
 	const cantidadPersonajes = harem[userId]?.length || 0;
+	
     if (cantidadPersonajes >= 15) {
     if (darLogro(perfiles, userId, "chars_15")) {
         message.reply("🏆 Logro desbloqueado: Conseguir 15 personajes");
     }
 }
 
-if (personajes >= 30) {
+if (cantidadPersonajes >= 30) {
     if (darLogro(perfiles, userId, "chars_30")) {
         message.reply("🏆 Logro desbloqueado: Conseguir 30 personajes");
     }
 }
 
-if (personajes >= 50) {
+if (cantidadPersonajes >= 50) {
     if (darLogro(perfiles, userId, "chars_50")) {
         message.reply("🏆 Logro desbloqueado: Conseguir 50 personajes");
     }
 }
 
-if (personajes >= 100) {
+if (cantidadPersonajes >= 100) {
     if (darLogro(perfiles, userId, "chars_100")) {
         message.reply("🏆 Logro desbloqueado: Conseguir 100 personajes");
     }
