@@ -539,8 +539,62 @@ if (perfiles[userId].comandos === 50000) {
     }
 
 	}
-	
+	const economia = cargarEconomia();
+	if (economia[userId]) {
 
+    const dinero = economia[userId].dinero || 0;
+
+if (dinero >= 100000) {
+        if (darLogro(perfiles, userId, "money_100k")) {
+            message.reply("🏆 Logro desbloqueado: Tener 100,000 de dinero");
+        }
+    }
+
+    if (dinero >= 1000000) {
+        if (darLogro(perfiles, userId, "money_1m")) {
+            message.reply("🏆 Logro desbloqueado: Tener 1,000,000 de dinero");
+        }
+    }
+
+    if (dinero >= 10000000) {
+        if (darLogro(perfiles, userId, "money_10m")) {
+            message.reply("🏆 Logro desbloqueado: Tener 10,000,000 de dinero");
+        }
+    }
+
+    if (dinero >= 100000000) {
+        if (darLogro(perfiles, userId, "money_100m")) {
+            message.reply("🏆 Logro desbloqueado: Tener 100,000,000 de dinero");
+        }
+    }
+
+	}
+
+	const harem = cargarHarem();
+	const personajes = harem[userId]?.length || 0;
+	if (personajes >= 15) {
+    if (darLogro(perfiles, userId, "chars_15")) {
+        message.reply("🏆 Logro desbloqueado: Conseguir 15 personajes");
+    }
+}
+
+if (personajes >= 30) {
+    if (darLogro(perfiles, userId, "chars_30")) {
+        message.reply("🏆 Logro desbloqueado: Conseguir 30 personajes");
+    }
+}
+
+if (personajes >= 50) {
+    if (darLogro(perfiles, userId, "chars_50")) {
+        message.reply("🏆 Logro desbloqueado: Conseguir 50 personajes");
+    }
+}
+
+if (personajes >= 100) {
+    if (darLogro(perfiles, userId, "chars_100")) {
+        message.reply("🏆 Logro desbloqueado: Conseguir 100 personajes");
+    }
+}
 	guardarPerfiles(perfiles);
     const texto = message.body.toLowerCase().trim();
     if (!texto.startsWith(prefix)) return;
@@ -1734,6 +1788,15 @@ if (comando.startsWith('pick')) {
         let mensajeFinal = "";
         const ganadorId = poder1 > poder2 ? duelo.jugador1 : duelo.jugador2;
         const perdedorId = poder1 > poder2 ? duelo.jugador2 : duelo.jugador1;
+		if (ganadorId !== adminNumber && perdedorId === adminNumber) {
+    if (darLogro(perfiles, ganadorId, "beat_admin")) {
+        client.sendMessage(
+            message.from,
+            `🏆 Logro desbloqueado: Derrotar al admin en duel`,
+            { mentions: [ganadorId] }
+        );
+    }
+		}
         const robo = Math.floor(economia[perdedorId].dinero * 0.50);
 
         economia[perdedorId].dinero -= robo;
@@ -2901,6 +2964,33 @@ const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh',
 const comandoLimpio = comando.split(/\s+/)[0];
 
 if (listaReacciones.includes(comandoLimpio)) {
+	
+	perfiles[userId].reacciones += 1;
+
+if (perfiles[userId].reacciones >= 40) {
+    if (darLogro(perfiles, userId, "react_40")) {
+        message.reply("🏆 Logro desbloqueado: Hacer 40 reacciones de anime");
+    }
+}
+
+if (perfiles[userId].reacciones >= 100) {
+    if (darLogro(perfiles, userId, "react_100")) {
+        message.reply("🏆 Logro desbloqueado: Hacer 100 reacciones de anime");
+    }
+}
+
+if (perfiles[userId].reacciones >= 200) {
+    if (darLogro(perfiles, userId, "react_200")) {
+        message.reply("🏆 Logro desbloqueado: Hacer 200 reacciones de anime");
+    }
+}
+
+if (perfiles[userId].reacciones >= 500) {
+    if (darLogro(perfiles, userId, "react_500")) {
+        message.reply("🏆 Logro desbloqueado: Hacer 500 reacciones de anime");
+    }
+}
+	
     const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
     const gifPath = path.join(__dirname, rawGifPath);
     const outputPath = `./temp_${Date.now()}.mp4`; 
