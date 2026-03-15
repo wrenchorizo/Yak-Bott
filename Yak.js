@@ -1,7 +1,5 @@
-if (diferencia > 8) expGanada *= 0.40;
-else if (diferencia > 5) expGanada *= 0.60;
-else if (diferencia > 3) expGanada *= 0.80;if (!global.File) {
-    const { Blob } = require('buffer');
+if (!global.File) {
+const { Blob } = require('buffer');
     global.File = class extends Blob {
         constructor(parts, filename, options = {}) {
             super(parts, options);
