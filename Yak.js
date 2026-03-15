@@ -410,6 +410,30 @@ function personajeRandom(listaPersonajes) {
     return filtrados[filtrados.length - 1];
 }
 
+const perfilesFile = './data/perfiles.json';
+
+function cargarPerfiles() {
+    if (!fs.existsSync(perfilesFile)) {
+        fs.writeFileSync(perfilesFile, JSON.stringify({}, null, 2));
+    }
+    return JSON.parse(fs.readFileSync(perfilesFile));
+}
+
+function guardarPerfiles(data) {
+    fs.writeFileSync(perfilesFile, JSON.stringify(data, null, 2));
+}
+
+function asegurarPerfil(perfiles, userId) {
+    if (!perfiles[userId]) {
+        perfiles[userId] = {
+            xp: 0,
+            level: 1,
+            mensajes: 0,
+            logros: []
+        };
+    }
+}
+	
 // ---------------- MENSAJES ----------------
 
 const prefix = '?';
@@ -457,6 +481,12 @@ if (isGroup) {
     const grupoId = message.from;
 
     const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+	const perfiles = cargarPerfiles();
+asegurarPerfil(perfiles, userId);
+	perfiles[userId].mensajes += 1;
+perfiles[userId].xp += 2;
+
+guardarPerfiles(perfiles);
 
 // --- LÓGICA DE DEADPOOL ERRANTE (LIMITADO AL GRUPO) ---
     const chanceDeadpool = Math.random();
