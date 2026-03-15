@@ -389,6 +389,13 @@
     "imagen": "https://i.pinimg.com/736x/d5/a4/74/d5a47406ac0210d753c89d73308bf7d9.jpg"
   },
   {
+    "nombre": "Ryuk",
+    "valor": "19999",
+    "genero": "Hombre",
+    "fuente": "Death Note",
+    "imagen": "https://m.media-amazon.com/images/I/71D5LFD+A-L._AC_UF894,1000_QL80_.jpg"
+  },
+  {
     "nombre": "Alucard",
     "valor": "17001",
     "genero": "Hombre",
@@ -1920,6 +1927,20 @@
     "genero": "Hombre",
     "fuente": "Marvel",
     "imagen": "https://i.pinimg.com/1200x/47/ae/8f/47ae8f2b9413483ab2b7f9fcc04fdac2.jpg"
+  },
+  {
+    "nombre": "Ultron",
+    "valor": "17800",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://www.superherotoystore.com/cdn/shop/articles/Ultron_1053x.jpg"
+  },
+  {
+    "nombre": "Infinity Ultron",
+    "valor": "16500",
+    "genero": "Hombre",
+    "fuente": "Marvel",
+    "imagen": "https://i.pinimg.com/736x/51/64/8e/51648e8585cba83a8c564f6cba050cfd.jpg"
   },
   {
     "nombre": "Spider-Man",
