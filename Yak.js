@@ -425,12 +425,15 @@ function guardarPerfiles(data) {
 
 function asegurarPerfil(perfiles, userId) {
     if (!perfiles[userId]) {
-        perfiles[userId] = {
-            xp: 0,
-            level: 1,
-            mensajes: 0,
-            logros: []
-        };
+        
+		perfiles[userId] = {
+    xp: 0,
+    level: 1,
+    mensajes: 0,
+    comandos: 0,
+    reacciones: 0,
+    logros: []
+};
     }
 }
 function darLogro(perfiles, userId, logro) {
@@ -444,6 +447,39 @@ function darLogro(perfiles, userId, logro) {
 
     return false;
 }
+	const logrosInfo = {
+
+cmd_1: "Usar un comando por primera vez",
+
+cmd_500: "Usar 500 comandos",
+cmd_1000: "Usar 1,000 comandos",
+cmd_10000: "Usar 10,000 comandos",
+cmd_50000: "Usar 50,000 comandos",
+
+chars_15: "Conseguir 15 personajes",
+chars_30: "Conseguir 30 personajes",
+chars_50: "Conseguir 50 personajes",
+chars_100: "Conseguir 100 personajes",
+
+money_100k: "Tener 100,000 de dinero",
+money_1m: "Tener 1,000,000 de dinero",
+money_10m: "Tener 10,000,000 de dinero",
+money_100m: "Tener 100,000,000 de dinero",
+
+duel_admin: "Derrotar al admin en un duel",
+
+react_40: "Hacer 40 reacciones de anime",
+react_100: "Hacer 100 reacciones de anime",
+react_200: "Hacer 200 reacciones de anime",
+react_500: "Hacer 500 reacciones de anime",
+
+three_am: "Usar un comando a las 3 AM",
+
+admin_money: "Conseguir que el admin te de dinero",
+
+completionist: "Conseguir todos los logros"
+
+};
 	
 // ---------------- MENSAJES ----------------
 
@@ -462,6 +498,36 @@ client.on('message_create', async (message) => {
 
 
    console.log("Comando detectado:", comando);
+	perfiles[userId].comandos += 1;
+	if (perfiles[userId].comandos === 1) {
+    if (darLogro(perfiles, userId, "cmd_1")) {
+        message.reply("🏆 Logro desbloqueado: Usar un comando por primera vez");
+    }
+}
+
+if (perfiles[userId].comandos === 500) {
+    if (darLogro(perfiles, userId, "cmd_500")) {
+        message.reply("🏆 Logro desbloqueado: Usar 500 comandos");
+    }
+}
+
+if (perfiles[userId].comandos === 1000) {
+    if (darLogro(perfiles, userId, "cmd_1000")) {
+        message.reply("🏆 Logro desbloqueado: Usar 1,000 comandos");
+    }
+}
+
+if (perfiles[userId].comandos === 10000) {
+    if (darLogro(perfiles, userId, "cmd_10000")) {
+        message.reply("🏆 Logro desbloqueado: Usar 10,000 comandos");
+    }
+}
+
+if (perfiles[userId].comandos === 50000) {
+    if (darLogro(perfiles, userId, "cmd_50000")) {
+        message.reply("🏆 Logro desbloqueado: Usar 50,000 comandos");
+    }
+}
 
     const texto = message.body.toLowerCase().trim();
     if (!texto.startsWith(prefix)) return;
@@ -847,6 +913,26 @@ texto += `XP: ${p.xp} / ${xpNecesaria}\n`;
     message.reply(texto);
 }
 
+
+if (comando === "logros") {
+
+    const perfiles = cargarPerfiles();
+    asegurarPerfil(perfiles, userId);
+
+    const lista = perfiles[userId].logros;
+
+    if (lista.length === 0) {
+        return message.reply("No tienes logros todavía.");
+    }
+
+    let texto = "🏆 TUS LOGROS\n\n";
+
+    lista.forEach(l => {
+        texto += `• ${logrosInfo[l] || l}\n`;
+    });
+
+    message.reply(texto);
+}
 	
 // --------- COMANDO ?say ---------
     if (comando.startsWith('say')) {
@@ -2871,7 +2957,7 @@ if (listaReacciones.includes(comandoLimpio)) {
 // --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
