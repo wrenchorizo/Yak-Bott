@@ -314,8 +314,8 @@ client.on('ready', () => {
 
 
 // ---------------- VARIABLES GLOBALES ----------------
-
-const personajes = JSON.parse(fs.readFileSync('./personajes.json'));
+const personajes = JSON.parse(fs.readFileSync('./personajes.json', 'utf8'));
+	
 // --- FUNCIÓN PARA LIMPIAR PERSONAJES ANTIGUOS (Añadir debajo de guardarHarem) ---
 function limpiarHaremNaN(data) {
     let corregidos = 0;
