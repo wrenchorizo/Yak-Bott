@@ -428,7 +428,7 @@ client.on('message_create', async (message) => {
 
    console.log("Comando detectado:", comando);
 
-    const texto = message.body.toLowerCase();
+    const texto = message.body.toLowerCase().trim();
     if (!texto.startsWith(prefix)) return;
 
 console.log("Comando detectado:", comando);
