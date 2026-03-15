@@ -2655,13 +2655,14 @@ if (comando.startsWith('fight')) {
     delete mobActual[message.from];
 
     if (poderFinalUser > mob.poderTotal) {
-        // VICTORIA
+       
+		// VICTORIA
         const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        const expTotal = Math.max(20, Math.floor(mob.poderTotal / 40));
+        const expTotal = Math.max(10, Math.floor(Math.sqrt(mob.poderTotal) / 2));
 let avisosLvl = "";
 		let expTotalEquipo = 0;
 
@@ -2689,10 +2690,10 @@ hData[message.from][userId].forEach(pj => {
         const aporte = poderPersonajes[pj.nombre] / poderEquipo;
 
         // EXP SEGÚN APORTE
-        let expGanada = Math.floor(expTotal * aporte * 2.5);
+        let expGanada = Math.floor(expTotal * aporte);
 
         // PENALIZACIÓN SI ES MUY DÉBIL
-        const nivelMobAprox = mob.poderTotal / 3;
+        const nivelMobAprox = Math.sqrt(mob.poderTotal);
         const diferencia = nivelMobAprox / pj.level;
 
         if (diferencia > 8) expGanada *= 0.15;
