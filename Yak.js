@@ -740,6 +740,35 @@ if (comando === 'cal') {
         return message.reply("❌ *Error:* Operación inválida. Revisa los signos.");
     }
 }
+
+// --------- ?gay ---------
+if (comando === 'gay') {
+
+    const mencionado = message.mentionedIds[0];
+    if (!mencionado) return message.reply(`Uso: ${prefix}gay @usuario`);
+
+    const usuario = `@${mencionado.split('@')[0]}`;
+
+    client.sendMessage(message.from, "ꕤ Calculando nivel de gay...");
+
+    setTimeout(() => {
+
+        let porcentaje;
+
+        if (Math.random() < 0.15) {
+            porcentaje = Math.floor(Math.random() * 1000000000);
+        } else {
+            porcentaje = Math.floor(Math.random() * 100) + 1;
+        }
+
+        client.sendMessage(
+            message.from,
+            `🏳️‍🌈 Resultado:\n${usuario} es *${porcentaje}%* gay`,
+            { mentions: [mencionado] }
+        );
+
+    }, 2500);
+}
 	
 // --------- COMANDO ?say ---------
     if (comando.startsWith('say')) {
