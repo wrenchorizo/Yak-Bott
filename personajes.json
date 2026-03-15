@@ -2265,8 +2265,119 @@
     "genero": "Mujer",
     "fuente": "One Piece",
     "imagen": "https://jumpichiban.com/cdn/shop/products/71-msmiCWPL._AC_SL1269.jpg"
-  }
-
+  },
+  {
+  "nombre": "John Price",
+  "valor": "10950",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://static.wikia.nocookie.net/callofduty/images/e/e4/JohnPrice_Infobox_MWIII.png"
+},
+{
+  "nombre": "Simon Riley",
+  "valor": "10780",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/736x/4e/27/66/4e2766e3ea695e61a16ba0495db9a9ac.jpg"
+},
+{
+  "nombre": "John MacTavish",
+  "valor": "10820",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/736x/aa/0b/37/aa0b37c710ce9c7fffd1698b73f0cb58.jpg"
+},
+{
+  "nombre": "Alex Mason",
+  "valor": "10540",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://static.wikia.nocookie.net/callofduty/images/b/b4/Alex_Mason_1981_BOCW.png"
+},
+{
+  "nombre": "Frank Woods",
+  "valor": "10580",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://cdn.staticneo.com/w/callofduty/Woods.jpg"
+},
+{
+  "nombre": "Vladimir Makarov",
+  "valor": "9800",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://static.wikia.nocookie.net/callofduty/images/e/e9/Makarov_Infobox_MWIII.jpg"
+},
+{
+  "nombre": "Raul Menendez",
+  "valor": "9950",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/280x280_RS/1b/dc/bb/1bdcbbd1e93df37892952dc586bd2d6c.jpg"
+},
+{
+  "nombre": "David Mason",
+  "valor": "10120",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/736x/96/7a/26/967a265a9f3a138da26c93c2683f5a7c.jpg"
+},
+{
+  "nombre": "Kyle Garrick",
+  "valor": "10340",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/564x/35/c7/fe/35c7feeb80c5709f38e41ea1e136ec1b.jpg"
+},
+{
+  "nombre": "Gary Sanderson",
+  "valor": "10480",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/736x/52/72/02/5272027367e8aa234d5e5f259a6232ea.jpg"
+},
+{
+  "nombre": "Farah Karim",
+  "valor": "10220",
+  "genero": "Mujer",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/474x/f2/27/72/f22772353cf095f2126270d412f1ab7b.jpg"
+},
+{
+  "nombre": "Russell Adler",
+  "valor": "10410",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/736x/af/cf/37/afcf37e7c9f3d63e2cb75e221d88b5d8.jpg"
+},
+{
+  "nombre": "Alejandro Vargas",
+  "valor": "10560",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/originals/83/52/e0/8352e03624fb97a69fc608c9081dbf5e.png"
+},
+{
+  "nombre": "Valeria Garza",
+  "valor": "10010",
+  "genero": "Mujer",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/originals/30/a3/4f/30a34fe330b27d06a04f69715df70797.jpg"
+},
+{
+  "nombre": "Phillip Graves",
+  "valor": "9800",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://i.pinimg.com/736x/74/fd/5a/74fd5a273af04e9342e74c9c5953079a.jpg"
+},
+{
+  "nombre": "Hershel Shepherd",
+  "valor": "9600",
+  "genero": "Hombre",
+  "fuente": "Call of Duty",
+  "imagen": "https://static.wikia.nocookie.net/callofduty/images/7/75/Shepherd_infobox_MW2.png"
+}
 ]
 
 
