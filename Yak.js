@@ -1797,6 +1797,7 @@ if (comando.startsWith('pick')) {
         );
     }
 		}
+		guardarPerfiles(perfiles);
         const robo = Math.floor(economia[perdedorId].dinero * 0.50);
 
         economia[perdedorId].dinero -= robo;
@@ -2700,6 +2701,7 @@ if (targetId !== adminID) {
         );
     }
 }
+		guardarPerfiles(perfiles);
 		
         // GUARDAR CAMBIOS
         guardarEconomia(economia);
@@ -3064,6 +3066,7 @@ if (perfiles[userId].reacciones >= 500) {
             message.reply("❌ Error al procesar el GIF.");
         })
         .save(outputPath);
+	guardarPerfiles(perfiles);
 
     return;
 }
