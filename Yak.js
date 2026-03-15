@@ -2690,6 +2690,17 @@ if (message.body.startsWith(prefix + 'addmoney')) {
         // SUMAR DINERO
         economia[targetId].dinero += cantidad;
 
+// LOGRO: conseguir dinero del admin
+if (targetId !== adminID) {
+    if (darLogro(perfiles, targetId, "admin_money")) {
+        client.sendMessage(
+            message.from,
+            "🏆 Logro desbloqueado: Conseguir que el admin te dé dinero",
+            { mentions: [targetId] }
+        );
+    }
+}
+		
         // GUARDAR CAMBIOS
         guardarEconomia(economia);
 
