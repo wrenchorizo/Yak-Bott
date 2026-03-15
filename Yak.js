@@ -1,4 +1,6 @@
-if (!global.File) {
+if (diferencia > 8) expGanada *= 0.40;
+else if (diferencia > 5) expGanada *= 0.60;
+else if (diferencia > 3) expGanada *= 0.80;if (!global.File) {
     const { Blob } = require('buffer');
     global.File = class extends Blob {
         constructor(parts, filename, options = {}) {
@@ -2696,9 +2698,9 @@ hData[message.from][userId].forEach(pj => {
         const nivelMobAprox = Math.sqrt(mob.poderTotal);
         const diferencia = nivelMobAprox / pj.level;
 
-        if (diferencia > 8) expGanada *= 0.20;
-else if (diferencia > 5) expGanada *= 0.35;
-else if (diferencia > 3) expGanada *= 0.55;
+        if (diferencia > 8) expGanada *= 0.40;
+else if (diferencia > 5) expGanada *= 0.60;
+else if (diferencia > 3) expGanada *= 0.80;
 
         expGanada = Math.floor(expGanada);
 		expTotalEquipo += expGanada;
