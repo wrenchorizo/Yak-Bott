@@ -166,12 +166,12 @@ let cooldownsBuscarmob = {};
 // Variable para guardar el mob que aparece en cada grupo
 let mobActual = {};
 const mobsData = [
-    { nombre: 'Feministas', lvls: [5, 9], desc: 'Protestan por tu presencia.' },
-    { nombre: 'Moscas', lvls: [10, 50], desc: 'Un zumbido molesto pero letal.' },
-    { nombre: 'Esqueletos', lvls: [100, 500], desc: 'Huesos crujientes que buscan pelea.' },
-    { nombre: 'Zombies', lvls: [1000, 3500], desc: 'Cerebros... y tu dinero.' },
+    { nombre: 'Zombies salvages', lvls: [5, 9], desc: 'Protestan por tu presencia.' },
+    { nombre: 'Mentes manipuladas ultra mejoradas', lvls: [10, 50], desc: 'Un zumbido molesto pero letal.' },
+    { nombre: 'Esqueletos infernales', lvls: [100, 500], desc: 'Huesos crujientes que buscan pelea.' },
+    { nombre: 'Robots de ultron', lvls: [1000, 3500], desc: 'Cerebros... y tu dinero.' },
     { nombre: 'Devastadores', lvls: [5000, 8000], desc: 'Máquinas de destrucción masiva.' },
-    { nombre: 'Piratas', lvls: [10000, 12000], desc: 'Buscadores de tesoros del Grand Line.' },
+    { nombre: 'Piratas con recompensas altas', lvls: [10000, 12000], desc: 'Buscadores de tesoros del Grand Line.' },
     { nombre: 'Ejército de Viltrumitas', lvls: [15000, 17000], desc: 'Omni-man estaría orgulloso.' },
     { nombre: 'Soldados de Freezer', lvls: [20000, 30000], desc: 'La élite galáctica del emperador.' },
     { nombre: 'Celestiales errantes', lvls: [30000, 60000], desc: 'Entidades cósmicas fuera de control.' },
