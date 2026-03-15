@@ -970,15 +970,35 @@ if (comando === "profile") {
 
     const p = perfiles[userId];
 
-    let texto = `👤 PERFIL\n\n`;
+    let texto = `👤 *PERFIL*\n\n`;
     const xpNecesaria = p.level * 100;
 
-texto += `Nivel: ${p.level}\n`;
-texto += `XP: ${p.xp} / ${xpNecesaria}\n`;
+    texto += `⭐ Nivel: ${p.level}\n`;
+    texto += `✨ XP: ${p.xp} / ${xpNecesaria}\n`;
     texto += `💬 Mensajes: ${p.mensajes}\n`;
     texto += `🏆 Logros: ${p.logros.length}\n`;
 
-    message.reply(texto);
+    try {
+
+        const contacto = await message.getContact();
+        const fotoUrl = await contacto.getProfilePicUrl();
+
+        if (fotoUrl) {
+
+            const media = await MessageMedia.fromUrl(fotoUrl);
+
+            await client.sendMessage(message.from, media, {
+                caption: texto
+            });
+
+        } else {
+            message.reply(texto);
+        }
+
+    } catch (err) {
+        console.log("Error cargando foto de perfil:", err);
+        message.reply(texto);
+    }
 }
 
 
