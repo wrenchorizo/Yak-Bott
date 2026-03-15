@@ -2545,14 +2545,33 @@ if (comando === 'smob') {
     // Seleccionamos un tipo de mob al azar de tu lista mobsData
     const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
     
-    // Generamos los 3 niveles
-    const enemigos = [];
-    let poderTotal = 0;
-    for(let i = 0; i < 3; i++) {
-        const lvl = Math.floor(Math.random() * (mobTemplate.lvls[1] - mobTemplate.lvls[0] + 1)) + mobTemplate.lvls[0];
-        enemigos.push(lvl);
-        poderTotal += lvl;
-    }
+    // calcular poder promedio del jugador
+const hData = cargarHarem();
+const misPersonajes = hData[message.from]?.[userId] || [];
+
+let poderJugador = 0;
+	
+misPersonajes.forEach(p => {
+    let lvl = p.level || 1;
+    let valorBase = Number(p.valor) || 0;
+    let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
+    poderJugador += valorReal;
+});
+
+poderJugador = poderJugador / Math.max(1, misPersonajes.length);
+	if (poderJugador < 50) poderJugador = 50;
+
+// ESCALADO DINÁMICO
+const minMob = Math.floor(poderJugador * 0.6);
+const maxMob = Math.floor(poderJugador * 1.25);
+const enemigos = [];
+let poderTotal = 0;
+
+for (let i = 0; i < 3; i++) {
+    const lvl = Math.floor(Math.random() * (maxMob - minMob + 1)) + Math.floor(minMob);
+    enemigos.push(lvl);
+    poderTotal += lvl;
+}
 
     // Guardamos el mob específico para este chat
     mobActual[message.from] = {
@@ -2641,33 +2660,68 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        const expGanada = Math.max(10, Math.floor(mob.poderTotal / 15));
-        let avisosLvl = "";
+        const expTotal = Math.max(20, Math.floor(mob.poderTotal / 40));
+let avisosLvl = "";
+		let expTotalEquipo = 0;
 
-        // EDITAR DIRECTAMENTE EL HAREM
-        hData[message.from][userId].forEach(pj => {
-            const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
-            if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
-                pj.level = pj.level || 1;
-                pj.exp = (pj.exp || 0) + expGanada;
-                pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
+// calcular poder total del equipo otra vez para reparto
+let poderEquipo = 0;
+let poderPersonajes = {};
 
-                let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-                while (pj.exp >= xpReq) {
-                    pj.exp -= xpReq;
-                    pj.level += 1;
-                    xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-                    avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
-                }
-            }
-        });
+equipoTemp.forEach(pj => {
+    let lvl = pj.level || 1;
+    let valorBase = Number(pj.valor) || 0;
+    let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
+
+    poderPersonajes[pj.nombre] = valorReal;
+    poderEquipo += valorReal;
+});
+
+hData[message.from][userId].forEach(pj => {
+    const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
+
+    if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
+
+        pj.level = pj.level || 1;
+
+        // PORCENTAJE DE APORTE AL EQUIPO
+        const aporte = poderPersonajes[pj.nombre] / poderEquipo;
+
+        // EXP SEGÚN APORTE
+        let expGanada = Math.floor(expTotal * aporte * 2.5);
+
+        // PENALIZACIÓN SI ES MUY DÉBIL
+        const nivelMobAprox = mob.poderTotal / 3;
+        const diferencia = nivelMobAprox / pj.level;
+
+        if (diferencia > 8) expGanada *= 0.15;
+        else if (diferencia > 5) expGanada *= 0.30;
+        else if (diferencia > 3) expGanada *= 0.50;
+
+        expGanada = Math.floor(expGanada);
+		expTotalEquipo += expGanada;
+
+        pj.exp = (pj.exp || 0) + expGanada;
+
+        pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
+
+        let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+
+        while (pj.exp >= xpReq) {
+            pj.exp -= xpReq;
+            pj.level += 1;
+            xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+            avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
+        }
+    }
+});
         
         // SINCRONIZACIÓN CRÍTICA
         haremPorGrupo = hData; 
         guardarHarem(hData);
         guardarEconomia(economia);
 
-        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expGanada} EXP${avisosLvl}\n\n> Datos guardados en tu Harem.`);
+        return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expTotalEquipo} EXP total${avisosLvl}\n\n> Datos guardados en tu Harem.`);
     } else {
         // DERROTA
         hData[message.from][userId].forEach(pj => {
