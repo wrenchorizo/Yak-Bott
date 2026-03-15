@@ -2169,7 +2169,7 @@ if (comando.startsWith('trade')) {
         `🔄 *PROPUESTA DE INTERCAMBIO*\n\n` +
         `@${userId.split('@')[0]} ofrece: *${miPersonaje.nombre}*\n` +
         `@${mentioned.split('@')[0]} ofrece: *${suPersonaje.nombre}*\n\n` +
-        `✅ @${mentioned.split('@')[0]}, responde *aceptar* en 60s.`,
+        `✅ @${mentioned.split('@')[0]}, responde *?aceptartrade* en 60s.`,
         { mentions: [userId, mentioned] }
     );
 }
