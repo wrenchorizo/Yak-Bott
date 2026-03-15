@@ -2560,7 +2560,7 @@ misPersonajes.forEach(p => {
 
 poderJugador = poderJugador / Math.max(1, misPersonajes.length);
 	if (poderJugador < 50) poderJugador = 50;
-	poderJugador = Math.min(poderJugador, 1000000);
+	poderJugador = Math.min(poderJugador, 50000);
 
 // ESCALADO DINÁMICO
 const minMob = Math.floor(poderJugador * 0.6);
@@ -2578,7 +2578,7 @@ for (let i = 0; i < 3; i++) {
     mobActual[message.from] = {
         nombre: mobTemplate.nombre,
         poderTotal: poderTotal,
-        recompensa: Math.floor(poderTotal / 2),
+        recompensa: Math.floor(Math.sqrt(poderTotal) * 5),
         vencido: false
     };
 
@@ -2662,7 +2662,7 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        const expTotal = Math.max(10, Math.floor(Math.sqrt(mob.poderTotal) / 2));
+        const expTotal = Math.max(10, Math.floor(Math.sqrt(mob.poderTotal) / 3));
 let avisosLvl = "";
 		let expTotalEquipo = 0;
 
@@ -2696,9 +2696,9 @@ hData[message.from][userId].forEach(pj => {
         const nivelMobAprox = Math.sqrt(mob.poderTotal);
         const diferencia = nivelMobAprox / pj.level;
 
-        if (diferencia > 8) expGanada *= 0.15;
-        else if (diferencia > 5) expGanada *= 0.30;
-        else if (diferencia > 3) expGanada *= 0.50;
+        if (diferencia > 8) expGanada *= 0.10;
+else if (diferencia > 5) expGanada *= 0.25;
+else if (diferencia > 3) expGanada *= 0.45;
 
         expGanada = Math.floor(expGanada);
 		expTotalEquipo += expGanada;
