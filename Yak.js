@@ -2662,7 +2662,7 @@ if (comando.startsWith('fight')) {
         const premio = mob.recompensa;
         economia[userId].dinero += premio;
 
-        const expTotal = Math.max(10, Math.floor(Math.sqrt(mob.poderTotal) / 3));
+        const expTotal = Math.max(25, Math.floor(Math.sqrt(mob.poderTotal) / 2));
 let avisosLvl = "";
 		let expTotalEquipo = 0;
 
@@ -2696,9 +2696,9 @@ hData[message.from][userId].forEach(pj => {
         const nivelMobAprox = Math.sqrt(mob.poderTotal);
         const diferencia = nivelMobAprox / pj.level;
 
-        if (diferencia > 8) expGanada *= 0.10;
-else if (diferencia > 5) expGanada *= 0.25;
-else if (diferencia > 3) expGanada *= 0.45;
+        if (diferencia > 8) expGanada *= 0.20;
+else if (diferencia > 5) expGanada *= 0.35;
+else if (diferencia > 3) expGanada *= 0.55;
 
         expGanada = Math.floor(expGanada);
 		expTotalEquipo += expGanada;
