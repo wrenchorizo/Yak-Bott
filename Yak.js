@@ -433,6 +433,17 @@ function asegurarPerfil(perfiles, userId) {
         };
     }
 }
+function darLogro(perfiles, userId, logro) {
+
+    if (!perfiles[userId].logros.includes(logro)) {
+
+        perfiles[userId].logros.push(logro);
+
+        return true;
+    }
+
+    return false;
+}
 	
 // ---------------- MENSAJES ----------------
 
@@ -487,6 +498,15 @@ asegurarPerfil(perfiles, userId);
 perfiles[userId].xp += 2;
 
 guardarPerfiles(perfiles);
+	const xpNecesaria = perfiles[userId].level * 100;
+
+if (perfiles[userId].xp >= xpNecesaria) {
+
+    perfiles[userId].xp -= xpNecesaria;
+    perfiles[userId].level += 1;
+
+    message.reply(`⭐ ¡Subiste al nivel ${perfiles[userId].level}!`);
+}
 
 // --- LÓGICA DE DEADPOOL ERRANTE (LIMITADO AL GRUPO) ---
     const chanceDeadpool = Math.random();
@@ -807,6 +827,26 @@ if (comando === 'gay') {
 
     }, 2500);
 }
+
+// =========== COMANDO ?profile =============
+if (comando === "profile") {
+
+    const perfiles = cargarPerfiles();
+    asegurarPerfil(perfiles, userId);
+
+    const p = perfiles[userId];
+
+    let texto = `👤 PERFIL\n\n`;
+    const xpNecesaria = p.level * 100;
+
+texto += `Nivel: ${p.level}\n`;
+texto += `XP: ${p.xp} / ${xpNecesaria}\n`;
+    texto += `💬 Mensajes: ${p.mensajes}\n`;
+    texto += `🏆 Logros: ${p.logros.length}\n`;
+
+    message.reply(texto);
+}
+
 	
 // --------- COMANDO ?say ---------
     if (comando.startsWith('say')) {
