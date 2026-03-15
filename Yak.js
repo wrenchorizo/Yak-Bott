@@ -1979,51 +1979,52 @@ if (comando.startsWith('ship')) {
     });
 }
 
+
 // --------- ?givechar ---------
 if (comando === 'givechar') {
-    const args = message.body.slice(prefix.length + comando.length).trim();
-    const mencionadoId = message.mentionedIds[0];
 
-    if (!mencionadoId || !args) {
-        return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre del Personaje`);
-    }
+    if (!message.from.endsWith("@g.us"))
+        return message.reply("Este comando solo funciona en grupos.");
 
-    const personajeNombre = args.replace(/@\d+/g, '').trim();
-    const soyYo = (message.author || message.from);
-    
-    // Referencia exacta a tu variable dataFolder definida al inicio de tu Yak.js
-    const miArchivo = `${dataFolder}${soyYo.split('@')[0]}.json`;
-    const archivoDestino = `${dataFolder}${mencionadoId.split('@')[0]}.json`;
+    const mencionado = message.mentionedIds[0];
+    if (!mencionado)
+        return message.reply(`Uso: ${prefix}givechar @usuario Nombre`);
 
-    if (!fs.existsSync(miArchivo)) return message.reply("❌ No tienes un perfil registrado.");
-    if (!fs.existsSync(archivoDestino)) return message.reply("❌ El usuario mencionado no tiene un perfil.");
+    const nombre = message.body
+        .slice(prefix.length + 8)
+        .replace(/@\d+\s*/g, "")
+        .trim()
+        .toLowerCase();
 
-    let miData = JSON.parse(fs.readFileSync(miArchivo, 'utf8'));
-    let suData = JSON.parse(fs.readFileSync(archivoDestino, 'utf8'));
+    const giver = userId;
+    const grupo = grupoId;
 
-    if (!miData.harem || miData.harem.length === 0) {
-        return message.reply("❌ Tu harem está vacío.");
-    }
+    if (!haremPorGrupo[grupo]?.[giver])
+        return message.reply("❌ No tienes personajes.");
 
-    // Buscamos el personaje respetando tu estructura de objetos del harem
-    const index = miData.harem.findIndex(c => c.name.toLowerCase() === personajeNombre.toLowerCase());
+    if (!haremPorGrupo[grupo]?.[mencionado])
+        haremPorGrupo[grupo][mencionado] = [];
 
-    if (index === -1) {
-        return message.reply(`❌ No tienes a *${personajeNombre}* en tu harem.`);
-    }
+    const harem = haremPorGrupo[grupo][giver];
 
-    // Transferencia
-    const [personaje] = miData.harem.splice(index, 1);
-    if (!suData.harem) suData.harem = [];
-    suData.harem.push(personaje);
+    const index = harem.findIndex(p => 
+        p.nombre.toLowerCase() === nombre
+    );
 
-    // Guardado con tu formato
-    fs.writeFileSync(miArchivo, JSON.stringify(miData, null, 2));
-    fs.writeFileSync(archivoDestino, JSON.stringify(suData, null, 2));
+    if (index === -1)
+        return message.reply(`❌ No tienes a ${nombre}.`);
 
-    return client.sendMessage(message.from, `✅ *Traspaso Legal*\n\nSe ha entregado a *${personaje.name}* al harem de @${mencionadoId.split('@')[0]}`, {
-        mentions: [mencionadoId]
-    });
+    const [personaje] = harem.splice(index, 1);
+
+    haremPorGrupo[grupo][mencionado].push(personaje);
+
+    guardarHarem(haremPorGrupo);
+
+    return client.sendMessage(
+        message.from,
+        `🎁 *Traspaso Legal*\n\n${personaje.nombre} fue entregado a @${mencionado.split('@')[0]}`,
+        { mentions: [mencionado] }
+    );
 }
 
 // ----------COMANDO ?YT--------------
