@@ -2554,12 +2554,13 @@ let poderJugador = 0;
 misPersonajes.forEach(p => {
     let lvl = p.level || 1;
     let valorBase = Number(p.valor) || 0;
-    let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
+    let valorReal = valorBase * Math.pow(1.05, (lvl - 1));
     poderJugador += valorReal;
 });
 
 poderJugador = poderJugador / Math.max(1, misPersonajes.length);
 	if (poderJugador < 50) poderJugador = 50;
+	poderJugador = Math.min(poderJugador, 1000000);
 
 // ESCALADO DINÁMICO
 const minMob = Math.floor(poderJugador * 0.6);
