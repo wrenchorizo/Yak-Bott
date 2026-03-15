@@ -529,6 +529,19 @@ if (perfiles[userId].comandos === 50000) {
     }
 }
 
+	const hora = new Date().getHours();
+	if (hora === 3) {
+
+    if (darLogro(perfiles, userId, "three_am")) {
+
+        message.reply("🏆 Logro desbloqueado: Usar un comando a las 3 AM");
+
+    }
+
+	}
+	
+
+	guardarPerfiles(perfiles);
     const texto = message.body.toLowerCase().trim();
     if (!texto.startsWith(prefix)) return;
 
