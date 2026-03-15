@@ -495,9 +495,51 @@ client.on('message_create', async (message) => {
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
+	console.log("Comando detectado:", comando);
+    const texto = message.body.toLowerCase().trim();
+    if (!texto.startsWith(prefix)) return;
+	
+    const chatId = message.from;
+if (message.isGroup) {
+    if (!botSettings[chatId]) {
+        botSettings[chatId] = { enabled: true };
+    }
 
+const isGroup = message.from.endsWith("@g.us");
 
-   console.log("Comando detectado:", comando);
+let userId;
+
+if (isGroup) {
+    userId = message.author || message._data.participant;
+} else {
+    userId = message.from;
+}
+
+    if (!botSettings[chatId].enabled && !message.body.toLowerCase().startsWith(`${prefix}bot on`)) {
+        return; // Ignora todos los comandos si está apagado
+    }
+}
+
+    const userId = message.author || message._data.participant || message.from;
+    const grupoId = message.from;
+
+    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+	const perfiles = cargarPerfiles();
+asegurarPerfil(perfiles, userId);
+	perfiles[userId].mensajes += 1;
+perfiles[userId].xp += 2;
+
+guardarPerfiles(perfiles);
+	const xpNecesaria = perfiles[userId].level * 100;
+
+if (perfiles[userId].xp >= xpNecesaria) {
+
+    perfiles[userId].xp -= xpNecesaria;
+    perfiles[userId].level += 1;
+
+    message.reply(`⭐ ¡Subiste al nivel ${perfiles[userId].level}!`);
+}
+
 	perfiles[userId].comandos += 1;
 	if (perfiles[userId].comandos === 1) {
     if (darLogro(perfiles, userId, "cmd_1")) {
@@ -596,51 +638,7 @@ if (personajes >= 100) {
     }
 }
 	guardarPerfiles(perfiles);
-    const texto = message.body.toLowerCase().trim();
-    if (!texto.startsWith(prefix)) return;
-
-console.log("Comando detectado:", comando);
-    const chatId = message.from;
-if (message.isGroup) {
-    if (!botSettings[chatId]) {
-        botSettings[chatId] = { enabled: true };
-    }
-
-const isGroup = message.from.endsWith("@g.us");
-
-let userId;
-
-if (isGroup) {
-    userId = message.author || message._data.participant;
-} else {
-    userId = message.from;
-}
-
-    if (!botSettings[chatId].enabled && !message.body.toLowerCase().startsWith(`${prefix}bot on`)) {
-        return; // Ignora todos los comandos si está apagado
-    }
-}
-
-    const userId = message.author || message._data.participant || message.from;
-    const grupoId = message.from;
-
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-	const perfiles = cargarPerfiles();
-asegurarPerfil(perfiles, userId);
-	perfiles[userId].mensajes += 1;
-perfiles[userId].xp += 2;
-
-guardarPerfiles(perfiles);
-	const xpNecesaria = perfiles[userId].level * 100;
-
-if (perfiles[userId].xp >= xpNecesaria) {
-
-    perfiles[userId].xp -= xpNecesaria;
-    perfiles[userId].level += 1;
-
-    message.reply(`⭐ ¡Subiste al nivel ${perfiles[userId].level}!`);
-}
-
+	
 // --- LÓGICA DE DEADPOOL ERRANTE (LIMITADO AL GRUPO) ---
     const chanceDeadpool = Math.random();
 
