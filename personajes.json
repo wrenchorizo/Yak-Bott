@@ -1,7 +1,7 @@
 [
   {
     "nombre": "Sakura Haruno",
-    "valor": "17631",
+    "valor": "15631",
     "genero": "Mujer",
     "fuente": "Naruto",
     "imagen": "https://i.pinimg.com/1200x/ab/f8/f7/abf8f7933d2f950d26f93cdce4b53f62.jpg"
@@ -15,42 +15,42 @@
   },
   {
     "nombre": "Zen Oh Sama",
-    "valor": "50000",
+    "valor": "90000",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/736x/f4/1b/07/f41b075615f297f15060ba4b72807b31.jpg"
   },
   {
     "nombre": "Vegeta",
-    "valor": "19999",
+    "valor": "25200",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/1200x/a8/51/31/a85131b412f0e53f613126c52b4ef9e0.jpg"
   },
   {
     "nombre": "Jiren",
-    "valor": "20099",
+    "valor": "26099",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/1200x/59/32/64/59326477cfbde634c789930622092640.jpg"
   },
   {
     "nombre": "Bills",
-    "valor": "30000",
+    "valor": "50000",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/1200x/29/ea/0b/29ea0b056b855b3d862c823429199a2e.jpg"
   },
   {
     "nombre": "Whis",
-    "valor": "90000",
+    "valor": "70000",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/736x/ab/4c/25/ab4c25df0a27d36e85485d0a795650ad.jpg"
   },
   {
     "nombre": "Shenlong",
-    "valor": "23000",
+    "valor": "30000",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/1200x/74/9b/2d/749b2d04e03af484a046fdc9ad1200f4.jpg"
@@ -657,7 +657,7 @@
 {
   "nombre": "Wave",
   "valor": "13100",
-  "genero": "Mujer",
+  "genero": "Hombre",
   "fuente": "Akame ga Kill",
   "imagen": "https://i.pinimg.com/736x/19/32/22/193222fe612cf76ea24fe479911b81c6.jpg"
 },
