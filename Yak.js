@@ -2171,32 +2171,52 @@ if (comando.startsWith('trade')) {
     );
 }
 
-// --------- Confirmar Trade ---------
-if (texto === "aceptar") {
-    const trade = tradesPendientes[grupoId];
-    if (!trade || userId !== trade.receptor) return;
+// --------- ?aceptartrade ---------
+if (comando === "aceptartrade") {
 
-    clearTimeout(trade.timeout);
+    const grupo = grupoId;
 
-    // 1. Quitar personajes de sus dueños originales
-    haremPorGrupo[grupoId][trade.iniciador] = haremPorGrupo[grupoId][trade.iniciador]
-        .filter(p => p.nombre !== trade.miPersonaje.nombre);
+    if (!tradesPendientes[grupo]) {
+        return message.reply("❌ No hay ningún intercambio pendiente.");
+    }
 
-    haremPorGrupo[grupoId][trade.receptor] = haremPorGrupo[grupoId][trade.receptor]
-        .filter(p => p.nombre !== trade.suPersonaje.nombre);
+    const trade = tradesPendientes[grupo];
 
-    // 2. Entregar personajes (Intercambio)
-    haremPorGrupo[grupoId][trade.iniciador].push(trade.suPersonaje);
-    haremPorGrupo[grupoId][trade.receptor].push(trade.miPersonaje);
+    if (userId !== trade.receptor) {
+        return message.reply("❌ Solo el usuario que recibió la oferta puede aceptarla.");
+    }
 
-    // 3. ¡MUY IMPORTANTE! Guardar en el archivo JSON
+    const haremA = haremPorGrupo[grupo][trade.iniciador];
+    const haremB = haremPorGrupo[grupo][trade.receptor];
+
+    if (!haremA || !haremB) {
+        return message.reply("❌ Error con los harems.");
+    }
+
+    const indexA = haremA.findIndex(p => p.nombre === trade.miPersonaje.nombre);
+    const indexB = haremB.findIndex(p => p.nombre === trade.suPersonaje.nombre);
+
+    if (indexA === -1 || indexB === -1) {
+        return message.reply("❌ Uno de los personajes ya no está disponible.");
+    }
+
+    const [personajeA] = haremA.splice(indexA, 1);
+    const [personajeB] = haremB.splice(indexB, 1);
+
+    haremA.push(personajeB);
+    haremB.push(personajeA);
+
     guardarHarem(haremPorGrupo);
 
-    delete tradesPendientes[grupoId];
+    delete tradesPendientes[grupo];
 
-    return message.reply(`🔁 ¡Intercambio exitoso!\n\n*${trade.miPersonaje.nombre}* ⇋ *${trade.suPersonaje.nombre}*`);
+    return client.sendMessage(
+        message.from,
+        `🤝 *Intercambio completado*\n\n${personajeA.nombre} ↔ ${personajeB.nombre}`
+    );
 }
-
+	
+// ============ COMANDO ?wtired ================
 if (message.body.startsWith(prefix + 'wtired')) {
     if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId] || haremPorGrupo[grupoId][userId].length === 0) {
         return message.reply('❒ Tu harem está vacío.');
