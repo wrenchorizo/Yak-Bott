@@ -269,14 +269,14 @@ const client = new Client({
         dataPath: './data/session' // <--- AQUÍ se guarda tu QR escaneado para siempre
     }),
     puppeteer: {
-        headless: "new",
-        args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu"
-        ]
-    }
+    headless: true,
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+    ]
+	}
 });
 
 
