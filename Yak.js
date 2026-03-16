@@ -2609,137 +2609,268 @@ for (let i = 0; i < 3; i++) {
 
 // ============ COMANDO ?fight ====================
 
+
 // --------- COMANDO ?fight ---------
+
 if (comando.startsWith('fight')) {
+
     const mob = mobActual[message.from];
+
     
+
     // Si el mob no existe (porque pasaron los 5 min o alguien ya peleó), da error
+
     if (!mob) {
+
         return message.reply("❏ *Error:* No hay mobs activos.\n> Usa ?smob primero.");
+
     }
+
+
 
     const argsF = message.body.slice(prefix.length + 5).trim();
+
     const nombresInput = argsF.split(",").map(n => n.trim().toLowerCase());
 
+
+
     if (!argsF || nombresInput.length < 1 || nombresInput.length > 3) {
+
         return message.reply(`❏ *Uso:* ${prefix}fight Personaje1, Personaje2, Personaje3`);
+
     }
+
+
 
     // Cargamos la data actualizada
+
     const hData = cargarHarem();
+
     const misPersonajes = hData[message.from]?.[userId] || [];
 
+
+
     if (misPersonajes.length === 0) {
+
         return message.reply("❏ *Error:* No tienes personajes en este grupo.");
+
     }
+
+
 
     let equipoTemp = [];
+
     let poderTotalEquipo = 0;
 
+
+
     for (let nombreBusqueda of nombresInput) {
+
         const pj = misPersonajes.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
+
         if (!pj) return message.reply(`❏ *Error:* No tienes a [ ${nombreBusqueda} ] en tu harem.`);
 
+
+
         let lvl = pj.level || 1;
+
         let valorBase = Number(pj.valor) || 0;
+
         let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
 
+
+
         equipoTemp.push(pj);
+
         poderTotalEquipo += valorReal;
+
     }
+
+
 
     const poderFinalUser = Math.floor(poderTotalEquipo);
 
+
+
     // --- CAMBIO CLAVE: BORRAMOS EL MOB AQUÍ ---
+
     // Esto hace que el mob desaparezca para siempre, gane o pierda el usuario.
+
     delete mobActual[message.from];
 
+
+
     if (poderFinalUser > mob.poderTotal) {
-       
-		// VICTORIA
+
+        // VICTORIA
+
         const economia = cargarEconomia();
+
         asegurarUsuario(economia, userId);
+
         const premio = mob.recompensa;
+
         economia[userId].dinero += premio;
 
-        const expTotal = Math.max(25, Math.floor(Math.sqrt(mob.poderTotal) / 2));
+
+
+        const expTotal = Math.max(20, Math.floor(mob.poderTotal / 40));
+
 let avisosLvl = "";
+
 		let expTotalEquipo = 0;
 
+
+
 // calcular poder total del equipo otra vez para reparto
+
 let poderEquipo = 0;
+
 let poderPersonajes = {};
 
+
+
 equipoTemp.forEach(pj => {
+
     let lvl = pj.level || 1;
+
     let valorBase = Number(pj.valor) || 0;
+
     let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
 
+
+
     poderPersonajes[pj.nombre] = valorReal;
+
     poderEquipo += valorReal;
+
 });
 
+
+
 hData[message.from][userId].forEach(pj => {
+
     const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
+
+
 
     if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
 
+
+
         pj.level = pj.level || 1;
 
+
+
         // PORCENTAJE DE APORTE AL EQUIPO
+
         const aporte = poderPersonajes[pj.nombre] / poderEquipo;
 
+
+
         // EXP SEGÚN APORTE
-        let expGanada = Math.floor(expTotal * aporte);
+
+        let expGanada = Math.floor(expTotal * aporte * 2.5);
+
+
 
         // PENALIZACIÓN SI ES MUY DÉBIL
-        const nivelMobAprox = Math.sqrt(mob.poderTotal);
+
+        const nivelMobAprox = mob.poderTotal / 3;
+
         const diferencia = nivelMobAprox / pj.level;
 
-        if (diferencia > 8) expGanada *= 0.40;
-else if (diferencia > 5) expGanada *= 0.60;
-else if (diferencia > 3) expGanada *= 0.80;
+
+
+        if (diferencia > 8) expGanada *= 0.15;
+
+        else if (diferencia > 5) expGanada *= 0.30;
+
+        else if (diferencia > 3) expGanada *= 0.50;
+
+
 
         expGanada = Math.floor(expGanada);
+
 		expTotalEquipo += expGanada;
+
+
 
         pj.exp = (pj.exp || 0) + expGanada;
 
+
+
         pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
+
+
 
         let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
 
+
+
         while (pj.exp >= xpReq) {
+
             pj.exp -= xpReq;
+
             pj.level += 1;
+
             xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+
             avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
+
         }
+
     }
+
 });
+
         
+
         // SINCRONIZACIÓN CRÍTICA
+
         haremPorGrupo = hData; 
+
         guardarHarem(hData);
+
         guardarEconomia(economia);
 
+
+
         return message.reply(`『  *VICTORIA* 』\n\n💰 +$${premio.toLocaleString()}\n⭐ +${expTotalEquipo} EXP total${avisosLvl}\n\n> Datos guardados en tu Harem.`);
+
     } else {
+
         // DERROTA
+
         hData[message.from][userId].forEach(pj => {
+
             const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
+
             if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
+
                 pj.stamina = Math.max(0, (pj.stamina || 100) - 10);
+
             }
+
         });
+
         haremPorGrupo = hData;
+
         guardarHarem(hData);
 
+
+
         const faltaPoder = mob.poderTotal - poderFinalUser;
+
         // Mensaje indicando que el mob escapó
+
         return message.reply(`『  *DERROTA* 』\n\n⚡ -10% Energía\n📉 Faltó ${faltaPoder.toLocaleString()} de poder.\n\n> El mob ha escapado tras la batalla.`);
+
     }
+
 }
+
+	
 
 
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
