@@ -2778,7 +2778,7 @@ let expGanada = Math.floor(expTotal / equipoTemp.length);
 
 
 
-        expGanada = Math.floor(explet expGanada = Math.floor(expTotal / equipoTemp.length);Ganada);
+        let expGanada = Math.floor(expTotal / equipoTemp.length);
 
 		expTotalEquipo += expGanada;
 
