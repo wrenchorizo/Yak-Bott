@@ -2578,7 +2578,7 @@ for (let i = 0; i < 3; i++) {
     mobActual[message.from] = {
         nombre: mobTemplate.nombre,
         poderTotal: poderTotal,
-        recompensa: Math.floor(Math.sqrt(poderTotal) * 5),
+        recompensa: Math.max(1000, Math.min(Math.floor(Math.sqrt(poderTotal) * 3), 60000)),
         vencido: false
     };
 
