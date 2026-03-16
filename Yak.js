@@ -2563,13 +2563,14 @@ poderJugador = poderJugador / Math.max(1, misPersonajes.length);
 	poderJugador = Math.min(poderJugador, 50000);
 
 // ESCALADO DINÁMICO
-const minMob = Math.floor(poderJugador * 0.6);
-const maxMob = Math.floor(poderJugador * 1.25);
+const minMob = Math.floor(poderJugador * 0.25);
+const maxMob = Math.floor(poderJugador * 0.9);
 const enemigos = [];
 let poderTotal = 0;
 
 for (let i = 0; i < 3; i++) {
-    const lvl = Math.floor(Math.random() * (maxMob - minMob + 1)) + Math.floor(minMob);
+    let randomFactor = Math.pow(Math.random(), 2); // más probabilidad de bajos
+const lvl = Math.floor(minMob + randomFactor * (maxMob - minMob));
     enemigos.push(lvl);
     poderTotal += lvl;
 }
@@ -2616,8 +2617,6 @@ if (comando.startsWith('fight')) {
 
     const mob = mobActual[message.from];
 
-    
-
     // Si el mob no existe (porque pasaron los 5 min o alguien ya peleó), da error
 
     if (!mob) {
@@ -2625,8 +2624,6 @@ if (comando.startsWith('fight')) {
         return message.reply("❏ *Error:* No hay mobs activos.\n> Usa ?smob primero.");
 
     }
-
-
 
     const argsF = message.body.slice(prefix.length + 5).trim();
 
@@ -2714,7 +2711,7 @@ if (comando.startsWith('fight')) {
 
 
 
-        const expTotal = Math.max(20, Math.floor(mob.poderTotal / 40));
+        const expTotal = Math.max(1000, Math.min(Math.floor(Math.sqrt(mob.poderTotal) * 3), 60000));
 
 let avisosLvl = "";
 
