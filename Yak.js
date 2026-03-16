@@ -29,6 +29,16 @@ const dns = require('dns');
 
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
+const http = require('http');
+
+// Crear un servidor básico para que Railway no apague el bot
+http.createServer((req, res) => {
+  res.write('YakBot está vivo');
+  res.end();
+}).listen(process.env.PORT || 3000, () => {
+  console.log(`Servidor de salud escuchando en el puerto ${process.env.PORT || 3000}`);
+});
+
 // ==========================================
 //        ANTI-CRASH GLOBAL (REPARADO)
 // ==========================================
