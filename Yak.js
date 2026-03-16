@@ -2751,40 +2751,27 @@ hData[message.from][userId].forEach(pj => {
 
 
 
-    if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
+if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
 
+    pj.level = pj.level || 1;
 
+    let expGanada = Math.floor(expTotal / equipoTemp.length);
 
-        pj.level = pj.level || 1;
+    // PENALIZACIÓN SI ES MUY DÉBIL
+    const nivelMobAprox = mob.poderTotal / 3;
+    const diferencia = nivelMobAprox / pj.level;
 
+    if (diferencia > 8) expGanada *= 0.15;
+    else if (diferencia > 5) expGanada *= 0.30;
+    else if (diferencia > 3) expGanada *= 0.50;
 
-        // PENALIZACIÓN SI ES MUY DÉBIL
+    expGanada = Math.floor(expGanada);
 
-        const nivelMobAprox = mob.poderTotal / 3;
+    expTotalEquipo += expGanada;
 
-        const diferencia = nivelMobAprox / pj.level;
+    pj.exp = (pj.exp || 0) + expGanada;
 
-
-
-        if (diferencia > 8) expGanada *= 0.15;
-
-        else if (diferencia > 5) expGanada *= 0.30;
-
-        else if (diferencia > 3) expGanada *= 0.50;
-
-
-
-        let expGanada = Math.floor(expTotal / equipoTemp.length);
-
-		expTotalEquipo += expGanada;
-
-
-
-        pj.exp = (pj.exp || 0) + expGanada;
-
-
-
-        pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
+    pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
 
 
 
