@@ -2563,13 +2563,14 @@ poderJugador = poderJugador / Math.max(1, misPersonajes.length);
 	poderJugador = Math.min(poderJugador, 50000);
 
 // ESCALADO DINÁMICO
-const minMob = Math.floor(poderJugador * 0.25);
+const minMob = Math.floor(poderJugador * 0.15);
 const maxMob = Math.floor(poderJugador * 0.9);
 const enemigos = [];
 let poderTotal = 0;
 
 for (let i = 0; i < 3; i++) {
     let randomFactor = Math.pow(Math.random(), 2); // más probabilidad de bajos
+let randomFactor = Math.pow(Math.random(), 2);
 const lvl = Math.floor(minMob + randomFactor * (maxMob - minMob));
     enemigos.push(lvl);
     poderTotal += lvl;
@@ -2759,16 +2760,7 @@ hData[message.from][userId].forEach(pj => {
 
 
 
-        // PORCENTAJE DE APORTE AL EQUIPO
-
-        const aporte = poderPersonajes[pj.nombre] / poderEquipo;
-
-
-
-        // EXP SEGÚN APORTE
-
-        let expGanada = Math.floor(expTotal * aporte * 2.5);
-
+let expGanada = Math.floor(expTotal / equipoTemp.length);
 
 
         // PENALIZACIÓN SI ES MUY DÉBIL
@@ -2787,7 +2779,7 @@ hData[message.from][userId].forEach(pj => {
 
 
 
-        expGanada = Math.floor(expGanada);
+        expGanada = Math.floor(explet expGanada = Math.floor(expTotal / equipoTemp.length);Ganada);
 
 		expTotalEquipo += expGanada;
 
