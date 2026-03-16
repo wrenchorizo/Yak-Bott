@@ -2758,10 +2758,6 @@ hData[message.from][userId].forEach(pj => {
         pj.level = pj.level || 1;
 
 
-
-let expGanada = Math.floor(expTotal / equipoTemp.length);
-
-
         // PENALIZACIÓN SI ES MUY DÉBIL
 
         const nivelMobAprox = mob.poderTotal / 3;
