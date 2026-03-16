@@ -2681,51 +2681,36 @@ let poderEquipo = 0;
 let poderPersonajes = {};
 
 equipoTemp.forEach(pj => {
-    let lvl = pj.level || 1;
-    let valorBase = Number(pj.valor) || 0;
-    let valorReal = valorBase * Math.pow(1.20, (lvl - 1));
 
-    poderPersonajes[pj.nombre] = valorReal;
-    poderEquipo += valorReal;
-});
+    pj.level = pj.level || 1;
 
-hData[message.from][userId].forEach(pj => {
-    const nombrePeleador = equipoTemp.map(e => e.nombre.toLowerCase());
+    const aporte = poderPersonajes[pj.nombre] / poderEquipo;
 
-    if (nombrePeleador.includes(pj.nombre.toLowerCase())) {
+    let expGanada = Math.floor(expTotal * aporte * 2.5);
 
-        pj.level = pj.level || 1;
+    const nivelMobAprox = mob.poderTotal / 3;
+    const diferencia = nivelMobAprox / pj.level;
 
-        // PORCENTAJE DE APORTE AL EQUIPO
-        const aporte = poderPersonajes[pj.nombre] / poderEquipo;
+    if (diferencia > 8) expGanada *= 0.15;
+    else if (diferencia > 5) expGanada *= 0.30;
+    else if (diferencia > 3) expGanada *= 0.50;
 
-        // EXP SEGÚN APORTE
-        let expGanada = Math.floor(expTotal * aporte * 2.5);
+    expGanada = Math.floor(expGanada);
+    expTotalEquipo += expGanada;
 
-        // PENALIZACIÓN SI ES MUY DÉBIL
-        const nivelMobAprox = mob.poderTotal / 3;
-        const diferencia = nivelMobAprox / pj.level;
+    pj.exp = (pj.exp || 0) + expGanada;
 
-        if (diferencia > 8) expGanada *= 0.15;
-        else if (diferencia > 5) expGanada *= 0.30;
-        else if (diferencia > 3) expGanada *= 0.50;
+    pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
 
-        expGanada = Math.floor(expGanada);
-		expTotalEquipo += expGanada;
+    let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
 
-        pj.exp = (pj.exp || 0) + expGanada;
-
-        pj.stamina = Math.min(100, (pj.stamina || 100) + 2);
-
-        let xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-
-        while (pj.exp >= xpReq) {
-            pj.exp -= xpReq;
-            pj.level += 1;
-            xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
-            avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
-        }
+    while (pj.exp >= xpReq) {
+        pj.exp -= xpReq;
+        pj.level += 1;
+        xpReq = Math.floor(100 * Math.pow(1.1, pj.level - 1));
+        avisosLvl += `\n🆙 ¡*${pj.nombre}* subió al nivel ${pj.level}!`;
     }
+
 });
         
         // SINCRONIZACIÓN CRÍTICA
