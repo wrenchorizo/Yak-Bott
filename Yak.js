@@ -274,18 +274,19 @@ function actualizarStamina(personaje) {
 
 // Cliente
 const client = new Client({
-    authStrategy: new LocalAuth({
-        clientId: "client-one",
-        dataPath: './data/session' // <--- AQUÍ se guarda tu QR escaneado para siempre
-    }),
+    authStrategy: new LocalAuth(),
     puppeteer: {
-        headless: "new",
+        headless: true,
         args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu"
-        ]
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+        ],
     }
 });
 
