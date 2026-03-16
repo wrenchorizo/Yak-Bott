@@ -2569,7 +2569,6 @@ const enemigos = [];
 let poderTotal = 0;
 
 for (let i = 0; i < 3; i++) {
-    let randomFactor = Math.pow(Math.random(), 2); // más probabilidad de bajos
 let randomFactor = Math.pow(Math.random(), 2);
 const lvl = Math.floor(minMob + randomFactor * (maxMob - minMob));
     enemigos.push(lvl);
