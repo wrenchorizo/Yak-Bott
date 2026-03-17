@@ -275,19 +275,16 @@ function actualizarStamina(personaje) {
 // Cliente
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: './data/session' // Esto guardará la sesión en /app/data/session
+        dataPath: './data/session' // Asegura que se guarde en tu volumen de Railway
     }),
     puppeteer: {
-        handleSIGINT: false,
+        headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
             '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
+            '--single-process'
         ],
     }
 });
@@ -2620,95 +2617,95 @@ for (let i = 0; i < 3; i++) {
 `);
 }
 
-// --------- COMANDO ?fight (REPARADO Y EQUILIBRADO) ---------
+
+// =============== COMANDO ?fight====================
 if (comando === 'fight') {
-    const grupoId = message.from;
+    const chat = await message.getChat();
+    const grupoId = chat.id._serialized;
     const userId = message.author || message.from;
 
     if (!mobActual[grupoId]) {
-        return message.reply("❌ No hay monstruos en esta zona. Usa *?smob* para encontrar uno.");
+        return message.reply("❌ No hay monstruos aquí. Usa *?smob* para encontrar uno.");
     }
 
-    const args = message.body.slice(prefix.length + 5).trim().split(',');
-    const seleccionados = args.map(n => n.trim().toLowerCase()).filter(n => n !== "");
-
-    if (seleccionados.length === 0) {
-        return message.reply("❌ Modo de uso: *?fight personaje1, personaje2*");
+    const nombresEquipo = args.join(" ").split(",").map(n => n.trim().toLowerCase()).filter(n => n !== "");
+    if (nombresEquipo.length === 0) {
+        return message.reply("❌ Debes elegir al menos un personaje. Ejemplo: *?fight Goku*");
     }
 
-    const userHarem = haremPorGrupo[grupoId] && haremPorGrupo[grupoId][userId] ? haremPorGrupo[grupoId][userId] : [];
-    if (userHarem.length === 0) return message.reply("❌ No tienes personajes en tu harem.");
-
+    const haremUser = haremPorGrupo[grupoId]?.[userId] || [];
     const equipo = [];
-    for (const nombrePj of seleccionados) {
-        const pj = userHarem.find(p => p.nombre.toLowerCase() === nombrePj);
+
+    for (let nombrePj of nombresEquipo) {
+        const pj = haremUser.find(p => p.nombre.toLowerCase() === nombrePj);
         if (pj) {
             actualizarStamina(pj);
-            if (pj.stamina < 15) {
-                return message.reply(`😫 *${pj.nombre}* está agotado. Necesita descansar (Stamina: ${pj.stamina}/100).`);
+            if ((pj.stamina || 0) < 15) {
+                return message.reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}/100).`);
             }
             equipo.push(pj);
         }
     }
 
-    if (equipo.length === 0) return message.reply("❌ No se encontraron los personajes especificados.");
+    if (equipo.length === 0) return message.reply("❌ No tienes esos personajes en tu harem.");
 
     const mob = mobActual[grupoId];
-    
-    // --- NUEVA FÓRMULA DE PODER ---
-    // Poder Usuario = (Niveles sumados * 30) + (Valor total / 40)
-    let poderEquipo = equipo.reduce((sum, p) => sum + (p.level * 30) + (Number(p.valor || 0) / 40), 0);
-    
-    // Poder Mob = (Nivel Mob * 25) -> Bajado de 35 a 25 para evitar derrotas infinitas
-    let poderMob = mob.lvl * 25;
+    // Rango de nivel del mob (aleatorio según el smob previo)
+    const mobLvl = Math.floor(Math.random() * (mob.lvls[1] - mob.lvls[0] + 1)) + mob.lvls[0];
 
-    // Factor Suerte y Crítico
-    const suerte = Math.random() * (1.2 - 0.9) + 0.9; // Variación entre 90% y 120%
-    const esCritico = Math.random() < 0.15; // 15% de probabilidad de golpe crítico
-    
-    if (esCritico) {
-        poderEquipo *= 1.5;
-    }
+    // --- NUEVA FÓRMULA DE PODER EQUILIBRADA ---
+    // Poder Personaje = (Lvl * 50) + (Valor / 10). 
+    // Ahora una carta nivel 10 (500 pts) + Valor 500 (50 pts) = 550 total.
+    let poderEquipo = equipo.reduce((sum, p) => {
+        return sum + (Number(p.level || 1) * 50) + (Number(p.valor || 0) / 10);
+    }, 0);
+
+    // Poder Mob = (Lvl * 45). Un mob lvl 10 tiene 450. ¡Ahora sí puedes ganar!
+    let poderMob = mobLvl * 45;
+
+    // Variación de suerte (0.9 a 1.2)
+    const suerte = Math.random() * (1.2 - 0.9) + 0.9;
     poderEquipo *= suerte;
 
-    // Consumo de stamina
-    equipo.forEach(p => p.stamina -= 15);
-
-    message.reply(`⚔️ *¡COMBATE INICIADO!*\n\n👾 *Enemigo:* ${mob.nombre} (Lvl ${mob.lvl})\n🛡️ *Tu Equipo:* ${equipo.map(p => p.nombre).join(', ')}\n${esCritico ? "💥 ¡GOLPE CRÍTICO AÑADIDO!" : ""}\n\n⏳ Calculando batalla...`);
+    message.reply(`⚔️ *COMBATE:* vs *${mob.nombre}* (Lvl. ${mobLvl})\n📊 Poder Equipo: ${Math.floor(poderEquipo)}\n👾 Poder Mob: ${poderMob}\n\n⏳ Peleando...`);
 
     setTimeout(() => {
         if (poderEquipo >= poderMob) {
-            // --- VICTORIA ---
-            const recompensa = Math.floor(mob.lvl * 100 * (Math.random() + 0.5));
-            const xpGanada = Math.floor(mob.lvl * 15);
+            // VICTORIA
+            const gananciaDinero = Math.floor(mobLvl * 120 * suerte);
+            const gananciaExp = Math.floor(mobLvl * 25);
 
             const economia = cargarEconomia();
             asegurarUsuario(economia, userId);
-            economia[userId].dinero += recompensa;
+            economia[userId].dinero = (Number(economia[userId].dinero) || 0) + gananciaDinero;
             guardarEconomia(economia);
 
-            // Subir XP y Niveles
             let subidas = "";
             equipo.forEach(p => {
-                p.exp = (p.exp || 0) + xpGanada;
-                const xpNecesaria = p.level * 50;
-                if (p.exp >= xpNecesaria) {
-                    p.level += 1;
+                p.exp = (Number(p.exp) || 0) + gananciaExp;
+                p.stamina = Math.max(0, (Number(p.stamina) || 100) - 15);
+                p.lastUpdate = Date.now();
+                
+                const expMeta = (Number(p.level) || 1) * 100;
+                if (p.exp >= expMeta) {
+                    p.level = (Number(p.level) || 1) + 1;
                     p.exp = 0;
-                    subidas += `\n🆙 *${p.nombre}* subió a Nivel ${p.level}!`;
+                    subidas += `\n⭐ *${p.nombre}* subió a Lvl ${p.level}!`;
                 }
             });
 
             guardarHarem(haremPorGrupo);
-            delete mobActual[grupoId]; // Mob derrotado
-
-            message.reply(`🎉 *¡VICTORIA!* 🎉\n\n💰 Ganaste: *$${recompensa}*\n✨ XP obtenida: +${xpGanada}${subidas}`);
+            delete mobActual[grupoId];
+            return message.reply(`🏆 *¡VICTORIA!*\n💰 Dinero: +$${gananciaDinero}\n✨ XP: +${gananciaExp}${subidas}`);
         } else {
-            // --- DERROTA ---
-            message.reply(`💀 *DERROTA*\n\nEl ${mob.nombre} era demasiado fuerte (${Math.floor(poderMob)} vs ${Math.floor(poderEquipo)}).\n\n💡 *Tip:* Sube de nivel a tus personajes o usa más de uno en la pelea.`);
+            // DERROTA
+            equipo.forEach(p => p.stamina = Math.max(0, (Number(p.stamina) || 100) - 20));
+            guardarHarem(haremPorGrupo);
+            return message.reply(`💀 *DERROTA*\nEl ${mob.nombre} fue demasiado fuerte. Tus personajes están cansados.`);
         }
     }, 2500);
-									   }
+}
+	
 	
 	
 
