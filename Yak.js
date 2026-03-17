@@ -2532,24 +2532,40 @@ if (comando === 'smob') {
     mobActual[grupoId] = {
         nombre: mobTemplate.nombre,
         poderTotal: poderMob,
-        vencido: false
+        vencido: false,
+        creadoEn: ahora
     };
 
     cooldownsBuscarmob[grupoId][userId] = ahora;
 
-    return message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n>Usa *?fight* personaje 1, personaje 2, personaje 3 para luchar.`);
+    message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n⚠️ Tienes **7 minutos** para pelear antes de que escape.`);
+
+    // --- TEMPORIZADOR DE ESCAPE ---
+    setTimeout(() => {
+        // Verificamos que el mob siga existiendo, que sea el mismo y que no haya sido vencido
+        if (mobActual[grupoId] && mobActual[grupoId].creadoEn === ahora && !mobActual[grupoId].vencido) {
+            const nombreEscapado = mobActual[grupoId].nombre;
+            delete mobActual[grupoId];
+            client.sendMessage(grupoId, `🍃 El *${nombreEscapado}* se ha marchado... se cansó de esperar a un contrincante.`);
+        }
+    }, 7 * 60 * 1000); 
 }
-	
-	
 	
 	
 // ================= COMANDO ?fight=================
 if (comando === 'fight') {
     const grupoId = message.from;
     const userId = message.author || message.from;
+    const ahora = Date.now();
+    const tiempoLimite = 7 * 60 * 1000;
 
     if (!mobActual[grupoId] || mobActual[grupoId].vencido) {
-        return message.reply("❌ No hay monstruos aquí.");
+        return message.reply("❌ No hay monstruos aquí. Usa *?smob* para buscar uno.");
+    }
+
+    if (ahora - mobActual[grupoId].creadoEn > tiempoLimite) {
+        delete mobActual[grupoId];
+        return message.reply("🍃 El monstruo se ha marchado... (Excediste el límite de 7 minutos).");
     }
 
     const argsF = message.body.slice(prefix.length + 5).trim().split(',');
@@ -2573,13 +2589,15 @@ if (comando === 'fight') {
 
     const mob = mobActual[grupoId];
     
-    // Cálculo de poder del equipo
     let poderTuEquipo = equipo.reduce((sum, p) => sum + (Number(p.valor) || 0) + ((Number(p.level) || 1) * 250), 0);
     poderTuEquipo *= (0.95 + Math.random() * 0.15);
 
     message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*\n\n⏳ Calculando impacto...`);
 
     setTimeout(() => {
+        // Verificación final por si el mob expiró durante los 2.5s de espera del mensaje
+        if (!mobActual[grupoId]) return;
+
         if (poderTuEquipo >= mob.poderTotal) {
             const gananciaDinero = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
             const xpGanada = Math.floor(mob.poderTotal / 80); 
@@ -2590,32 +2608,29 @@ if (comando === 'fight') {
             guardarEconomia(eco);
 
             let avisosNivel = "";
-            
             equipo.forEach(p => {
                 p.exp = (Number(p.exp) || 0) + xpGanada;
                 p.stamina = Math.max(0, p.stamina - 15);
                 p.lastUpdate = Date.now();
 
-                // --- SISTEMA DE LEVEL UP DINÁMICO ---
-                // Mientras la EXP sea mayor o igual a lo necesario, sube de nivel
-                // Nivel 1 pide 100, Nivel 2 pide 200, etc.
                 let nivelesSubidos = 0;
                 let expNecesaria = (Number(p.level) || 1) * 100;
 
                 while (p.exp >= expNecesaria) {
-                    p.exp -= expNecesaria; // Restamos lo que costó subir
+                    p.exp -= expNecesaria;
                     p.level = (Number(p.level) || 1) + 1;
-                    expNecesaria = p.level * 100; // Actualizamos costo para el siguiente nivel
+                    expNecesaria = p.level * 100;
                     nivelesSubidos++;
                 }
 
                 if (nivelesSubidos > 0) {
-                    avisosNivel += `\n🆙 ¡*${p.nombre}* subió ${nivelesSubidos} nivel(es)! (Ahora Lvl ${p.level})`;
+                    avisosNivel += `\n🆙 ¡*${p.nombre}* subió ${nivelesSubidos} nivel(es)! (Lvl ${p.level})`;
                 }
             });
 
-            // GUARDAR CAMBIOS EN EL DISCO
             guardarHarem(haremPorGrupo);
+            // Marcar como vencido para que el setTimeout no mande el mensaje de "escapó"
+            if (mobActual[grupoId]) mobActual[grupoId].vencido = true;
             delete mobActual[grupoId];
 
             return message.reply(`🏆 *¡VICTORIA TOTAL!* 🏆\n\n💰 Recompensa: *$${gananciaDinero.toLocaleString()}*\n✨ EXP: +${xpGanada.toLocaleString()}${avisosNivel}`);
