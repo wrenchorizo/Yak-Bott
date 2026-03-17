@@ -1278,31 +1278,33 @@ if (comando === 'cooldowns') {
 
 
 if (message.body === "?w") {
-
     const economia = cargarEconomia();
     const userId = message.author || message._data.participant || message.from;
 
     asegurarUsuario(economia, userId);
 
     const ahora = Date.now();
-    const cooldown = 60 * 1000; // 1 minuto
+    const cooldown = 60 * 1000; // 1 minuto (puedes subirlo si sientes que dan mucho dinero muy rápido)
 
-if (ahora - economia[userId].lastWork < cooldown) {
-    const restante = cooldown - (ahora - economia[userId].lastWork);
-    return message.reply(`◔ Espera ${msToTime(restante)} para volver a trabajar`);
-}
+    if (ahora - (economia[userId].lastWork || 0) < cooldown) {
+        const restante = cooldown - (ahora - (economia[userId].lastWork || 0));
+        // Usamos tu función msToTime que ya tienes en el archivo
+        return message.reply(`◔ Espera ${msToTime(restante)} para volver a trabajar.`);
+    }
 
-    const ganancia = Math.floor(Math.random() * 401) + 100;
-    economia[userId].dinero += ganancia;
+    // --- NUEVO RANGO DE TRABAJO (1k a 3k) ---
+    const ganancia = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
+    
+    // Aseguramos que el dinero sea tratado como número para evitar el "NaN" o errores de suma
+    economia[userId].dinero = (Number(economia[userId].dinero) || 0) + ganancia;
     economia[userId].lastWork = ahora;
 
     guardarEconomia(economia);
 
-    message.reply(`⌨ Trabajaste y ganaste $${ganancia}\n\n» Balance: $${economia[userId].dinero}`);
+    message.reply(`⌨️ Has trabajado con éxito.\n\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance Total: *$${economia[userId].dinero.toLocaleString()}*`);
 }
-
+	
 if (message.body === "?crime") {
-
     const economia = cargarEconomia();
     const userId = message.author || message._data.participant || message.from;
 
@@ -1311,29 +1313,36 @@ if (message.body === "?crime") {
     const ahora = Date.now();
     const cooldown = 5 * 60 * 1000; // 5 minutos
 
-if (ahora - economia[userId].lastCrime < cooldown) {
-    const restante = cooldown - (ahora - economia[userId].lastCrime);
-    return message.reply(`◔ Espera ${msToTime(restante)} para volver a intentar cometer un crimen`);
-}
+    if (ahora - (economia[userId].lastCrime || 0) < cooldown) {
+        const restante = cooldown - (ahora - (economia[userId].lastCrime || 0));
+        return message.reply(`◔ Espera ${msToTime(restante)} para volver a intentar cometer un crimen.`);
+    }
 
+    // 50% de probabilidad de éxito
     const exito = Math.random() < 0.5;
 
     if (exito) {
-        const ganancia = Math.floor(Math.random() * 901) + 300;
-        economia[userId].dinero += ganancia;
+        // --- GANANCIA ENTRE 5,000 Y 7,000 ---
+        const ganancia = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000;
+        economia[userId].dinero = (Number(economia[userId].dinero) || 0) + ganancia;
 
-        message.reply(`✪ Crimen exitoso...\nGanaste $${ganancia}\n\n» Balance: $${economia[userId].dinero}`);
+        message.reply(`✪ *¡CRIMEN EXITOSO!* ✪\n\n🕵️‍♂️ Lograste el golpe perfecto.\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance actual: *$${economia[userId].dinero.toLocaleString()}*`);
     } else {
-        const perdida = Math.floor(Math.random() * 601) + 200;
-        economia[userId].dinero -= perdida;
+        // --- PÉRDIDA ENTRE 4,000 Y 6,000 (Riesgo alto) ---
+        const perdida = Math.floor(Math.random() * (6000 - 4000 + 1)) + 4000;
+        economia[userId].dinero = (Number(economia[userId].dinero) || 0) - perdida;
+        
+        // Evitar que el dinero sea negativo
         if (economia[userId].dinero < 0) economia[userId].dinero = 0;
 
-        message.reply(`✪ Te atraparon...\nPerdiste $${perdida}\n\n» Balance: $${economia[userId].dinero}`);
+        message.reply(`👮‍♂️ *¡TE ATRAPARON!* 👮‍♂️\n\nLa policía te confiscó el equipo y pagaste fianza.\n📉 Perdiste: *$${perdida.toLocaleString()}*\n💰 Balance actual: *$${economia[userId].dinero.toLocaleString()}*`);
     }
 
     economia[userId].lastCrime = ahora;
     guardarEconomia(economia);
 }
+	
+
 
 if (comando === 'daily') {
     const economia = cargarEconomia();
@@ -1374,7 +1383,7 @@ if (comando === 'daily') {
     }
 
     // --- ENTREGAR PREMIO ---
-    const premio = 50000; // Ajusta el premio a tu gusto
+    const premio = 45000; // Ajusta el premio a tu gusto
     economia[userId].dinero += premio;
     economia[userId].lastDaily = ahora.getTime();
 
