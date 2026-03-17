@@ -2528,7 +2528,7 @@ if (comando === 'smob') {
 
     cooldownsBuscarmob[grupoId][userId] = ahora;
 
-    return message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* para medir fuerzas.`);
+    return message.reply(`✧ ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* personaje 1, personaje 2, personaje 3 para enfrentarlos.`);
 }
 	
 	
