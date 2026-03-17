@@ -274,9 +274,11 @@ function actualizarStamina(personaje) {
 
 // Cliente
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth({
+        dataPath: './data/session' // Esto guardará la sesión en /app/data/session
+    }),
     puppeteer: {
-        headless: true,
+        handleSIGINT: false,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -2618,89 +2620,96 @@ for (let i = 0; i < 3; i++) {
 `);
 }
 
-// --------- COMANDO ?fight (REPARADO) ---------
+// --------- COMANDO ?fight (REPARADO Y EQUILIBRADO) ---------
 if (comando === 'fight') {
     const grupoId = message.from;
     const userId = message.author || message.from;
 
-    // 1. Verificar si hay un mob activo en el grupo
     if (!mobActual[grupoId]) {
-        return message.reply("❌ No hay ningún mob en esta zona. Usa *?smob* para buscar uno.");
+        return message.reply("❌ No hay monstruos en esta zona. Usa *?smob* para encontrar uno.");
     }
 
-    // 2. Obtener los personajes elegidos por el usuario
-    const seleccionados = message.body.slice(prefix.length + 5).trim().split(',').map(n => n.trim().toLowerCase());
+    const args = message.body.slice(prefix.length + 5).trim().split(',');
+    const seleccionados = args.map(n => n.trim().toLowerCase()).filter(n => n !== "");
 
-    if (seleccionados.length === 0 || seleccionados[0] === "") {
-        return message.reply("❌ Uso: *?fight personaje1, personaje2, personaje3*");
+    if (seleccionados.length === 0) {
+        return message.reply("❌ Modo de uso: *?fight personaje1, personaje2*");
     }
 
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) {
-        return message.reply("❌ No tienes personajes en tu harem.");
-    }
+    const userHarem = haremPorGrupo[grupoId] && haremPorGrupo[grupoId][userId] ? haremPorGrupo[grupoId][userId] : [];
+    if (userHarem.length === 0) return message.reply("❌ No tienes personajes en tu harem.");
 
-    const userHarem = haremPorGrupo[grupoId][userId];
     const equipo = [];
-
-    // 3. Validar que el usuario tenga los personajes y calcular poder
     for (const nombrePj of seleccionados) {
         const pj = userHarem.find(p => p.nombre.toLowerCase() === nombrePj);
         if (pj) {
-            // Actualizar stamina antes de pelear
             actualizarStamina(pj);
-            if (pj.stamina < 10) {
-                return message.reply(`❌ **${pj.nombre}** está muy cansado para pelear (Stamina baja).`);
+            if (pj.stamina < 15) {
+                return message.reply(`😫 *${pj.nombre}* está agotado. Necesita descansar (Stamina: ${pj.stamina}/100).`);
             }
             equipo.push(pj);
-        } else {
-            return message.reply(`❌ No tienes a **${nombrePj}** en tu harem.`);
         }
     }
 
-    if (equipo.length === 0) return;
+    if (equipo.length === 0) return message.reply("❌ No se encontraron los personajes especificados.");
 
-    // 4. Lógica de Combate
     const mob = mobActual[grupoId];
-    let poderEquipo = equipo.reduce((sum, p) => sum + (p.level * 10) + (p.valor / 100), 0);
-    let poderMob = (mob.lvl * 15);
+    
+    // --- NUEVA FÓRMULA DE PODER ---
+    // Poder Usuario = (Niveles sumados * 30) + (Valor total / 40)
+    let poderEquipo = equipo.reduce((sum, p) => sum + (p.level * 30) + (Number(p.valor || 0) / 40), 0);
+    
+    // Poder Mob = (Nivel Mob * 25) -> Bajado de 35 a 25 para evitar derrotas infinitas
+    let poderMob = mob.lvl * 25;
 
-    // Aplicar cansancio (restar stamina)
-    equipo.forEach(p => p.stamina -= 10);
+    // Factor Suerte y Crítico
+    const suerte = Math.random() * (1.2 - 0.9) + 0.9; // Variación entre 90% y 120%
+    const esCritico = Math.random() < 0.15; // 15% de probabilidad de golpe crítico
+    
+    if (esCritico) {
+        poderEquipo *= 1.5;
+    }
+    poderEquipo *= suerte;
 
-    message.reply(`⚔️ *COMBATE INICIADO*\n\n🛡️ Tu equipo: ${equipo.map(p => p.nombre).join(', ')}\n👾 Enemigo: ${mob.nombre} (Lvl. ${mob.lvl})\n\n⏳ Calculando resultado...`);
+    // Consumo de stamina
+    equipo.forEach(p => p.stamina -= 15);
+
+    message.reply(`⚔️ *¡COMBATE INICIADO!*\n\n👾 *Enemigo:* ${mob.nombre} (Lvl ${mob.lvl})\n🛡️ *Tu Equipo:* ${equipo.map(p => p.nombre).join(', ')}\n${esCritico ? "💥 ¡GOLPE CRÍTICO AÑADIDO!" : ""}\n\n⏳ Calculando batalla...`);
 
     setTimeout(() => {
         if (poderEquipo >= poderMob) {
-            // VICTORIA
-            const recompensa = Math.floor(mob.lvl * 50);
-            const xpGanada = Math.floor(mob.lvl * 5);
+            // --- VICTORIA ---
+            const recompensa = Math.floor(mob.lvl * 100 * (Math.random() + 0.5));
+            const xpGanada = Math.floor(mob.lvl * 15);
 
             const economia = cargarEconomia();
             asegurarUsuario(economia, userId);
             economia[userId].dinero += recompensa;
             guardarEconomia(economia);
 
-            // Subir XP a los personajes
+            // Subir XP y Niveles
+            let subidas = "";
             equipo.forEach(p => {
                 p.exp = (p.exp || 0) + xpGanada;
-                if (p.exp >= (p.level * 20)) {
+                const xpNecesaria = p.level * 50;
+                if (p.exp >= xpNecesaria) {
                     p.level += 1;
                     p.exp = 0;
+                    subidas += `\n🆙 *${p.nombre}* subió a Nivel ${p.level}!`;
                 }
             });
 
             guardarHarem(haremPorGrupo);
-            delete mobActual[grupoId]; // El mob muere
+            delete mobActual[grupoId]; // Mob derrotado
 
-            return message.reply(`🎉 *¡VICTORIA!*\n\nHas derrotado a ${mob.nombre}.\n💰 Recompensa: $${recompensa}\n✨ XP para tus personajes: +${xpGanada}`);
+            message.reply(`🎉 *¡VICTORIA!* 🎉\n\n💰 Ganaste: *$${recompensa}*\n✨ XP obtenida: +${xpGanada}${subidas}`);
         } else {
-            // DERROTA
-            return message.reply(`💀 *DERROTA*\n\nEl ${mob.nombre} ha masacrado a tu equipo. Entrena más a tus personajes o elige un equipo más fuerte.`);
+            // --- DERROTA ---
+            message.reply(`💀 *DERROTA*\n\nEl ${mob.nombre} era demasiado fuerte (${Math.floor(poderMob)} vs ${Math.floor(poderEquipo)}).\n\n💡 *Tip:* Sube de nivel a tus personajes o usa más de uno en la pelea.`);
         }
-    }, 3000);
-    
-    return; // Cierre correcto del comando
-}
+    }, 2500);
+									   }
+	
 	
 
 
