@@ -2537,7 +2537,7 @@ if (comando === 'smob') {
 
     cooldownsBuscarmob[grupoId][userId] = ahora;
 
-    return message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* para medir fuerzas.`);
+    return message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n>Usa *?fight* personaje 1, personaje 2, personaje 3 para luchar.`);
 }
 	
 	
@@ -2573,7 +2573,7 @@ if (comando === 'fight') {
 
     const mob = mobActual[grupoId];
     
-    // Cálculo de poder del equipo (Valor + bono de nivel)
+    // Cálculo de poder del equipo
     let poderTuEquipo = equipo.reduce((sum, p) => sum + (Number(p.valor) || 0) + ((Number(p.level) || 1) * 250), 0);
     poderTuEquipo *= (0.95 + Math.random() * 0.15);
 
@@ -2581,10 +2581,7 @@ if (comando === 'fight') {
 
     setTimeout(() => {
         if (poderTuEquipo >= mob.poderTotal) {
-            // --- NUEVO RANGO DE DINERO (5k a 15k) ---
             const gananciaDinero = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
-            
-            // EXP: Mob de 40,000 / 80 = 500 EXP
             const xpGanada = Math.floor(mob.poderTotal / 80); 
 
             const eco = cargarEconomia();
@@ -2592,32 +2589,43 @@ if (comando === 'fight') {
             eco[userId].dinero = (Number(eco[userId].dinero) || 0) + gananciaDinero;
             guardarEconomia(eco);
 
-            let subidas = "";
+            let avisosNivel = "";
+            
             equipo.forEach(p => {
                 p.exp = (Number(p.exp) || 0) + xpGanada;
                 p.stamina = Math.max(0, p.stamina - 15);
                 p.lastUpdate = Date.now();
 
-                // Nivel: Cada nivel pide (Nivel * 250) de EXP para que sea un reto justo
-                let expNecesaria = (Number(p.level) || 1) * 250;
-                if (p.exp >= expNecesaria) {
+                // --- SISTEMA DE LEVEL UP DINÁMICO ---
+                // Mientras la EXP sea mayor o igual a lo necesario, sube de nivel
+                // Nivel 1 pide 100, Nivel 2 pide 200, etc.
+                let nivelesSubidos = 0;
+                let expNecesaria = (Number(p.level) || 1) * 100;
+
+                while (p.exp >= expNecesaria) {
+                    p.exp -= expNecesaria; // Restamos lo que costó subir
                     p.level = (Number(p.level) || 1) + 1;
-                    p.exp = 0;
-                    subidas += `\n🆙 ¡*${p.nombre}* subió al nivel ${p.level}!`;
+                    expNecesaria = p.level * 100; // Actualizamos costo para el siguiente nivel
+                    nivelesSubidos++;
+                }
+
+                if (nivelesSubidos > 0) {
+                    avisosNivel += `\n🆙 ¡*${p.nombre}* subió ${nivelesSubidos} nivel(es)! (Ahora Lvl ${p.level})`;
                 }
             });
 
+            // GUARDAR CAMBIOS EN EL DISCO
             guardarHarem(haremPorGrupo);
             delete mobActual[grupoId];
 
-            return message.reply(`🏆 *¡VICTORIA TOTAL!* 🏆\n\n💰 Recompensa: *$${gananciaDinero.toLocaleString()}*\n✨ EXP: +${xpGanada.toLocaleString()}${subidas}`);
+            return message.reply(`🏆 *¡VICTORIA TOTAL!* 🏆\n\n💰 Recompensa: *$${gananciaDinero.toLocaleString()}*\n✨ EXP: +${xpGanada.toLocaleString()}${avisosNivel}`);
         } else {
             equipo.forEach(p => {
                 p.stamina = Math.max(0, p.stamina - 20);
                 p.lastUpdate = Date.now();
             });
             guardarHarem(haremPorGrupo);
-            return message.reply(`💀 *DERROTA*\nFuiste superado por los ${mob.poderTotal.toLocaleString()} de poder del enemigo.`);
+            return message.reply(`💀 *DERROTA*\nFuiste superado por el enemigo.`);
         }
     }, 2500);
 }
