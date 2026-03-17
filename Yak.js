@@ -2515,7 +2515,7 @@ if (comando === 'smob') {
         valorRef = mejores.reduce((sum, p) => sum + (Number(p.valor) || 0), 0) / mejores.length;
     }
 
-    if (valorRef < 3000) valorRef = 3000;
+    if (valorRef < 5000) valorRef = 5000;
     if (valorRef > 45000) valorRef = 45000; 
 
     let poderMob = Math.floor(valorRef * (0.8 + Math.random() * 0.4));
@@ -2528,8 +2528,9 @@ if (comando === 'smob') {
 
     cooldownsBuscarmob[grupoId][userId] = ahora;
 
-    return message.reply(`✧ ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* personaje 1, personaje 2, personaje 3 para enfrentarlos.`);
+    return message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* para medir fuerzas.`);
 }
+	
 	
 	
 	
@@ -2563,18 +2564,18 @@ if (comando === 'fight') {
 
     const mob = mobActual[grupoId];
     
-    // Cálculo de poder del equipo
+    // Cálculo de poder del equipo (Valor + bono de nivel)
     let poderTuEquipo = equipo.reduce((sum, p) => sum + (Number(p.valor) || 0) + ((Number(p.level) || 1) * 250), 0);
-    poderTuEquipo *= (0.95 + Math.random() * 0.15); // Factor suerte
+    poderTuEquipo *= (0.95 + Math.random() * 0.15);
 
     message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*\n\n⏳ Calculando impacto...`);
 
     setTimeout(() => {
         if (poderTuEquipo >= mob.poderTotal) {
-            // --- CÁLCULO DE RECOMPENSAS AJUSTADO ---
-            const gananciaDinero = Math.floor(Math.random() * (5000 - 1500 + 1)) + 1500;
+            // --- NUEVO RANGO DE DINERO (5k a 15k) ---
+            const gananciaDinero = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
             
-            // NUEVA EXP ESCALADA: Mob de 40k = 500 EXP aprox.
+            // EXP: Mob de 40,000 / 80 = 500 EXP
             const xpGanada = Math.floor(mob.poderTotal / 80); 
 
             const eco = cargarEconomia();
@@ -2588,20 +2589,19 @@ if (comando === 'fight') {
                 p.stamina = Math.max(0, p.stamina - 15);
                 p.lastUpdate = Date.now();
 
-                // Escalado de nivel: Cada nivel pide más EXP (Nivel * 200)
-                let expNecesaria = (Number(p.level) || 1) * 200;
+                // Nivel: Cada nivel pide (Nivel * 250) de EXP para que sea un reto justo
+                let expNecesaria = (Number(p.level) || 1) * 250;
                 if (p.exp >= expNecesaria) {
                     p.level = (Number(p.level) || 1) + 1;
                     p.exp = 0;
-                    subidas += `\n🆙 ¡*${p.nombre}* alcanzó el nivel ${p.level}!`;
+                    subidas += `\n🆙 ¡*${p.nombre}* subió al nivel ${p.level}!`;
                 }
             });
 
-            // GUARDAR CAMBIOS PARA QUE SE REFLEJEN EN ?harem
             guardarHarem(haremPorGrupo);
             delete mobActual[grupoId];
 
-            return message.reply(`🏆 *¡VICTORIA CRÍTICA!* 🏆\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ EXP: +${xpGanada.toLocaleString()}${subidas}`);
+            return message.reply(`🏆 *¡VICTORIA TOTAL!* 🏆\n\n💰 Recompensa: *$${gananciaDinero.toLocaleString()}*\n✨ EXP: +${xpGanada.toLocaleString()}${subidas}`);
         } else {
             equipo.forEach(p => {
                 p.stamina = Math.max(0, p.stamina - 20);
@@ -2613,62 +2613,6 @@ if (comando === 'fight') {
     }, 2500);
 }
 	
-	
-// --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
-if (message.body.startsWith(prefix + 'addmoney')) {
-    const adminID = '232246195839008@lid'; 
-    if (userId !== adminID) return message.reply("⚠️ No tienes permiso para crear dinero.");
-
-    // Extraer la cantidad del mensaje
-    const parts = message.body.split(/\s+/); // Divide por espacios
-    let cantidad = parseInt(parts[1]); // El primer argumento después del comando
-
-    if (isNaN(cantidad)) {
-        return message.reply("❌ Uso: `?addmoney [cantidad]`\nEjemplo: `?addmoney 1000000` ");
-    }
-
-    try {
-        const economia = cargarEconomia();
-        let targetId = userId;
-
-        // Si mencionas a alguien, el dinero es para él
-        if (message.mentionedIds && message.mentionedIds.length > 0) {
-            targetId = message.mentionedIds[0];
-        }
-
-        // Asegurar que el usuario existe en el JSON
-        if (!economia[targetId]) {
-            economia[targetId] = { dinero: 0, lastDaily: "", lastWork: 0, lastCrime: 0 };
-        }
-
-        // SUMAR DINERO
-        economia[targetId].dinero += cantidad;
-
-// LOGRO: conseguir dinero del admin
-if (targetId !== adminID) {
-    if (darLogro(perfiles, targetId, "admin_money")) {
-        client.sendMessage(
-            message.from,
-            "🏆 Logro desbloqueado: Conseguir que el admin te dé dinero",
-            { mentions: [targetId] }
-        );
-    }
-}
-		guardarPerfiles(perfiles);
-		
-        // GUARDAR CAMBIOS
-        guardarEconomia(economia);
-
-        console.log(`[ADMIN] Se añadieron ${cantidad} a ${targetId}`);
-
-        const nombreExito = targetId === userId ? "tu cuenta" : "la cuenta del usuario";
-        return message.reply(`✅ *¡TRANSACCIÓN EXITOSA!*\n\n💵 Se han sumado: *$${cantidad.toLocaleString()}*\n👤 Destino: ${nombreExito}\n🏦 Saldo actual: *$${economia[targetId].dinero.toLocaleString()}*`);
-
-    } catch (e) {
-        console.log("Error en addmoney:", e);
-        return message.reply("⚠ Hubo un problema al acceder al archivo de economía.");
-    }
-}
 
 // --------- COMANDO ADMIN: INVOCAR DEADPOOL ---------
     if (comando === 'spawndeadpool') {
