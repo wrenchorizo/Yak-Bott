@@ -2509,16 +2509,14 @@ if (comando === 'smob') {
     const hData = cargarHarem();
     const misPersonajes = hData[grupoId]?.[userId] || [];
     
-    // Sacamos el valor promedio de tus mejores personajes
     let valorRef = 0;
     if (misPersonajes.length > 0) {
         const mejores = misPersonajes.sort((a, b) => (Number(b.valor) || 0) - (Number(a.valor) || 0)).slice(0, 3);
         valorRef = mejores.reduce((sum, p) => sum + (Number(p.valor) || 0), 0) / mejores.length;
     }
 
-    // AJUSTE DE RANGO: Si tu valor es 30k, el mob andará por ahí.
     if (valorRef < 3000) valorRef = 3000;
-    if (valorRef > 40000) valorRef = 40000; // Limite máximo para evitar los 120 Millones
+    if (valorRef > 45000) valorRef = 45000; 
 
     let poderMob = Math.floor(valorRef * (0.8 + Math.random() * 0.4));
 
@@ -2530,8 +2528,9 @@ if (comando === 'smob') {
 
     cooldownsBuscarmob[grupoId][userId] = ahora;
 
-    return message.reply(`✧ ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* personaje1,personaje2, personaje3 para enfrentarlos.`);
+    return message.reply(`👾 ¡Detección de Poder! un *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\nUsa *?fight* para medir fuerzas.`);
 }
+	
 	
 	
 // ================= COMANDO ?fight=================
@@ -2546,7 +2545,7 @@ if (comando === 'fight') {
     const argsF = message.body.slice(prefix.length + 5).trim().split(',');
     const seleccionados = argsF.map(n => n.trim().toLowerCase()).filter(n => n !== "");
 
-    if (seleccionados.length === 0) return message.reply("❌ ¿A quién mandas?");
+    if (seleccionados.length === 0) return message.reply("❌ ¿A quién mandas a la batalla?");
 
     const haremUser = haremPorGrupo[grupoId]?.[userId] || [];
     const equipo = [];
@@ -2555,69 +2554,64 @@ if (comando === 'fight') {
         const pj = haremUser.find(p => p.nombre.toLowerCase() === nombrePj);
         if (pj) {
             actualizarStamina(pj);
-            if ((pj.stamina || 0) < 10) return message.reply(`😫 *${pj.nombre}* no tiene energía.`);
+            if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado.`);
             equipo.push(pj);
         }
     }
 
-    if (equipo.length === 0) return message.reply("❌ No tienes esos personajes.");
+    if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
 
     const mob = mobActual[grupoId];
     
-    // Poder de tu equipo (Suma simple de Valor + Bono de Nivel)
-    let poderTuEquipo = equipo.reduce((sum, p) => {
-        return sum + (Number(p.valor) || 0) + ((Number(p.level) || 1) * 200);
-    }, 0);
-    
-    // Suerte aleatoria
-    poderTuEquipo *= (0.9 + Math.random() * 0.2);
+    // Cálculo de poder del equipo
+    let poderTuEquipo = equipo.reduce((sum, p) => sum + (Number(p.valor) || 0) + ((Number(p.level) || 1) * 250), 0);
+    poderTuEquipo *= (0.95 + Math.random() * 0.15); // Factor suerte
 
-    message.reply(`⚔️ *BATALLA* ⚔️\n\n🛡️ Tu Poder: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*\n\n⏳ Calculando...`);
+    message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*\n\n⏳ Calculando impacto...`);
 
     setTimeout(() => {
         if (poderTuEquipo >= mob.poderTotal) {
-            // --- ARREGLO DE DINERO (1k a 5k) ---
-            const ganancia = Math.floor(Math.random() * (5000 - 1000 + 1)) + 1000;
+            // --- CÁLCULO DE RECOMPENSAS AJUSTADO ---
+            const gananciaDinero = Math.floor(Math.random() * (5000 - 1500 + 1)) + 1500;
             
-            // --- ARREGLO DE EXP ---
-            const xpGanada = 20; 
+            // NUEVA EXP ESCALADA: Mob de 40k = 500 EXP aprox.
+            const xpGanada = Math.floor(mob.poderTotal / 80); 
 
             const eco = cargarEconomia();
             asegurarUsuario(eco, userId);
-            eco[userId].dinero = (Number(eco[userId].dinero) || 0) + ganancia;
+            eco[userId].dinero = (Number(eco[userId].dinero) || 0) + gananciaDinero;
             guardarEconomia(eco);
 
             let subidas = "";
-            // Aplicar cambios a cada personaje del equipo
             equipo.forEach(p => {
                 p.exp = (Number(p.exp) || 0) + xpGanada;
-                p.stamina = Math.max(0, p.stamina - 10);
+                p.stamina = Math.max(0, p.stamina - 15);
                 p.lastUpdate = Date.now();
 
-                // Lógica de Level Up (cada 100 de exp)
-                if (p.exp >= 100) {
+                // Escalado de nivel: Cada nivel pide más EXP (Nivel * 200)
+                let expNecesaria = (Number(p.level) || 1) * 200;
+                if (p.exp >= expNecesaria) {
                     p.level = (Number(p.level) || 1) + 1;
                     p.exp = 0;
-                    subidas += `\n🆙 ¡*${p.nombre}* subió al nivel ${p.level}!`;
+                    subidas += `\n🆙 ¡*${p.nombre}* alcanzó el nivel ${p.level}!`;
                 }
             });
 
-            // GUARDAR CAMBIOS EN EL HAREM (IMPORTANTE)
+            // GUARDAR CAMBIOS PARA QUE SE REFLEJEN EN ?harem
             guardarHarem(haremPorGrupo);
             delete mobActual[grupoId];
 
-            return message.reply(`🏆 *¡VICTORIA!*\n\n💰 Ganaste: *$${ganancia.toLocaleString()}*\n✨ XP: +${xpGanada}${subidas}`);
+            return message.reply(`🏆 *¡VICTORIA CRÍTICA!* 🏆\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ EXP: +${xpGanada.toLocaleString()}${subidas}`);
         } else {
             equipo.forEach(p => {
                 p.stamina = Math.max(0, p.stamina - 20);
                 p.lastUpdate = Date.now();
             });
             guardarHarem(haremPorGrupo);
-            return message.reply(`💀 *DERROTA*\nFuiste superado por el poder de ${mob.nombre}.`);
+            return message.reply(`💀 *DERROTA*\nFuiste superado por los ${mob.poderTotal.toLocaleString()} de poder del enemigo.`);
         }
     }, 2500);
 }
-	
 	
 	
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
