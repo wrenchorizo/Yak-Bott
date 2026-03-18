@@ -2496,5 +2496,61 @@
   "genero": "Desconocido",
   "fuente": "Cuphead",
   "imagen": "https://i.pinimg.com/1200x/25/05/c9/2505c9628f7b07edf16b375097884eae.jpg"
+},
+{
+  "nombre": "Boyfriend",
+  "valor": "15000",
+  "genero": "Hombre",
+  "fuente": "Friday Night Funkin'",
+  "imagen": "https://i.pinimg.com/736x/66/78/4f/66784f6d3a834ed19a4e6ddc25a877ff.jpg"
+},
+{
+  "nombre": "Girlfriend",
+  "valor": "16789",
+  "genero": "Mujer",
+  "fuente": "Friday Night Funkin'",
+  "imagen": "https://i.pinimg.com/736x/08/79/19/0879192d7cc5292bebcbf81f71e303bd.jpg"
+},
+{
+  "nombre": "Daddy Dearest",
+  "valor": "16990",
+  "genero": "Hombre",
+  "fuente": "Friday Night Funkin'",
+  "imagen": "https://i.pinimg.com/originals/51/ce/0b/51ce0b2194970eb031e7a5f335abf154.png"
+},
+{
+  "nombre": "Lemon Demon",
+  "valor": "17120",
+  "genero": "Desconocido",
+  "fuente": "Friday Night Funkin'",
+  "imagen": "https://i.pinimg.com/736x/5c/77/97/5c7797404f7038ae15d7fb46c674d215.jpg"
+},
+{
+  "nombre": "Mommy Mearest",
+  "valor": "16990",
+  "genero": "Mujer",
+  "fuente": "Friday Night Funkin'",
+  "imagen": "https://i.pinimg.com/originals/bd/66/36/bd6636570d3222e42573f9e8e8999c41.jpg"
+},
+{
+  "nombre": "Pico",
+  "valor": "15180",
+  "genero": "Hombre",
+  "fuente": "Newgrounds",
+  "imagen": "https://i.pinimg.com/736x/78/a1/7a/78a17a4a9fde903d4c674ee425e09074.jpg"
+},
+{
+  "nombre": "Nene",
+  "valor": "15280",
+  "genero": "Mujer",
+  "fuente": "Newgrounds'",
+  "imagen": "https://i.pinimg.com/236x/cb/50/8a/cb508a4688ce2ca3c538ee4946229172.jpg"
+},
+{
+  "nombre": "Tankman",
+  "valor": "16105",
+  "genero": "Hombre",
+  "fuente": "Newgrounds'",
+  "imagen": "https://art.ngfiles.com/images/347000/347868_johnnyutah_tankmen-picoday-art.png"
 }
 ]
