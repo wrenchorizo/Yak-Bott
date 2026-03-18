@@ -2745,7 +2745,7 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     }
 }
 
-// ============= COMANDO ADMIN: ELIMINAR PERSONAJE (BÚSQUEDA GLOBAL) =============
+// ============= COMANDO ADMIN: ELIMINAR PERSONAJE (MODO AGRESIVO) =============
 if (comando.startsWith('delchar')) {
     const adminID = '232246195839008@lid'; // Tu ID de Admin
     if (userId !== adminID) return message.reply("⚠️ No tienes permisos.");
@@ -2753,45 +2753,53 @@ if (comando.startsWith('delchar')) {
     const mentions = await message.getMentions();
     if (mentions.length === 0) return message.reply("❌ Menciona a alguien: *?delchar @user Nombre*");
 
+    // Lo que tú escribes (limpio)
     const partes = message.body.split(' ');
-    // El nombre del personaje puede tener espacios (ej: "Son Goku")
-    const nombrePj = partes.slice(2).join(' ').trim().toLowerCase();
-    if (!nombrePj) return message.reply("❌ ¿Qué personaje quieres borrar?");
+    const nombreBusqueda = partes.slice(2).join(' ').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
     const targetId = mentions[0].id._serialized;
     const targetNumber = targetId.split('@')[0];
     const hData = cargarHarem();
 
     let encontrado = false;
+    let nombreRealBorrado = "";
 
-    // --- BÚSQUEDA GLOBAL EN TODOS LOS GRUPOS ---
+    // Recorrer todos los grupos
     for (let grupoId in hData) {
-        // Buscamos al usuario en este grupo ignorando si es @c.us o @lid
+        // Encontrar la llave del usuario ignorando si es @c.us o @lid
         let userKey = Object.keys(hData[grupoId]).find(key => key.includes(targetNumber));
 
         if (userKey) {
             let userHarem = hData[grupoId][userKey];
-            const index = userHarem.findIndex(p => 
-                p.nombre.toLowerCase() === nombrePj || 
-                p.nombre.toLowerCase().includes(nombrePj)
-            );
+            
+            // BUSQUEDA AGRESIVA: Comparamos nombres normalizados
+            const index = userHarem.findIndex(p => {
+                const nombreEnHarem = p.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                return nombreEnHarem === nombreBusqueda || nombreEnHarem.includes(nombreBusqueda);
+            });
 
             if (index !== -1) {
-                const borrado = userHarem.splice(index, 1);
+                nombreRealBorrado = userHarem[index].nombre;
+                userHarem.splice(index, 1); // Borrar
                 hData[grupoId][userKey] = userHarem;
                 encontrado = true;
-                console.log(`[DELCHAR] Borrado ${borrado[0].nombre} del grupo ${grupoId}`);
             }
         }
     }
 
     if (encontrado) {
         guardarHarem(hData);
-        message.reply(`✅ Personaje *${nombrePj}* eliminado de todos los registros del usuario @${targetNumber}.`);
+        message.reply(`🗑️ ¡Listo! Se eliminó a *${nombreRealBorrado}* del harem de @${targetNumber} en todos los grupos.`);
     } else {
-        // Si falla, mostramos qué IDs tiene el usuario para debuguear
-        message.reply(`❌ No se encontró a "${nombrePj}" en ningún grupo para el usuario ${targetNumber}.`);
-        console.log("IDs de grupos en harem.json:", Object.keys(hData));
+        message.reply(`❌ No pude encontrar nada parecido a "${nombreBusqueda}" en el harem de ese usuario.\n\n💡 Revisa si el nombre tiene emojis o símbolos raros.`);
+        // Esto saldrá en tu terminal para que veas qué pasa
+        console.log(`[DEBUG DELCHAR] El usuario ${targetNumber} tiene estos pjs:`);
+        for (let g in hData) {
+            let uk = Object.keys(hData[g]).find(k => k.includes(targetNumber));
+            if(uk) console.log(`En grupo ${g}:`, hData[g][uk].map(p => p.nombre));
+        }
     }
 }
 	
