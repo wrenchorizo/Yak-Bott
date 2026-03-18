@@ -28,6 +28,48 @@
     "imagen": "https://i.pinimg.com/1200x/a8/51/31/a85131b412f0e53f613126c52b4ef9e0.jpg"
   },
   {
+    "nombre": "Ten Shin Han",
+    "valor": "15207",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/c9/db/bf/c9dbbf755b576714abb66a6ac87d0987.jpg"
+  },
+  {
+    "nombre": "Chaos (Dragon Ball)",
+    "valor": "12961",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/736x/80/1e/b1/801eb17cb21be3a7aeebda59e03c6480.jpg"
+  },
+  {
+    "nombre": "Krillin",
+    "valor": "15898",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/60/18/5b/60185b6b4b42370ef53877c3294942cb.jpg"
+  },
+  {
+    "nombre": "Gohan",
+    "valor": "19993",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/3d/a6/c5/3da6c505a75dd6d30bf04b343f7b4d16.jpg"
+  },
+  {
+    "nombre": "Piccolo",
+    "valor": "19293",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/f0/6a/e4/f06ae4e98f65f0ff0085a12064eb97ef.jpg"
+  },
+  {
+    "nombre": "Trunks",
+    "valor": "18793",
+    "genero": "Hombre",
+    "fuente": "Dragon Ball",
+    "imagen": "https://i.pinimg.com/1200x/08/6e/ec/086eecae17f245b0c310bae0304e799d.jpg"
+  },
+  {
     "nombre": "Jiren",
     "valor": "26099",
     "genero": "Hombre",
@@ -1379,7 +1421,7 @@
 },
 {
   "nombre": "Kaido",
-  "valor": 18990,
+  "valor": 19990,
   "genero": "Hombre",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/736x/e2/ac/46/e2ac46923a78589581c3990cca56aae8.jpg"
@@ -1435,10 +1477,52 @@
 },
 {
   "nombre": "Big Mom",
-  "valor": 16940,
-  "genero": "Hombre",
+  "valor": 17940,
+  "genero": "Mujer",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/1200x/0c/ff/da/0cffda6096af186fa0d6d7bddd01d2c8.jpg"
+},
+{
+  "nombre": "Buggy",
+  "valor": 13840,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/9a/15/99/9a15998e3c6f544f4b6ec60c53925a74.jpg"
+},
+{
+  "nombre": "Mihawk",
+  "valor": 18940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/c2/64/03/c2640373e718585a6549119faa6e5fb3.jpg"
+},
+{
+  "nombre": "Dorry y Brogy",
+  "valor": 17940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/89/30/14/893014b24ab393b41c4f1dc4aaf53ba8.jpg"
+},
+{
+  "nombre": "Shanks",
+  "valor": 19940,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/736x/2c/ba/d0/2cbad0340c1e7b4358bbe846f6cee412.jpg"
+},
+{
+  "nombre": "Imu",
+  "valor": 20940,
+  "genero": "Desconocido",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/00/ac/e3/00ace32f5688399d7f7213459a28e541.jpg"
+},
+{
+  "nombre": "Doflamingo",
+  "valor": 17999,
+  "genero": "Hombre",
+  "fuente": "One Piece",
+  "imagen": "https://i.pinimg.com/1200x/37/24/76/372476f6d8552d3a5b439231a5a834cf.jpg"
 },
 {
   "nombre": "Gemini",
@@ -2377,8 +2461,40 @@
   "genero": "Hombre",
   "fuente": "Call of Duty",
   "imagen": "https://static.wikia.nocookie.net/callofduty/images/7/75/Shepherd_infobox_MW2.png"
+},
+{
+  "nombre": "Cuphead",
+  "valor": "11800",
+  "genero": "Hombre",
+  "fuente": "Cuphead",
+  "imagen": "https://i.pinimg.com/1200x/88/ce/b3/88ceb3db9be8ece8f3247619b29989c3.jpg"
+},
+{
+  "nombre": "Mugman",
+  "valor": "11700",
+  "genero": "Hombre",
+  "fuente": "Cuphead",
+  "imagen": "https://i.pinimg.com/736x/06/bc/b7/06bcb7d83381693fae7cf295f60ec097.jpg"
+},
+{
+  "nombre": "El Diablo (Cuphead)",
+  "valor": "14990",
+  "genero": "Hombre",
+  "fuente": "Cuphead",
+  "imagen": "https://i.pinimg.com/1200x/df/39/38/df3938615869e0a3e539a61ebc1739c6.jpg"
+},
+{
+  "nombre": "Ms. Chalice",
+  "valor": "11990",
+  "genero": "Mujer",
+  "fuente": "Cuphead",
+  "imagen": "https://i.pinimg.com/1200x/52/64/4c/52644cd9230e65a7401e91cded276ac3.jpg"
+},
+{
+  "nombre": "Deudores (Cuphead)",
+  "valor": "14890",
+  "genero": "Desconocido",
+  "fuente": "Cuphead",
+  "imagen": "https://i.pinimg.com/1200x/25/05/c9/2505c9628f7b07edf16b375097884eae.jpg"
 }
 ]
-
-
-
