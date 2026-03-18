@@ -2533,23 +2533,24 @@ if (comando === 'smob') {
     const hData = cargarHarem();
     const misPersonajes = hData[grupoId]?.[userId] || [];
     
-    let valorRef = 5000; // Valor base mínimo
+    // Rango base: 10,000 a 30,000
+    let poderBase = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
+    let bonoNivel = 0;
 
     if (misPersonajes.length > 0) {
-        // Calculamos el PODER REAL (con niveles) de tus 3 mejores personajes
+        // Calculamos un bono basado en el nivel promedio de tus 3 mejores, pero LINEAL
         const mejores = misPersonajes
-            .map(p => ({
-                ...p,
-                poderReal: Number(p.valor) * Math.pow(1.20, (Number(p.level) || 1) - 1)
-            }))
-            .sort((a, b) => b.poderReal - a.poderReal)
+            .sort((a, b) => (b.level || 1) - (a.level || 1))
             .slice(0, 3);
-
-        valorRef = mejores.reduce((sum, p) => sum + p.poderReal, 0) / mejores.length;
+        
+        const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
+        
+        // Cada nivel promedio del equipo añade 1,500 de poder al mob (Escala suave)
+        bonoNivel = nivelPromedio * 1500;
     }
 
-    // Ajustamos el poder del mob para que sea un reto (entre 80% y 120% de tu promedio)
-    let poderMob = Math.floor(valorRef * (0.8 + Math.random() * 0.4));
+    // Poder Total = Base + Bono por nivel (Máximo aprox 150k - 200k en niveles muy altos)
+    let poderMob = Math.floor(poderBase + bonoNivel);
 
     mobActual[grupoId] = {
         nombre: mobTemplate.nombre,
@@ -2561,6 +2562,7 @@ if (comando === 'smob') {
     cooldownsBuscarmob[grupoId][userId] = ahora;
     message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n⚠️ Tienes **7 minutos** para pelear antes de que escape.`);
 }
+
 	
 //============= COMANDO ?fight (CORREGIDO) ===============
 if (comando === 'fight') {
@@ -2597,24 +2599,26 @@ if (comando === 'fight') {
 
     const mob = mobActual[grupoId];
 
-    // CÁLCULO DE PODER REAL (Igual que en ?duel y ?charinfo)
+    // CÁLCULO DE PODER REAL (Usa tus valores de harem con niveles)
     let poderTuEquipo = equipo.reduce((sum, p) => {
         const nivel = Number(p.level) || 1;
         const valorBase = Number(p.valor) || 0;
         return sum + (valorBase * Math.pow(1.20, nivel - 1));
     }, 0);
 
-    // Factor de suerte en la batalla
     poderTuEquipo *= (0.95 + Math.random() * 0.15);
 
-    message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*\n\n⏳ Calculando impacto...`);
+    message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
 
     setTimeout(() => {
         if (!mobActual[grupoId]) return;
 
         if (poderTuEquipo >= mob.poderTotal) {
             const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
-            const xpGanada = Math.floor(mob.poderTotal / 50); // XP basada en la dificultad del mob
+            
+            // EXP ajustada: Si el mob tiene 50,000 poder, da 250 XP. 
+            // Con nivel 1 pidiendo 100 XP, subirás 2 niveles aprox.
+            const xpGanada = Math.floor(mob.poderTotal / 200); 
 
             const eco = cargarEconomia();
             asegurarUsuario(eco, userId);
@@ -2627,15 +2631,12 @@ if (comando === 'fight') {
                 p.stamina = Math.max(0, p.stamina - 15);
                 p.lastUpdate = Date.now();
 
-                // FIX DE NIVELACIÓN: Bucle dinámico para subir varios niveles si sobra EXP
+                // Lógica de subida de nivel (expNecesaria = nivel * 100)
                 let nivelesSubidos = 0;
-                let expNecesaria = (Number(p.level) || 1) * 100;
-
-                while (p.exp >= expNecesaria) {
-                    p.exp -= expNecesaria;
+                while (p.exp >= (Number(p.level) || 1) * 100) {
+                    p.exp -= (Number(p.level) || 1) * 100;
                     p.level = (Number(p.level) || 1) + 1;
                     nivelesSubidos++;
-                    expNecesaria = p.level * 100; // Actualizar requisito para el siguiente nivel
                 }
 
                 if (nivelesSubidos > 0) {
@@ -2647,11 +2648,11 @@ if (comando === 'fight') {
             guardarHarem(hData);
             mobActual[grupoId].vencido = true;
 
-            message.reply(`✅ *¡VICTORIA!* 🎉\n\n💰 Ganaste: *$${gananciaDinero.toLocaleString()}*\n✨ XP Equipo: *+${xpGanada}*${avisosNivel}`);
+            message.reply(`✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
         } else {
-            message.reply(`💀 *DERROTA...* El mob era demasiado fuerte.`);
+            message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
         }
-    }, 2500);
+    }, 2000);
 }
 
 	
@@ -2851,7 +2852,7 @@ if (comando === 'adminchar') {
     const adminChar = {
         nombre: "EL ADMIN",
         fuente: "SISTEMA",
-        valor: 999999999,
+        valor: 9999999999999999999999999999,
         imagen: "https://i.pinimg.com/736x/22/1a/da/221ada2b52d13dcc65999b2cda540aae.jpg", 
         genero: "Divino",
         level: 100,
