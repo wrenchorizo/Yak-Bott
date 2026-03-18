@@ -134,7 +134,7 @@
   },
   {
     "nombre": "Satoru Gojo",
-    "valor": "19900",
+    "valor": "20900",
     "genero": "Hombre",
     "fuente": "Jujutsu Kaisen",
     "imagen": "https://i.pinimg.com/736x/1e/1d/f5/1e1df5de1a628d6d6f4d4a6ad8384a47.jpg"
@@ -176,7 +176,7 @@
   },
   {
     "nombre": "Pichu",
-    "valor": "236",
+    "valor": "1236",
     "genero": "Desconocido",
     "fuente": "Pokemon",
     "imagen": "https://i.pinimg.com/1200x/05/b0/fa/05b0fa6ac4ae49944a4acb183c243270.jpg",
@@ -229,7 +229,7 @@
   },
   {
     "nombre": "Anya Forger",
-    "valor": "10009",
+    "valor": "8009",
     "genero": "Mujer",
     "fuente": "Spy x Family",
     "imagen": "https://i.pinimg.com/736x/07/74/1e/07741e301bb9851dcd3bb891c8336d84.jpg"
@@ -348,49 +348,49 @@
   },
   {
     "nombre": "Freddy (Fnafhs)",
-    "valor": "9769",
+    "valor": "8769",
     "genero": "Hombre",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/28/2a/be/282abe9cc665f234785310ef48f3ae0e.jpg"
   },
   {
     "nombre": "Fox (Fnafhs)",
-    "valor": "1769",
+    "valor": "7769",
     "genero": "Hombre",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/56/ce/a6/56cea6078175d0ffc701bac1a6f9829f.jpg"
   },
   {
     "nombre": "Ann Chica",
-    "valor": "1569",
+    "valor": "7569",
     "genero": "Mujer",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/bb/3d/a1/bb3da18519dee0c9c4a3c6cf9588bacd.jpg"
   },
   {
     "nombre": "Golden (Fnafhs)",
-    "valor": "1579",
+    "valor": "7579",
     "genero": "Hombre",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/65/df/fb/65dffb3b7888ab4d13c7c5df69b0c375.jpg"
   },
   {
     "nombre": "Bonnie (Fnafhs)",
-    "valor": "1769",
+    "valor": "6769",
     "genero": "Hombre",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/bb/bd/07/bbbd071c41c066819b43594b21f6b8d9.jpg"
   },
   {
     "nombre": "Springtrap (Fnafhs)",
-    "valor": "8769",
+    "valor": "9769",
     "genero": "Hombre",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/f3/4b/d8/f34bd8d2b89a8a4d37433ef11faec7ac.jpg"
   },
   {
     "nombre": "Puppet (Fnafhs)",
-    "valor": "8769",
+    "valor": "9769",
     "genero": "Desconocido",
     "fuente": "Fnafhs",
     "imagen": "https://i.pinimg.com/736x/90/5b/a0/905ba0488da834d3e35d8764d853f52f.jpg"
@@ -432,7 +432,7 @@
   },
   {
     "nombre": "Kasane Teto",
-    "valor": "18501",
+    "valor": "19501",
     "genero": "Mujer",
     "fuente": "UTAU",
     "imagen": "https://i.pinimg.com/736x/0d/56/f6/0d56f630a623f5dd90adcc69456e3bb6.jpg"
@@ -474,14 +474,14 @@
   },
   {
     "nombre": "Alucard",
-    "valor": "17001",
+    "valor": "17071",
     "genero": "Hombre",
     "fuente": "Hellsing",
     "imagen": "https://i.pinimg.com/736x/0e/80/0e/0e800e7493ecd24211e223b6398ff418.jpg"
   },
   {
     "nombre": "Anko Uguisu",
-    "valor": "11566",
+    "valor": "10566",
     "genero": "Mujer",
     "fuente": "Call of the Night",
     "imagen": "https://i.pinimg.com/736x/d8/af/82/d8af8270915c56313d0925d037b61a62.jpg"
@@ -516,7 +516,7 @@
   },
   {
     "nombre": "Ryo Yamada",
-    "valor": "251",
+    "valor": "1251",
     "genero": "Mujer",
     "fuente": "Bocchi The Rock",
     "imagen": "https://i.pinimg.com/736x/43/9d/4c/439d4ce423c30b42fbaa13c5ccaed5d8.jpg"
@@ -537,7 +537,7 @@
   },
   {
     "nombre": "Seven",
-    "valor": "14251",
+    "valor": "14551",
     "genero": "Hombre",
     "fuente": "Scissor Seven",
     "imagen": "https://i.pinimg.com/736x/6e/0d/9d/6e0d9dcc316719aa8be3134ac89d532b.jpg"
@@ -565,14 +565,14 @@
   },
   {
     "nombre": "Invincible",
-    "valor": "16758",
+    "valor": "17758",
     "genero": "Hombre",
     "fuente": "Invincible",
     "imagen": "https://i.pinimg.com/736x/05/e8/35/05e8357503463ce28244df086a080d37.jpg"
   },
   {
     "nombre": "Omni-Man",
-    "valor": "17768",
+    "valor": "18768",
     "genero": "Hombre",
     "fuente": "Invincible",
     "imagen": "https://i.pinimg.com/1200x/c7/3d/6e/c73d6e587402ad1b6468a69847d67f8d.jpg"
@@ -755,13 +755,13 @@
 {
   "nombre": "Susanoo",
   "valor": "14100",
-  "genero": "Mujer",
+  "genero": "Hombre",
   "fuente": "Akame ga Kill",
   "imagen": "https://i.pinimg.com/736x/f3/11/48/f3114824bbe630c6045a59be2a0231e0.jpg"
 },
 {
   "nombre": "Itachi Uchiha",
-  "valor": "17480",
+  "valor": "18480",
   "genero": "Hombre",
   "fuente": "Naruto",
   "imagen": "https://i.pinimg.com/736x/73/54/6c/73546c999961676fcff0664321545393.jpg"
@@ -854,7 +854,7 @@
 },
 {
   "nombre": "Titan anormal",
-  "valor": "1500",
+  "valor": "5500",
   "genero": "Desconocido",
   "fuente": "Attack on Titan",
   "imagen": "https://i.pinimg.com/1200x/6b/bf/cb/6bbfcb814bef314ebbcf2ee53a04c8b2.jpg"
@@ -987,7 +987,7 @@
 },
 {
   "nombre": "Marine aleatorio",
-  "valor": "1800",
+  "valor": "5800",
   "genero": "Hombre",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/1200x/4a/83/03/4a830349c84b143660163b97a658dd1e.jpg"
@@ -1015,14 +1015,14 @@
 },
 {
   "nombre": "Gwen Tennyson",
-  "valor": 8000,
+  "valor": 6500,
   "genero": "Mujer",
   "fuente": "Ben 10",
   "imagen": "https://i.pinimg.com/736x/a1/df/13/a1df13d2b14865c925fe9b239431631f.jpg"
 },
 {
   "nombre": "Vilgax",
-  "valor": 9300,
+  "valor": 10300,
   "genero": "Hombre",
   "fuente": "Ben 10",
   "imagen": "https://i.pinimg.com/1200x/ea/0e/3d/ea0e3d77f66bddc58e86fdeba68b8aab.jpg"
@@ -1225,7 +1225,7 @@
 },
 {
   "nombre": "Marco Diaz",
-  "valor": 5600,
+  "valor": 6600,
   "genero": "Hombre",
   "fuente": "Star vs las Fuerzas del Mal",
   "imagen": "https://i.pinimg.com/736x/4a/91/28/4a9128061cbaf4683adb12b4dd794313.jpg"
@@ -1246,14 +1246,14 @@
 },
 {
   "nombre": "Bill Cipher",
-  "valor": 18500,
+  "valor": 19900,
   "genero": "Desconocido",
   "fuente": "Gravity Falls",
   "imagen": "https://i.pinimg.com/1200x/ca/d3/c5/cad3c58d34b6a9e0cd9c71031fd407c7.jpg"
 },
 {
   "nombre": "Ryōmen Sukuna",
-  "valor": "19000",
+  "valor": "20500",
   "genero": "Hombre",
   "fuente": "Jujutsu Kaisen",
   "imagen": "https://i.pinimg.com/736x/7d/f1/f1/7df1f19eaa9c92bdc5df804b7d96216f.jpg"
@@ -1323,7 +1323,7 @@
 },
 {
   "nombre": "Doctor Doom",
-  "valor": "19600",
+  "valor": "19995",
   "genero": "Hombre",
   "fuente": "Marvel",
   "imagen": "https://i.pinimg.com/736x/a9/0d/34/a90d341827652db5dbb9d8b8b36f2b34.jpg"
@@ -1386,7 +1386,7 @@
 },
 {
   "nombre": "Franky",
-  "valor": 14904,
+  "valor": 15904,
   "genero": "Hombre",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/736x/48/89/ae/4889aea97d3c33c5af983fc26b996605.jpg"
@@ -1400,7 +1400,7 @@
 },
 {
   "nombre": "Jinbei",
-  "valor": 15804,
+  "valor": 16804,
   "genero": "Hombre",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/736x/37/12/78/3712788179d14a8a08fbe302041028d4.jpg"
@@ -1505,14 +1505,14 @@
 },
 {
   "nombre": "Garp",
-  "valor": 19920,
+  "valor": 19950,
   "genero": "Hombre",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/736x/4f/36/ab/4f36ab956ea4ed2760634ce3934a0990.jpg"
 },
 {
   "nombre": "Big Mom",
-  "valor": 17940,
+  "valor": 18940,
   "genero": "Mujer",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/1200x/0c/ff/da/0cffda6096af186fa0d6d7bddd01d2c8.jpg"
@@ -1540,14 +1540,14 @@
 },
 {
   "nombre": "Shanks",
-  "valor": 19940,
+  "valor": 20040,
   "genero": "Hombre",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/736x/2c/ba/d0/2cbad0340c1e7b4358bbe846f6cee412.jpg"
 },
 {
   "nombre": "Imu",
-  "valor": 20940,
+  "valor": 23940,
   "genero": "Desconocido",
   "fuente": "One Piece",
   "imagen": "https://i.pinimg.com/1200x/00/ac/e3/00ace32f5688399d7f7213459a28e541.jpg"
@@ -1680,7 +1680,7 @@
 },
 {
   "nombre": "Freezer",
-  "valor": 20002,
+  "valor": 25902,
   "genero": "Hombre",
   "fuente": "Dragon Ball",
   "imagen": "https://i.pinimg.com/736x/31/14/1a/31141a18fe2eae506cbec4f70ff5b386.jpg"
@@ -1722,7 +1722,7 @@
 },
 {
   "nombre": "Broly (DBZ)",
-  "valor": 16210,
+  "valor": 18210,
   "genero": "Hombre",
   "fuente": "Dragon Ball",
   "imagen": "https://i.pinimg.com/736x/9c/81/22/9c812287810dc47d2c67b01ec69c57b5.jpg"
@@ -1813,7 +1813,7 @@
 },
 {
   "nombre": "Knuckles the echidna",
-  "valor": 13250,
+  "valor": 14250,
   "genero": "Hombre",
   "fuente": "Sonic The Hedgehog",
   "imagen": "https://i.pinimg.com/736x/db/e5/57/dbe557dc8871a5a8ef696356beb65390.jpg"
@@ -1972,7 +1972,7 @@
   },
   {
     "nombre": "Black Panther",
-    "valor": "9029",
+    "valor": "10929",
     "genero": "Hombre",
     "fuente": "Marvel",
     "imagen": "https://i.pinimg.com/736x/89/95/ad/8995adcc4d0532cd9f1f9750dd9997a7.jpg"
@@ -1986,7 +1986,7 @@
   },
   {
     "nombre": "Wolverine",
-    "valor": "10659",
+    "valor": "12659",
     "genero": "Hombre",
     "fuente": "Marvel",
     "imagen": "https://i.pinimg.com/736x/2a/f7/56/2af756c14bce33f8e5c0103f59c90237.jpg"
@@ -2028,7 +2028,7 @@
   },
   {
     "nombre": "Venom",
-    "valor": "13219",
+    "valor": "14219",
     "genero": "Hombre",
     "fuente": "Marvel",
     "imagen": "https://i.pinimg.com/1200x/8c/15/e5/8c15e5e5095770a0b8bff63922921473.jpg"
@@ -2056,7 +2056,7 @@
   },
   {
     "nombre": "Infinity Ultron",
-    "valor": "20500",
+    "valor": "22500",
     "genero": "Hombre",
     "fuente": "Marvel",
     "imagen": "https://i.pinimg.com/736x/51/64/8e/51648e8585cba83a8c564f6cba050cfd.jpg"
@@ -2105,7 +2105,7 @@
   },
   {
     "nombre": "Yamcha",
-    "valor": "10200",
+    "valor": "12200",
     "genero": "Hombre",
     "fuente": "Dragon Ball",
     "imagen": "https://i.pinimg.com/736x/42/58/e5/4258e5cb76a008e743f5602f52815b37.jpg"
@@ -2156,28 +2156,28 @@
   },
   {
     "nombre": "Lanzaguisantes (GW)",
-    "valor": "5684",
+    "valor": "12684",
     "genero": "Desconocido",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/bd/41/61/bd416184c19000351d104457d37a1d51.jpg"
   },
   {
     "nombre": "Planta Carnivora (GW)",
-    "valor": "7457",
+    "valor": "11457",
     "genero": "Desconocido",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/89/13/21/891321e86667ec847946fbad838e06f9.jpg"
   },
   {
     "nombre": "Girasol (GW)",
-    "valor": "3569",
+    "valor": "10569",
     "genero": "Desconocido",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/86/6b/54/866b54837968a155eea393b3ae13b5af.jpg"
   },
   {
     "nombre": "Cactus (GW)",
-    "valor": "6895",
+    "valor": "11895",
     "genero": "Desconocido",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/1200x/a2/97/34/a29734d8ffbead5d45595331eb3b8365.jpg"
@@ -2191,35 +2191,35 @@
   },
   {
     "nombre": "Zombie Soldado",
-    "valor": "5684",
+    "valor": "11684",
     "genero": "Hombre",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/c6/ad/50/c6ad500d7daa74f976edaec5e067a53c.jpg"
   },
   {
     "nombre": "Zombie Ingeniero",
-    "valor": "6753",
+    "valor": "11753",
     "genero": "Hombre",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/51/b0/fb/51b0fb3ad2127598d46ea763578dc815.jpg"
   },
   {
     "nombre": "Zombie Científico",
-    "valor": "4321",
+    "valor": "10321",
     "genero": "Hombre",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/7f/c8/4c/7fc84c70a1efa910cedd6bfa70da7256.jpg"
   },
   {
     "nombre": "Zombie All-Star (GW)",
-    "valor": "7582",
+    "valor": "12982",
     "genero": "Hombre",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/dc/f8/f1/dcf8f194e8290a105ef637bace157884.jpg"
   },
   {
     "nombre": "Super Brains",
-    "valor": "15230",
+    "valor": "15730",
     "genero": "Desconocido",
     "fuente": "Plants vs Zombies",
     "imagen": "https://i.pinimg.com/736x/5f/4e/4e/5f4e4e634225bc74dbe308dc9466b20b.jpg"
@@ -2303,7 +2303,7 @@
   },
   {
     "nombre": "Dr. Eggman",
-    "valor": "16780",
+    "valor": "15780",
     "genero": "Desconocido",
     "fuente": "Sonic The Hedgehog",
     "imagen": "https://i.pinimg.com/736x/de/7e/f6/de7ef6a27068c92fec5bf4797fe6594e.jpg"
@@ -2380,7 +2380,7 @@
   },
   {
     "nombre": "Uta",
-    "valor": "17523",
+    "valor": "17823",
     "genero": "Mujer",
     "fuente": "One Piece",
     "imagen": "https://jumpichiban.com/cdn/shop/products/71-msmiCWPL._AC_SL1269.jpg"
@@ -2534,7 +2534,7 @@
 },
 {
   "nombre": "Boyfriend",
-  "valor": "15000",
+  "valor": "12900",
   "genero": "Hombre",
   "fuente": "Friday Night Funkin'",
   "imagen": "https://i.pinimg.com/736x/66/78/4f/66784f6d3a834ed19a4e6ddc25a877ff.jpg"
@@ -2569,14 +2569,14 @@
 },
 {
   "nombre": "Pico",
-  "valor": "15180",
+  "valor": "14180",
   "genero": "Hombre",
   "fuente": "Newgrounds",
   "imagen": "https://i.pinimg.com/736x/78/a1/7a/78a17a4a9fde903d4c674ee425e09074.jpg"
 },
 {
   "nombre": "Nene",
-  "valor": "15280",
+  "valor": "12980",
   "genero": "Mujer",
   "fuente": "Newgrounds",
   "imagen": "https://i.pinimg.com/236x/cb/50/8a/cb508a4688ce2ca3c538ee4946229172.jpg"
