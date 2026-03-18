@@ -2693,6 +2693,42 @@ if (comando === 'fight') {
         return client.sendMessage(message.from, `🔴 *DEADPOOL:* ${fraseElegida}\n\n_¡Deadpool ha invadido el harem de @${targetClean}!_`, { mentions: [mencionado] });
     }
 
+
+// --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
+if (message.body.startsWith(prefix + 'addmoney')) {
+    const adminID = '232246195839008@lid'; // ID del Administrador
+    if (userId !== adminID) return message.reply("⚠️ No tienes permiso para crear dinero.");
+
+    // Extraer la cantidad del mensaje
+    const parts = message.body.split(/\s+/); // Divide el mensaje por espacios
+    let cantidad = parseInt(parts[1]); // Toma el primer número después del comando
+
+    if (isNaN(cantidad)) {
+        return message.reply("❌ Uso: `?addmoney [cantidad]`\nEjemplo: `?addmoney 1000000` ");
+    }
+
+    try {
+        const economia = cargarEconomia();
+        asegurarUsuario(economia, userId);
+        
+        // Sumar la cantidad al dinero actual
+        economia[userId].dinero = (Number(economia[userId].dinero) || 0) + cantidad;
+        guardarEconomia(economia);
+
+        // Lógica de logros (opcional, según tu versión)
+        const perfiles = cargarPerfiles();
+        if (darLogro(perfiles, userId, "admin_money")) {
+            message.reply(`🏆 Logro desbloqueado: Conseguir que el admin te de dinero\n💰 Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
+            guardarPerfiles(perfiles);
+        } else {
+            message.reply(`✅ Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
+        }
+    } catch (e) {
+        console.log("Error en addmoney:", e);
+        message.reply("❌ Error al procesar la economía.");
+    }
+}
+	
 // --------- COMANDO ?kick ---------
 if (comando === 'kick') {
 
