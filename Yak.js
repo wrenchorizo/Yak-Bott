@@ -2546,7 +2546,7 @@ if (comando === 'smob') {
         if (mobActual[grupoId] && mobActual[grupoId].creadoEn === ahora && !mobActual[grupoId].vencido) {
             const nombreEscapado = mobActual[grupoId].nombre;
             delete mobActual[grupoId];
-            client.sendMessage(grupoId, `🍃 El *${nombreEscapado}* se ha marchado... se cansó de esperar a un contrincante.`);
+            client.sendMessage(grupoId, `🍃 Los *${nombreEscapado}* se han marchado... se escaparon del combate.`);
         }
     }, 7 * 60 * 1000); 
 }
@@ -2565,7 +2565,7 @@ if (comando === 'fight') {
 
     if (ahora - mobActual[grupoId].creadoEn > tiempoLimite) {
         delete mobActual[grupoId];
-        return message.reply("🍃 El monstruo se ha marchado... (Excediste el límite de 7 minutos).");
+        return message.reply("🍃 Los mobs se han marchado... (Excediste el límite de 7 minutos).");
     }
 
     const argsF = message.body.slice(prefix.length + 5).trim().split(',');
