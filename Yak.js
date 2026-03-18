@@ -2745,7 +2745,7 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     }
 }
 
-// ============= COMANDO ADMIN: ELIMINAR PERSONAJE (GRUPO ACTUAL) =============
+// ============= COMANDO ADMIN: DELCHAR (SOLO NÚMEROS) =============
 if (comando.startsWith('delchar')) {
     const adminID = '232246195839008@lid'; 
     if (userId !== adminID) return;
@@ -2754,32 +2754,32 @@ if (comando.startsWith('delchar')) {
     if (mentions.length === 0) return message.reply("❌ Menciona al usuario.");
 
     const partes = message.body.split(' ');
-    // Tomamos el nombre del personaje (soporta nombres con espacios)
     const nombreBusqueda = partes.slice(2).join(' ').trim().toLowerCase();
-    
     if (!nombreBusqueda) return message.reply("❌ Especifica el personaje.");
 
-    const targetId = mentions[0].id._serialized;
-    const targetNumber = targetId.split('@')[0];
-    const grupoId = message.from; // ID del grupo actual
+    // Extraemos SOLO los números (quitamos @g.us, @lid, etc)
+    const numUsuario = mentions[0].id.user; 
+    const numGrupo = message.from.split('@')[0];
 
-    // LEER ARCHIVO
     const hData = JSON.parse(fs.readFileSync(dataFolder + 'harem.json', 'utf-8'));
 
-    if (!hData[grupoId]) {
-        return message.reply("❌ No hay datos de harem registrados en este grupo.");
+    // 1. Encontrar el Grupo por número
+    const grupoKey = Object.keys(hData).find(k => k.includes(numGrupo));
+    if (!grupoKey) {
+        return message.reply(`❌ No hay datos para el grupo con número: ${numGrupo}`);
     }
 
-    // Buscar al usuario en este grupo específico
-    let userKey = Object.keys(hData[grupoId]).find(key => key.includes(targetNumber));
-
+    // 2. Encontrar al Usuario por número dentro de ese grupo
+    const userKey = Object.keys(hData[grupoKey]).find(k => k.includes(numUsuario));
     if (!userKey) {
-        return message.reply("❌ El usuario no tiene personajes en este grupo.");
+        // Si no lo encuentra, te muestra quiénes sí están en el archivo para ese grupo
+        const registrados = Object.keys(hData[grupoKey]).map(k => k.split('@')[0]).join(', ');
+        return message.reply(`❌ El usuario ${numUsuario} no está en este grupo.\n\nNúmeros registrados aquí: ${registrados}`);
     }
 
-    let userHarem = hData[grupoId][userKey];
+    let userHarem = hData[grupoKey][userKey];
     
-    // Buscar el índice del personaje
+    // 3. Buscar el Personaje
     const index = userHarem.findIndex(p => {
         const n = p.nombre.toLowerCase().trim();
         return n === nombreBusqueda || n.includes(nombreBusqueda);
@@ -2787,16 +2787,12 @@ if (comando.startsWith('delchar')) {
 
     if (index !== -1) {
         const borrado = userHarem.splice(index, 1);
-        
-        // Guardar cambios solo si se encontró
-        hData[grupoId][userKey] = userHarem;
+        hData[grupoKey][userKey] = userHarem;
         fs.writeFileSync(dataFolder + 'harem.json', JSON.stringify(hData, null, 2));
-        
-        message.reply(`✅ *${borrado[0].nombre}* eliminado del harem de este grupo.`);
+        message.reply(`✅ *${borrado[0].nombre}* eliminado con éxito.`);
     } else {
-        // Si falla, te muestra qué personajes SÍ detecta el bot en este grupo
-        const nombresDisponibles = userHarem.map(p => p.nombre).join(", ");
-        message.reply(`❌ No encontrado.\n\nPersonajes de este usuario en este grupo:\n${nombresDisponibles}`);
+        const disponibles = userHarem.map(p => p.nombre).join(", ");
+        message.reply(`❌ No encontrado.\n\nPersonajes actuales de este usuario:\n${disponibles}`);
     }
 }
 	
