@@ -284,8 +284,15 @@
     "imagen": "https://i.pinimg.com/736x/f5/64/70/f56470d8b04d503e8a4fc3aea8860555.jpg"
   },
   {
+    "nombre": "Withered Freddy",
+    "valor": "14899",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/fc/38/3a/fc383a76f18e9bda76d529ad2e353082.jpg"
+  },
+  {
     "nombre": "Withered Foxy",
-    "valor": "14789",
+    "valor": "14899",
     "genero": "Hombre",
     "fuente": "Fnaf",
     "imagen": "https://i.pinimg.com/736x/92/e7/7c/92e77c04bc06ac45f13d349bce2c855c.jpg"
@@ -303,6 +310,34 @@
     "genero": "Hombre",
     "fuente": "Fnaf",
     "imagen": "https://i.pinimg.com/736x/58/72/a5/5872a5eac44a140c28cee8e7530ef83e.jpg"
+  },
+  {
+    "nombre": "Withered Chica",
+    "valor": "14650",
+    "genero": "Mujer",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/originals/40/7b/e6/407be632b4d991b79c32e2bf492f3a71.jpg"
+  },
+  {
+    "nombre": "Springtrap",
+    "valor": "15679",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/564x/ef/39/52/ef3952f27b6c27ae16fd2416e33d29c1.jpg"
+  },
+  {
+    "nombre": "Nightmare",
+    "valor": "15968",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/236x/97/3c/8e/973c8ec361278b8cbdbbedb2223bf3ec.jpg"
+  },
+  {
+    "nombre": "Ennard (Fnaf)",
+    "valor": "15198",
+    "genero": "Hombre",
+    "fuente": "Fnaf",
+    "imagen": "https://i.pinimg.com/736x/2b/5c/7f/2b5c7ffd4e22982547f464f78abb3694.jpg"
   },
   {
     "nombre": "Fred",
