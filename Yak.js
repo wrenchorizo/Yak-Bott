@@ -1058,71 +1058,6 @@ if (comando === 'ping') {
     return message.reply(`¡Pong!\n\n> *Latencia:* ${latencia}ms\n> *RAM:* ${memoria} MB\n> *Estado:* Online`);
 }
 
-// --- COMANDO POKEVO REPARADO ---
-    if (comando === 'pokevo') {
-        const args = message.body.split(/\s+/).slice(1);
-        const target = args.join(' ').toLowerCase().trim();
-        const chat = await message.getChat();
-        const grupoId = chat.id._serialized;
-        const senderId = message.author || message.from; // Usa el ID correcto del remitente
-
-        if (!target) return message.reply(`❌ Uso: ${prefix}pokevo [nombre del personaje]`);
-
-        // 1. Verificar si existe la base de datos de harems
-        if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][senderId]) {
-            return message.reply("❌ No tienes personajes en tu harem de este grupo.");
-        }
-
-        const userHarem = haremPorGrupo[grupoId][senderId];
-
-        // 2. Buscar al personaje en el harem del usuario (ignorando tildes y mayúsculas)
-        const index = userHarem.findIndex(p => p.nombre.toLowerCase() === target);
-        
-        if (index === -1) {
-            return message.reply(`❌ No tienes a **${target}** en tu lista.`);
-        }
-
-        const pjEnHarem = userHarem[index];
-
-        // 3. Buscar la data base original en personajes.json para ver si evoluciona
-        const dataBase = personajes.find(p => p.nombre.toLowerCase() === pjEnHarem.nombre.toLowerCase());
-
-        if (!dataBase || !dataBase.evolucion) {
-            return message.reply(`❌ **${pjEnHarem.nombre}** no tiene evoluciones registradas.`);
-        }
-
-        // 4. Verificar nivel (si no tiene nivel, asumimos que puede evolucionar para no trabar el bot)
-        const nivelActual = pjEnHarem.level || pjEnHarem.nivel || 1; 
-        const nivelRequerido = dataBase.nivelEvo || 1;
-
-        if (nivelActual < nivelRequerido) {
-            return message.reply(`⌛ Nivel insuficiente. **${pjEnHarem.nombre}** necesita nivel ${nivelRequerido} (Actual: ${nivelActual}).`);
-        }
-
-        // 5. Buscar los datos de la nueva forma
-        const evoData = personajes.find(p => p.nombre.toLowerCase() === dataBase.evolucion.toLowerCase());
-
-        if (!evoData) {
-            return message.reply(`❌ Error: No se encontró la data de **${dataBase.evolucion}** en el archivo personajes.json.`);
-        }
-
-        // 6. EVOLUCIONAR
-        const nombreViejo = pjEnHarem.nombre;
-        
-        // Actualizamos los datos manteniendo el nivel que ya tenía
-        userHarem[index] = {
-            ...pjEnHarem, // Mantiene nivel, experiencia, etc.
-            nombre: evoData.nombre,
-            imagen: evoData.image || evoData.imagen, // Soporte para ambos nombres de propiedad
-            valor: evoData.valor
-        };
-
-        // 7. Guardar y confirmar
-        haremPorGrupo[grupoId][senderId] = userHarem;
-        guardarHarem(haremPorGrupo);
-
-        return message.reply(`✨ ¡Felicidades! Tu **${nombreViejo}** ha evolucionado a **${evoData.nombre}**! 🎉`);
-    }
 
 
 if (message.body.startsWith("?charlist")) {
@@ -1237,12 +1172,21 @@ Balance actual: $${economia[senderId].dinero}`
 }
 
 // ============== COMANDO ?cooldowns ====================
-	
 if (comando === 'cooldowns') {
-
     const ahora = Date.now();
+    const grupoId = message.from;
+    const userId = message.author || message.from;
     let texto = "◔ Tus cooldowns activos:\n\n";
 
+    // --- COOLDOWN DE SMOB ---
+    if (cooldownsBuscarmob[grupoId]?.[userId]) {
+        const totalSmob = 15 * 60 * 1000;
+        const restanteSmob = totalSmob - (ahora - cooldownsBuscarmob[grupoId][userId]);
+        if (restanteSmob > 0)
+            texto += `◔ smob → ${msToTime(restanteSmob)}\n`;
+    }
+
+    // --- COOLDOWN DE RW ---
     if (cooldownsRW[grupoId]?.[userId]) {
         const total = 15 * 60 * 1000;
         const restante = total - (ahora - cooldownsRW[grupoId][userId]);
@@ -1250,6 +1194,7 @@ if (comando === 'cooldowns') {
             texto += `◔ rw → ${msToTime(restante)}\n`;
     }
 
+    // --- COOLDOWN DE C ---
     if (cooldownsC[grupoId]?.[userId]) {
         const total = 20 * 60 * 1000;
         const restante = total - (ahora - cooldownsC[grupoId][userId]);
@@ -1260,22 +1205,27 @@ if (comando === 'cooldowns') {
     const economia = cargarEconomia();
     asegurarUsuario(economia, userId);
 
+    // --- COOLDOWN DE WORK (W) ---
     const totalW = 60 * 1000;
-    const restanteW = totalW - (ahora - economia[userId].lastWork);
+    const restanteW = totalW - (ahora - (economia[userId].lastWork || 0));
     if (restanteW > 0)
         texto += `◔ w → ${msToTime(restanteW)}\n`;
 
+    // --- COOLDOWN DE CRIME ---
     const totalCrime = 5 * 60 * 1000;
-    const restanteCrime = totalCrime - (ahora - economia[userId].lastCrime);
+    const restanteCrime = totalCrime - (ahora - (economia[userId].lastCrime || 0));
     if (restanteCrime > 0)
         texto += `◔ crime → ${msToTime(restanteCrime)}\n`;
 
+    // --- VERIFICACIÓN FINAL ---
     if (texto === "◔ Tus cooldowns activos:\n\n")
         texto += "◔ No tienes cooldowns activos.";
 
     return message.reply(texto);
 }
 
+
+	//====================== E C O N O M I A  ==========================
 
 if (message.body === "?w") {
     const economia = cargarEconomia();
@@ -1491,7 +1441,7 @@ if (comando.startsWith('buy')) {
         if (economia[userId].dinero < 300000) return message.reply("No tienes suficiente dinero ($300,000).");
         economia[userId].dinero -= 300000;
         personaje.valor = Math.floor(personaje.valor * 1.5);
-        message.reply(`📜 *Contrato Eterno* firmado.\n📈 El valor base de ${personaje.nombre} ha subido a $${personaje.valor.toLocaleString()}.`);
+        message.reply(`📜 *Contrato Eterno* firmado.\n📈 El valor base de ${personaje.nombre} ha subido a ${personaje.valor.toLocaleString()}.`);
     } else {
         return message.reply("❌ Ese número de objeto no existe.");
     }
@@ -1597,60 +1547,40 @@ if (comando.startsWith('bchar')) {
         }
     }
 
-// --------- COMANDO ?baltop (CORREGIDO) ---------
-    if (message.body.startsWith("?baltop")) {
-        const chat = await message.getChat();
-        if (!chat.isGroup) return message.reply("Este comando solo funciona en grupos.");
+// ============= COMANDO ?baltop (RANKING) =============
+if (comando === 'baltop') {
+    const eco = cargarEconomia();
+    let usuarios = [];
 
-        const economia = cargarEconomia();
-        const participantes = chat.participants;
-        
-        let ranking = [];
-        for (const p of participantes) {
-            const id = p.id._serialized;
-            if (economia[id]) {
-                // Sumamos dinero + banco para un top real
-                const total = (economia[id].dinero || 0) + (economia[id].banco || 0);
-                if (total > 0) {
-                    ranking.push({ id: id, total: total });
-                }
-            }
-        }
-
-        ranking.sort((a, b) => b.total - a.total);
-        if (ranking.length === 0) return message.reply("Nadie tiene dinero aún.");
-
-        const args = message.body.split(' ');
-        let pagina = parseInt(args[1]) || 1;
-        const porPagina = 20;
-        const maxPaginas = Math.ceil(ranking.length / porPagina);
-        if (pagina < 1) pagina = 1;
-        if (pagina > maxPaginas) pagina = maxPaginas;
-
-        const inicio = (pagina - 1) * porPagina;
-        const rankingPagina = ranking.slice(inicio, inicio + porPagina);
-
-        let texto = `🏆 *RANKING DE DINERO (Pág. ${pagina}/${maxPaginas})* 🏆\n\n`;
-        
-        for (let i = 0; i < rankingPagina.length; i++) {
-            const user = rankingPagina[i];
-            const posicion = inicio + i + 1;
-            const numeroLimpio = user.id.split('@')[0];
-            
-            let medalla = "👤";
-            if (posicion === 1) medalla = "🥇";
-            else if (posicion === 2) medalla = "🥈";
-            else if (posicion === 3) medalla = "🥉";
-
-            texto += `${medalla} ${posicion}. @${numeroLimpio}: *$${user.total.toLocaleString()}*\n`;
-        }
-
-        // Enviamos las menciones para que WhatsApp convierta los números en nombres
-        return client.sendMessage(message.from, texto, {
-            mentions: rankingPagina.map(u => u.id)
+    // Convertimos el objeto en una lista para poder ordenarla
+    for (let id in eco) {
+        usuarios.push({
+            id: id,
+            dinero: Number(eco[id].dinero) || 0
         });
     }
 
+    // Ordenamos de mayor a menor dinero
+    usuarios.sort((a, b) => b.dinero - a.dinero);
+
+    // Tomamos los 10 mejores
+    const top10 = usuarios.slice(0, 10);
+
+    let textoTop = "🏆 *RANKING DE RIQUEZA* 🏆\n\n";
+    let mentions = [];
+
+    top10.forEach((user, index) => {
+        const num = user.id.split('@')[0];
+        const medalla = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "👤";
+        textoTop += `${medalla} ${index + 1}. @${num}: *$${user.dinero.toLocaleString()}*\n`;
+        mentions.push(user.id); // Guardamos la ID para que se vea la mención azul
+    });
+
+    if (usuarios.length === 0) return message.reply("❌ No hay registros de economía todavía.");
+
+    // Enviamos el mensaje con las menciones habilitadas
+    client.sendMessage(message.from, textoTop, { mentions });
+}
 
 // --------- ?duel ---------
 
@@ -2115,7 +2045,7 @@ if (comando.startsWith('harem')) {
         
         if (p.nombre === 'Deadpool') {
             respuesta += `⌁ ${numGlobal} ⌁ 🔴 *DEADPOOL*\n`;
-            respuesta += `    ╰┈─ ➤ Marvel ✦ (Está rompiendo tu lista de personajes)\n\n`;
+            respuesta += `    ╰┈─ ➤ Marvel ✦ (Me tomé la libertad de cambiar mi valor a uno insuperable)\n\n`;
         } else {
             respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre}\n`;
             respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ ${valorReal.toLocaleString()}\n\n`;
@@ -2151,7 +2081,7 @@ if (comando.startsWith('wimage')) {
             // Intentamos obtener la imagen
             const media = await MessageMedia.fromUrl(pj.imagen).catch(() => null);
 
-            const caption = `🖼️ *PERSONAJE ENCONTRADO*\n\n` +
+            const caption = `*PERSONAJE ENCONTRADO*\n\n` +
                             `👤 *Nombre:* ${pj.nombre}\n` +
                             `📺 *Fuente:* ${pj.fuente}`;
 
@@ -2516,51 +2446,58 @@ if (message.body.startsWith(prefix + 'wtired')) {
     return message.reply(respuesta);
 }
 
-//============= COMANDO ?smob (CORREGIDO) ===============
+//============= COMANDO ?smob (VERSIÓN FINAL COMPLETA) ===============
 if (comando === 'smob') {
     const ahora = Date.now();
-    const tiempoEspera = 15 * 60 * 1000;
+    const tiempoEspera = 15 * 60 * 1000; // 15 minutos entre búsquedas
     const grupoId = message.from;
     const userId = message.author || message.from;
 
+    // --- SISTEMA DE COOLDOWN ---
     if (!cooldownsBuscarmob[grupoId]) cooldownsBuscarmob[grupoId] = {};
     if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
         const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
-        return message.reply(`⏳ Espera ${restante} min para buscar otro mob.`);
+        return message.reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min** para buscar otro mob.`);
     }
 
     const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
     const hData = cargarHarem();
     const misPersonajes = hData[grupoId]?.[userId] || [];
     
-    // Rango base: 10,000 a 30,000
+    // --- LÓGICA DE PODER CONTROLADA ---
     let poderBase = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
     let bonoNivel = 0;
 
     if (misPersonajes.length > 0) {
-        // Calculamos un bono basado en el nivel promedio de tus 3 mejores, pero LINEAL
+        // Promedio de los 3 mejores (solo si no son nivel bugueado)
         const mejores = misPersonajes
             .sort((a, b) => (b.level || 1) - (a.level || 1))
             .slice(0, 3);
         
         const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
         
-        // Cada nivel promedio del equipo añade 1,500 de poder al mob (Escala suave)
+        // Cada nivel promedio añade 1,500 de poder (Lineal, no exponencial)
         bonoNivel = nivelPromedio * 1500;
     }
 
-    // Poder Total = Base + Bono por nivel (Máximo aprox 150k - 200k en niveles muy altos)
     let poderMob = Math.floor(poderBase + bonoNivel);
 
+    // 🔥 ESCUDO ANTI-INFINITO (MÁXIMO 500k)
+    if (poderMob > 500000 || !isFinite(poderMob)) {
+        poderMob = 500000; 
+    }
+
+    // Guardar mob en memoria del grupo
     mobActual[grupoId] = {
         nombre: mobTemplate.nombre,
         poderTotal: poderMob,
         vencido: false,
-        creadoEn: ahora
+        creadoEn: ahora // Para que expire en 7 mins
     };
 
     cooldownsBuscarmob[grupoId][userId] = ahora;
-    message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n⚠️ Tienes **7 minutos** para pelear antes de que escape.`);
+
+    message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n>Tienes **7 minutos** para pelear antes de que escape.`);
 }
 
 	
@@ -2709,6 +2646,31 @@ if (comando === 'fight') {
         return client.sendMessage(message.from, `🔴 *DEADPOOL:* ${fraseElegida}\n\n_¡Deadpool ha invadido el harem de @${targetClean}!_`, { mentions: [mencionado] });
     }
 
+	// ============= RESETEAR NIVELES (LÍMITE 1,000) =============
+if (comando === 'fixlevels') {
+    const adminID = '232246195839008@lid'; 
+    if (userId !== adminID) return;
+
+    const hData = cargarHarem();
+    let cont = 0;
+
+    for (let g in hData) {
+        for (let u in hData[g]) {
+            hData[g][u].forEach(p => {
+                let lvl = Number(p.level);
+                // Si el nivel es mayor a 1,000 o es Infinito/NaN
+                if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
+                    p.level = 1;
+                    p.exp = 0;
+                    cont++;
+                }
+            });
+        }
+    }
+
+    guardarHarem(hData);
+    message.reply(`✨ *PURIFICACIÓN COMPLETADA* ✨\n\nSe han reseteado **${cont}** personajes que superaban el nivel 1,000.\n\n*(Tu Admin Char y personajes legales no han sido afectados)*.`);
+}
 
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
 if (message.body.startsWith(prefix + 'addmoney')) {
@@ -3101,7 +3063,7 @@ if (perfiles[userId].reacciones >= 500) {
 // --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'delcahr', 'fixlevels', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
