@@ -2745,7 +2745,7 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     }
 }
 
-// ============= COMANDO ADMIN: ELIMINAR PERSONAJE (DEBUG VERSION) =============
+// ============= COMANDO ADMIN: ELIMINAR PERSONAJE (BÚSQUEDA GLOBAL) =============
 if (comando.startsWith('delchar')) {
     const adminID = '232246195839008@lid'; // Tu ID de Admin
     if (userId !== adminID) return message.reply("⚠️ No tienes permisos.");
@@ -2753,55 +2753,48 @@ if (comando.startsWith('delchar')) {
     const mentions = await message.getMentions();
     if (mentions.length === 0) return message.reply("❌ Menciona a alguien: *?delchar @user Nombre*");
 
-    // Extraer el nombre del personaje después de la mención
     const partes = message.body.split(' ');
+    // El nombre del personaje puede tener espacios (ej: "Son Goku")
     const nombrePj = partes.slice(2).join(' ').trim().toLowerCase();
     if (!nombrePj) return message.reply("❌ ¿Qué personaje quieres borrar?");
 
-    const targetId = mentions[0].id._serialized; // ID de la mención
-    const targetNumber = targetId.split('@')[0];   // Solo el número
-    const grupoId = message.from;
+    const targetId = mentions[0].id._serialized;
+    const targetNumber = targetId.split('@')[0];
     const hData = cargarHarem();
 
-    if (!hData[grupoId]) {
-        console.log(`[DELCHAR] El grupo ${grupoId} no existe en el harem.json`);
-        return message.reply("❌ Este grupo no tiene datos de harem.");
+    let encontrado = false;
+
+    // --- BÚSQUEDA GLOBAL EN TODOS LOS GRUPOS ---
+    for (let grupoId in hData) {
+        // Buscamos al usuario en este grupo ignorando si es @c.us o @lid
+        let userKey = Object.keys(hData[grupoId]).find(key => key.includes(targetNumber));
+
+        if (userKey) {
+            let userHarem = hData[grupoId][userKey];
+            const index = userHarem.findIndex(p => 
+                p.nombre.toLowerCase() === nombrePj || 
+                p.nombre.toLowerCase().includes(nombrePj)
+            );
+
+            if (index !== -1) {
+                const borrado = userHarem.splice(index, 1);
+                hData[grupoId][userKey] = userHarem;
+                encontrado = true;
+                console.log(`[DELCHAR] Borrado ${borrado[0].nombre} del grupo ${grupoId}`);
+            }
+        }
     }
 
-    // --- BÚSQUEDA AGRESIVA DEL USUARIO ---
-    // Buscamos cualquier llave que contenga el número del usuario mencionado
-    let userKey = Object.keys(hData[grupoId]).find(key => key.includes(targetNumber));
-
-    // Log de ayuda para el programador (mira tu consola si falla)
-    console.log(`[DELCHAR] Buscando: ${targetNumber} | Encontrado: ${userKey || 'NADA'}`);
-    console.log(`[DELCHAR] IDs disponibles en este grupo:`, Object.keys(hData[grupoId]));
-
-    if (!userKey) {
-        return message.reply(`❌ No encontré datos para el usuario con número ${targetNumber}.`);
+    if (encontrado) {
+        guardarHarem(hData);
+        message.reply(`✅ Personaje *${nombrePj}* eliminado de todos los registros del usuario @${targetNumber}.`);
+    } else {
+        // Si falla, mostramos qué IDs tiene el usuario para debuguear
+        message.reply(`❌ No se encontró a "${nombrePj}" en ningún grupo para el usuario ${targetNumber}.`);
+        console.log("IDs de grupos en harem.json:", Object.keys(hData));
     }
-
-    let userHarem = hData[grupoId][userKey];
-
-    // --- BÚSQUEDA DEL PERSONAJE ---
-    const index = userHarem.findIndex(p => 
-        p.nombre.toLowerCase() === nombrePj || 
-        p.nombre.toLowerCase().includes(nombrePj)
-    );
-
-    if (index === -1) {
-        return message.reply(`❌ El usuario tiene personajes, pero ninguno se llama "${nombrePj}".`);
-    }
-
-    const borrado = userHarem.splice(index, 1);
-    
-    // Guardar cambios en el archivo
-    hData[grupoId][userKey] = userHarem;
-    guardarHarem(hData);
-
-    message.reply(`✅ *${borrado[0].nombre}* eliminado del harem de @${targetNumber}.`);
 }
 	
-
 	
 // --------- COMANDO ?kick ---------
 if (comando === 'kick') {
