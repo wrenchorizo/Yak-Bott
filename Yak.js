@@ -2745,56 +2745,62 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     }
 }
 
-// ============= COMANDO ADMIN: ELIMINAR PERSONAJE =============
+// ============= COMANDO ADMIN: ELIMINAR PERSONAJE (ROBUSTO) =============
 if (comando.startsWith('delchar')) {
-    const adminID = '232246195839008@lid'; // ID de Admin (el que usas en addmoney)
+    const adminID = '232246195839008@lid'; // Tu ID de Admin
     if (userId !== adminID) return message.reply("⚠️ No tienes permisos de administrador.");
 
     const mentions = await message.getMentions();
-    const args = message.body.split(/\s+/);
-
+    
+    // Si no hay mención, intentamos buscar si escribieron la ID a mano o si falta algo
     if (mentions.length === 0) {
-        return message.reply("❌ Uso: *?delchar @mención NombrePersonaje*\nEjemplo: *?delchar @user Deadpool*");
+        return message.reply("❌ Uso: *?delchar @mención NombrePersonaje*");
     }
 
-    // Extraemos el nombre: quitamos el comando y la mención del texto
-    // ?delchar @user Nombre -> ["?delchar", "@user", "Nombre"]
-    const nombrePj = args.slice(2).join(' ').trim().toLowerCase();
+    // El nombre del personaje es todo lo que sigue después de la mención
+    // Dividimos el cuerpo original para no perder espacios en nombres largos
+    const partes = message.body.split(' ');
+    // El nombre empieza después de prefix+delchar (índice 0) y la mención (índice 1)
+    const nombrePj = partes.slice(2).join(' ').trim().toLowerCase();
 
     if (!nombrePj) {
-        return message.reply("❌ Debes escribir el nombre del personaje después de la mención.");
+        return message.reply("❌ Debes escribir el nombre del personaje.");
     }
 
     const targetId = mentions[0].id._serialized;
     const grupoId = message.from;
     const hData = cargarHarem();
 
-    if (!hData[grupoId] || !hData[grupoId][targetId]) {
-        return message.reply("❌ Este usuario no tiene personajes en este grupo.");
+    // --- LOGICA DE BUSQUEDA FLEXIBLE DE USUARIO ---
+    // A veces se guarda como 12345@c.us y otras como 12345@lid
+    // Buscamos una coincidencia en las llaves del JSON que contenga el número
+    const targetNumber = targetId.split('@')[0];
+    const userKey = Object.keys(hData[grupoId] || {}).find(key => key.startsWith(targetNumber));
+
+    if (!hData[grupoId] || !userKey) {
+        return message.reply("❌ Este usuario no tiene personajes registrados en este grupo.");
     }
 
-    // Buscamos el índice para borrarlo
-    const index = hData[grupoId][targetId].findIndex(p => p.nombre.toLowerCase() === nombrePj);
+    const userHarem = hData[grupoId][userKey];
+
+    // --- BUSQUEDA DEL PERSONAJE ---
+    const index = userHarem.findIndex(p => 
+        p.nombre.toLowerCase() === nombrePj || 
+        p.nombre.toLowerCase().includes(nombrePj)
+    );
 
     if (index === -1) {
-        // Intento de búsqueda parcial por si el nombre es largo
-        const indexParcial = hData[grupoId][targetId].findIndex(p => p.nombre.toLowerCase().includes(nombrePj));
-        if (indexParcial === -1) {
-            return message.reply(`❌ No encontré a "${nombrePj}" en ese harem.`);
-        }
-        // Si lo encuentra parcial, usamos ese
-        const borrado = hData[grupoId][targetId].splice(indexParcial, 1);
-        guardarHarem(hData);
-        return message.reply(`🗑️ Personaje *${borrado[0].nombre}* eliminado del harem de @${mentions[0].number}.`);
+        return message.reply(`❌ No encontré a "${nombrePj}" en el harem de ese usuario.`);
     }
 
-    // Borrado por coincidencia exacta
-    const borrado = hData[grupoId][targetId].splice(index, 1);
+    const borrado = userHarem.splice(index, 1);
+    
+    // Guardar cambios
+    hData[grupoId][userKey] = userHarem;
     guardarHarem(hData);
 
-    message.reply(`✅ Se ha eliminado a *${borrado[0].nombre}* correctamente.`);
+    message.reply(`✅ *${borrado[0].nombre}* ha sido eliminado del harem de @${targetNumber}.`);
 }
-	
 	
 // --------- COMANDO ?kick ---------
 if (comando === 'kick') {
