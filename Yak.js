@@ -2169,32 +2169,46 @@ if (comando.startsWith('wimage')) {
     }
 
 
-
-// --------- ?charinfo ---------
+// --------- ?charinfo (CORREGIDO) ---------
 if (comando.startsWith('charinfo')) {
-    const nombreBusqueda = message.body.slice(prefix.length + 8).trim(); 
+    const nombreBusqueda = message.body.slice(prefix.length + 8).trim().toLowerCase(); 
     if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
     // Refrescar memoria desde el archivo antes de buscar
     haremPorGrupo = cargarHarem(); 
 
-    if (!haremPorGrupo[message.from] || !haremPorGrupo[message.from][userId]) {
+    const grupoId = message.from;
+    const userId = message.author || message.from;
+
+    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) {
         return message.reply("❒ Tu harem está vacío en este grupo.");
     }
 
-    const personaje = haremPorGrupo[message.from][userId].find(p => 
-        p.nombre.toLowerCase() === nombreBusqueda.toLowerCase() || 
-        p.nombre.toLowerCase().includes(nombreBusqueda.toLowerCase())
-    );
+    const miHarem = haremPorGrupo[grupoId][userId];
+
+    // --- LÓGICA DE BÚSQUEDA PRIORIZADA ---
+    // 1. Intentamos buscar una coincidencia EXACTA primero
+    let personaje = miHarem.find(p => p.nombre.toLowerCase() === nombreBusqueda);
+
+    // 2. Si no hay exacta, buscamos uno que EMPIECE por ese nombre
+    if (!personaje) {
+        personaje = miHarem.find(p => p.nombre.toLowerCase().startsWith(nombreBusqueda));
+    }
+
+    // 3. Si aún no hay nada, buscamos que CONTENGA el nombre (como último recurso)
+    if (!personaje) {
+        personaje = miHarem.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
+    }
 
     if (!personaje) return message.reply(`❌ No tienes a "${nombreBusqueda}" en tu colección.`);
 
     // Asegurar valores por defecto
-    const lvl = personaje.level || 1;
-    const exp = personaje.exp || 0;
+    const lvl = Number(personaje.level) || 1;
+    const exp = Number(personaje.exp) || 0;
     const stamina = personaje.stamina !== undefined ? personaje.stamina : 100;
     
-    const xpSiguienteNivel = Math.floor(100 * Math.pow(1.1, lvl - 1));
+    // Fórmulas consistentes con el resto del bot
+    const xpSiguienteNivel = lvl * 100; // Ajustado a tu nueva lógica de nivelación
     const poderReal = Math.floor(Number(personaje.valor) * Math.pow(1.20, (lvl - 1)));
 
     let infoMsg = `👤 *DETALLES DEL PERSONAJE*\n`;
@@ -2210,11 +2224,12 @@ if (comando.startsWith('charinfo')) {
     try {
         const response = await axios.get(personaje.imagen, { responseType: 'arraybuffer' });
         const media = new MessageMedia('image/jpeg', Buffer.from(response.data).toString('base64'), 'char.jpg');
-        await client.sendMessage(message.from, media, { caption: infoMsg });
+        await client.sendMessage(grupoId, media, { caption: infoMsg });
     } catch (error) {
         message.reply(infoMsg);
     }
 }
+
 
 // --------- COMANDO ?dice (APUESTAS) ---------
 if (comando.startsWith('dice')) {
