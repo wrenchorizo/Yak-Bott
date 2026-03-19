@@ -1405,7 +1405,7 @@ if (comando === 'shop') {
     return message.reply(tabla);
 }
 
-// --------- COMANDO ?buy ---------
+	
 // --------- COMANDO ?buy ---------
 if (comando.startsWith('buy')) {
     const economia = cargarEconomia();
@@ -1562,39 +1562,41 @@ if (comando.startsWith('bchar')) {
         }
     }
 
-// ============= COMANDO ?baltop (RANKING) =============
+// ================= COMANDO ?baltop (SOLO DINERO) =================
 if (comando === 'baltop') {
-    const eco = cargarEconomia();
-    let usuarios = [];
+    try {
+        // 1. Convertimos el objeto de economía en una lista para ordenar
+        const listaDinero = Object.entries(perfiles)
+            .map(([id, data]) => ({ 
+                id, 
+                money: Number(data.money) || 0 
+            }))
+            // Filtramos a los que tengan 0 o IDs inválidos si es necesario
+            .filter(user => user.money > 0)
+            .sort((a, b) => b.money - a.money)
+            .slice(0, 10); // Mostramos el Top 10
 
-    // Convertimos el objeto en una lista para poder ordenarla
-    for (let id in eco) {
-        usuarios.push({
-            id: id,
-            dinero: Number(eco[id].dinero) || 0
+        if (listaDinero.length === 0) {
+            return message.reply("💸 Parece que todos en este grupo están en la quiebra.");
+        }
+
+        let msg = `💰 *RANKING DE RIQUEZA - TOP 10* 💰\n`;
+        msg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        listaDinero.forEach((user, i) => {
+            const medalla = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "👤";
+            msg += `${medalla} ${i + 1}. @${user.id.split('@')[0]}\n      — *$${user.money.toLocaleString()}*\n\n`;
         });
+
+        msg += `━━━━━━━━━━━━━━━━━━━━\n🏆 ¡Felicidades a los magnates!`;
+
+        const menciones = listaDinero.map(u => u.id);
+        message.reply(msg, { mentions: menciones });
+
+    } catch (e) {
+        console.error("Error en baltop:", e);
+        message.reply("❌ Error al generar el ranking de dinero.");
     }
-
-    // Ordenamos de mayor a menor dinero
-    usuarios.sort((a, b) => b.dinero - a.dinero);
-
-    // Tomamos los 10 mejores
-    const top10 = usuarios.slice(0, 10);
-
-    let textoTop = "🏆 *RANKING DE RIQUEZA* 🏆\n\n";
-    let mentions = [];
-
-    top10.forEach((user, index) => {
-        const num = user.id.split('@')[0];
-        const medalla = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "👤";
-        textoTop += `${medalla} ${index + 1}. @${num}: *$${user.dinero.toLocaleString()}*\n`;
-        mentions.push(user.id); // Guardamos la ID para que se vea la mención azul
-    });
-
-    if (usuarios.length === 0) return message.reply("❌ No hay registros de economía todavía.");
-
-    // Enviamos el mensaje con las menciones habilitadas
-    client.sendMessage(message.from, textoTop, { mentions });
 }
 
 // --------- ?duel ---------
