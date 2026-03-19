@@ -39,13 +39,13 @@ http.createServer((req, res) => {
   console.log(`Servidor de salud escuchando en el puerto ${process.env.PORT || 3000}`);
 });
 
-// ================= CONEXIÓN MONGO =================
+// ================= CONEXIÓN Y MODELO MONGO =================
 const mongoose = require('mongoose');
-const mongoURI = process.env.MONGODB_URL; // Railway la da automática
+const mongoURI = process.env.MONGODB_URL; 
 
 mongoose.connect(mongoURI)
     .then(() => console.log('✅ Conectado a MongoDB'))
-    .catch(err => console.error('❌ Error Mongo:', err));
+    .catch(err => console.error('❌ Error conexión Mongo:', err));
 
 const HaremSchema = new mongoose.Schema({
     grupoId: { type: String, index: true },
@@ -53,7 +53,7 @@ const HaremSchema = new mongoose.Schema({
     personajes: { type: Array, default: [] }
 });
 const HaremModel = mongoose.model('Harem', HaremSchema);
-// ==================================================
+// ===========================================================
 
 
 // ==========================================
@@ -1600,234 +1600,192 @@ if (comando === 'baltop') {
 }
 
 // --------- ?duel ---------
+if (comando.startsWith('duel')) {
+    const mentariado = message.mentionedIds[0];
+    if (!mentariado) return message.reply("❌ Menciona a quién quieres retar.");
+    if (mentariado === userId) return message.reply("❓ No puedes pelear contigo mismo.");
 
-if (comando.split(" ")[0] === 'duel') {
+    duelosPendientes[message.from] = {
+        retador: userId,
+        retado: mentariado,
+        aceptado: false
+    };
 
-    try {
-
-        if (!message.from.endsWith("@g.us")) {
-            return message.reply("Solo funciona en grupos.");
-        }
-
-        if (duelosActivos[grupoId]) {
-            return message.reply("Ya hay un duelo activo en este grupo.");
-        }
-
-        if (!message.mentionedIds || message.mentionedIds.length === 0) {
-            return message.reply("Debes mencionar a alguien.");
-        }
-
-        const jugador1 = String(message.author || message.from);
-        const jugador2 = String(message.mentionedIds[0]);
-
-        if (jugador1 === jugador2) {
-            return message.reply("No puedes retarte a ti mismo.");
-        }
-
-        const timeoutAceptacion = setTimeout(() => {
-            if (duelosActivos[grupoId]) {
-                delete duelosActivos[grupoId];
-                message.reply("◔ El duelo expiró por no ser aceptado.");
-            }
-        }, 5 * 60 * 1000);
-
-        duelosActivos[grupoId] = {
-            jugador1,
-            jugador2,
-            picks: {},
-            aceptado: false,
-            timeoutAceptacion
-        };
-
-        const numero = jugador2.split("@")[0];
-
-        return message.reply(
-            `⚔ Duelo iniciado.
-@${numero} escribe ?accept para aceptar.
-Tienes 5 minutos.`
-        );
-
-    } catch (err) {
-        console.log("ERROR EN DUEL:", err);
-        return message.reply("Ocurrió un error iniciando el duelo.");
-    }
+    message.reply(`⚔️ @${userId.split('@')[0]} ha retado a @${mentariado.split('@')[0]} a un duelo!\n\nEscribe *?acceptduel* para aceptar el desafío.`, { mentions: [userId, mentariado] });
 }
+	
 
-if (comando === 'accept') {
+if (comando === 'acceptduel') {
+    const duelo = duelosPendientes[message.from];
+    if (!duelo || userId !== duelo.retado) return message.reply("❌ No tienes duelos pendientes por aceptar.");
 
-    if (!duelosActivos[grupoId]) {
-        return message.reply("No hay duelo pendiente.");
-    }
+    duelosEnCurso[message.from] = {
+        p1: duelo.retador,
+        p2: duelo.retado,
+        picks1: [],
+        picks2: []
+    };
+    delete duelosPendientes[message.from];
 
-    const duelo = duelosActivos[grupoId];
-
-    if (userId !== duelo.jugador2) {
-        return message.reply("No eres el jugador retado.");
-    }
-
-    clearTimeout(duelo.timeoutAceptacion);
-    duelo.aceptado = true;
-
-    // En comando 'accept'
-duelo.timeoutPick = setTimeout(() => {
-    if (duelosActivos[grupoId]) {
-        delete duelosActivos[grupoId];
-        message.reply("⏱️ Se acabó el tiempo para elegir personajes.");
-    }
-}, 600000); // 10 minutos para ?pick
-
-    message.reply("⇎ Duelo aceptado.\nAmbos jugadores tienen 5 minutos para elegir:\n?pick goku, seven, alucard");
+    message.reply("✅ ¡Duelo aceptado!\n\nCada uno debe elegir sus 3 personajes con:\n*?pick Nombre1, Nombre2, Nombre3*");
 }
 
 // --------- ?pick (3v3) ---------
 if (comando.startsWith('pick')) {
-    if (!duelosActivos[grupoId]) return;
-    const duelo = duelosActivos[grupoId];
-    if (userId !== duelo.jugador1 && userId !== duelo.jugador2) return;
+    const grupoId = message.from;
+    if (!duelosEnCurso[grupoId]) return;
+    const duelo = duelosEnCurso[grupoId];
+    if (userId !== duelo.p1 && userId !== duelo.p2) return;
 
     const textoOriginal = message.body.slice(prefix.length + 5).trim();
     const nombres = textoOriginal.split(",").map(n => n.trim());
 
     if (nombres.length < 1 || nombres.length > 3) {
-        return message.reply("Debes elegir entre 1 y 3 personajes separados por coma.");
-    }
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) {
-        return message.reply("No tienes personajes.");
+        return message.reply("❌ Debes elegir entre 1 y 3 personajes separados por coma.");
     }
 
-    let equipo = [];
-    let valorTotal = 0;
-    let tieneADeadpool = false; // Check para el diálogo
+    try {
+        // Traemos el harem del usuario desde Mongo
+        const datosHarem = await HaremModel.findOne({ grupoId, userId });
+        if (!datosHarem || datosHarem.personajes.length === 0) return message.reply("❌ No tienes personajes.");
 
-    for (let nombre of nombres) {
-        const personaje = haremPorGrupo[grupoId][userId]
-            .find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
+        let equipoSeleccionado = [];
+        let valorTotalEquipo = 0;
+        let tieneADeadpool = false;
 
-        if (!personaje) {
-            return message.reply(`No tienes a ${nombre}.`);
-        }
+        for (let nombre of nombres) {
+            const personaje = datosHarem.personajes.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
 
-        // --- LÓGICA DEADPOOL: STAMINA ---
-        actualizarStamina(personaje);
-        
-        if (personaje.nombre === 'Deadpool') {
-            tieneADeadpool = true;
-            personaje.stamina = 100; // Deadpool nunca se cansa (Factor de curación)
-        } else if (personaje.stamina <= 10) {
-            return message.reply(`Noup, ${personaje.nombre} está muy cansado (${personaje.stamina}%). ¡Déjalo dormir!`);
-        }
+            if (!personaje) return message.reply(`❌ No tienes a ${nombre}.`);
+            if (equipoSeleccionado.find(p => p.nombre === personaje.nombre)) return message.reply("❌ No puedes repetir personajes.");
 
-        // Calcular valor real
-        let valorReal = Number(personaje.valor) * Math.pow(1.20, (personaje.level - 1));
+            // --- LÓGICA DEADPOOL: STAMINA ---
+            // (Asumo que tienes la función actualizarStamina definida, si no, hay que adaptarla)
+            if (typeof actualizarStamina === 'function') actualizarStamina(personaje);
+            
+            if (personaje.nombre === 'Deadpool') {
+                tieneADeadpool = true;
+                personaje.stamina = 100; // Factor de curación
+            } else if ((personaje.stamina || 100) <= 10) {
+                return message.reply(`😴 ${personaje.nombre} está muy cansado (${personaje.stamina}%). ¡Déjalo dormir!`);
+            }
 
-        // --- LÓGICA DEADPOOL: TRAMPA DE VALOR ---
-        if (personaje.nombre === 'Deadpool') {
-            // 20% de probabilidad de que su valor sea absurdamente alto por "guion"
-            if (Math.random() < 0.20) {
+            // Calcular poder real (Valor * 1.20 ^ Lvl-1)
+            let lvl = personaje.level || 1;
+            let valorReal = Number(personaje.valor) * Math.pow(1.20, lvl - 1);
+
+            // --- TRAMPA DE DEADPOOL ---
+            if (personaje.nombre === 'Deadpool' && Math.random() < 0.20) {
                 valorReal *= 5; 
                 message.reply("🔴 *DEADPOOL:* ¡Le robé el teclado al programador y me subí las stats! ¡Miren ese poder! 💥");
             }
+
+            valorTotalEquipo += valorReal;
+
+            // Restar energía (Excepto Deadpool)
+            if (personaje.nombre !== 'Deadpool') {
+                personaje.stamina = Math.max(0, (personaje.stamina || 100) - 30);
+                personaje.lastUpdate = Date.now();
+            }
+
+            equipoSeleccionado.push(personaje);
         }
 
-        valorTotal += valorReal; 
-
-        // Restar energía (Excepto a Deadpool)
-        if (personaje.nombre !== 'Deadpool') {
-            personaje.stamina -= 30; 
-            if (personaje.stamina < 0) personaje.stamina = 0;
-            personaje.lastUpdate = Date.now();
+        // Guardamos los picks en el objeto del duelo
+        if (userId === duelo.p1) {
+            duelo.picks1 = equipoSeleccionado;
+            duelo.valorTotal1 = valorTotalEquipo;
+        } else {
+            duelo.picks2 = equipoSeleccionado;
+            duelo.valorTotal2 = valorTotalEquipo;
         }
 
-        if (equipo.find(p => p.nombre === personaje.nombre)) {
-            return message.reply("No puedes repetir personajes.");
+        // Guardamos cambios de Stamina en Mongo
+        datosHarem.markModified('personajes');
+        await datosHarem.save();
+
+        let msgConfirm = "✅ Equipo seleccionado.";
+        if (tieneADeadpool) msgConfirm = "✅ Equipo seleccionado. 🔴 *DP:* ¡Prepárense para la masacre! Traje chimichangas.";
+        message.reply(msgConfirm);
+
+        // --- SI AMBOS TERMINARON EL PICK ---
+        if (duelo.picks1.length > 0 && duelo.picks2.length > 0) {
+            
+            let pTotal1 = duelo.valorTotal1 * (0.95 + Math.random() * 0.1);
+            let pTotal2 = duelo.valorTotal2 * (0.95 + Math.random() * 0.1);
+
+            // Victoria forzada de Deadpool (10%)
+            if (duelo.picks1.some(p => p.nombre === 'Deadpool') && Math.random() < 0.10) {
+                pTotal1 += pTotal2;
+                message.reply("🔴 *DEADPOOL:* ¡BOOM! Puse C4 en las estadísticas del oponente. ¡Ganamos!");
+            } else if (duelo.picks2.some(p => p.nombre === 'Deadpool') && Math.random() < 0.10) {
+                pTotal2 += pTotal1;
+                message.reply("🔴 *DEADPOOL:* ¿Iba perdiendo? ¡JA! El verdadero yo acaba de apuñalar al otro equipo. ¡Ganamos!");
+            }
+
+            const ganadorId = pTotal1 > pTotal2 ? duelo.p1 : duelo.p2;
+            const perdedorId = pTotal1 > pTotal2 ? duelo.p2 : duelo.p1;
+
+            // Lógica de Economía y Logros (perfiles es global)
+            if (!perfiles[ganadorId]) perfiles[ganadorId] = { money: 0 };
+            if (!perfiles[perdedorId]) perfiles[perdedorId] = { money: 0 };
+
+            const robo = Math.floor((perfiles[perdedorId].money || 0) * 0.50);
+            perfiles[perdedorId].money -= robo;
+            perfiles[ganadorId].money += robo;
+
+            // Logro Admin
+            const adminNumber = '232246195839008@lid';
+            if (ganadorId !== adminNumber && perdedorId === adminNumber) {
+                if (typeof darLogro === 'function' && darLogro(perfiles, ganadorId, "beat_admin")) {
+                    client.sendMessage(grupoId, `🏆 Logro desbloqueado: Derrotar al admin en duel`, { mentions: [ganadorId] });
+                }
+            }
+
+            guardarPerfiles(perfiles);
+
+            // Mensaje Final
+            let mensajeFinal = `⇏ RESULTADO 3v3 ⇍\n\n`;
+            mensajeFinal += `🔴 Equipo 1 (@${duelo.p1.split('@')[0]}): ${duelo.picks1.map(p => p.nombre).join(", ")}\n`;
+            mensajeFinal += `🔵 Equipo 2 (@${duelo.p2.split('@')[0]}): ${duelo.picks2.map(p => p.nombre).join(", ")}\n\n`;
+            mensajeFinal += `» GANADOR: @${ganadorId.split('@')[0]}\n» Robó $${robo.toLocaleString()}`;
+
+            if (pTotal1 > pTotal2 && duelo.picks1.some(p => p.nombre === 'Deadpool')) mensajeFinal += `\n\n🔴 *DP:* ¡Victoria! Vámonos por tacos. 🌮`;
+            if (pTotal2 > pTotal1 && duelo.picks2.some(p => p.nombre === 'Deadpool')) mensajeFinal += `\n\n🔴 *DP:* ¡Fácil! No olviden suscribirse a mi canal. 🌮`;
+
+            // --- REPARTO DE EXP EN MONGO ---
+            const repartirExp = async (uId, pjs, cantidad) => {
+                const h = await HaremModel.findOne({ grupoId, userId: uId });
+                if (h) {
+                    pjs.forEach(pjPick => {
+                        const pjReal = h.personajes.find(p => p.nombre === pjPick.nombre);
+                        if (pjReal) {
+                            pjReal.exp = (pjReal.exp || 0) + cantidad;
+                            let xpReq = (pjReal.level || 1) * 100;
+                            if (pjReal.exp >= xpReq) {
+                                pjReal.level = (pjReal.level || 1) + 1;
+                                pjReal.exp -= xpReq;
+                            }
+                        }
+                    });
+                    h.markModified('personajes');
+                    await h.save();
+                }
+            };
+
+            await repartirExp(ganadorId, (ganadorId === duelo.p1 ? duelo.picks1 : duelo.picks2), 50);
+            await repartirExp(perdedorId, (perdedorId === duelo.p1 ? duelo.picks1 : duelo.picks2), 15);
+
+            client.sendMessage(grupoId, mensajeFinal, { mentions: [duelo.p1, duelo.p2] });
+            delete duelosEnCurso[grupoId];
         }
 
-        equipo.push(personaje);
-    }
-
-    duelo.picks[userId] = { equipo, valorTotal };
-    
-    let msgConfirm = "Equipo seleccionado.";
-    if (tieneADeadpool) msgConfirm = "Equipo seleccionado. 🔴 *DP:* ¡Prepárense para la masacre! Traje chimichangas para todos (menos para los perdedores).";
-    message.reply(msgConfirm);
-
-    // Si ambos ya eligieron
-    if (duelo.picks[duelo.jugador1] && duelo.picks[duelo.jugador2]) {
-        clearTimeout(duelo.timeoutPick);
-
-        const equipo1 = duelo.picks[duelo.jugador1];
-        const equipo2 = duelo.picks[duelo.jugador2];
-
-        // RNG leve ±5%
-        let poder1 = equipo1.valorTotal * (0.95 + Math.random() * 0.1);
-        let poder2 = equipo2.valorTotal * (0.95 + Math.random() * 0.1);
-
-        // --- LÓGICA DEADPOOL: VICTORIA FORZADA ---
-        // Si alguien tiene a Deadpool, hay un 10% de probabilidad extra de ganar por "Deus Ex Machina"
-        if (equipo1.equipo.some(p => p.nombre === 'Deadpool') && Math.random() < 0.10) {
-            poder1 += poder2; 
-            message.reply("🔴 *DEADPOOL:* ¿Iba perdiendo? ¡JA! Eso era un señuelo de cartón, el verdadero yo acaba de apuñalar al otro equipo por la espalda. ¡Ganamos!");
-        } else if (equipo2.equipo.some(p => p.nombre === 'Deadpool') && Math.random() < 0.10) {
-            poder2 += poder1;
-            message.reply("🔴 *DEADPOOL:* ¡BOOM! Puse C4 en las estadísticas del oponente. ¡Victoria para mi dueño!");
-        }
-
-        const economia = cargarEconomia();
-        asegurarUsuario(economia, duelo.jugador1);
-        asegurarUsuario(economia, duelo.jugador2);
-
-        let mensajeFinal = "";
-        const ganadorId = poder1 > poder2 ? duelo.jugador1 : duelo.jugador2;
-        const perdedorId = poder1 > poder2 ? duelo.jugador2 : duelo.jugador1;
-		if (ganadorId !== adminNumber && perdedorId === adminNumber) {
-    if (darLogro(perfiles, ganadorId, "beat_admin")) {
-        client.sendMessage(
-            message.from,
-            `🏆 Logro desbloqueado: Derrotar al admin en duel`,
-            { mentions: [ganadorId] }
-        );
-    }
-		}
-		guardarPerfiles(perfiles);
-        const robo = Math.floor(economia[perdedorId].dinero * 0.50);
-
-        economia[perdedorId].dinero -= robo;
-        economia[ganadorId].dinero += robo;
-
-        mensajeFinal = `⇏ RESULTADO 3v3 ⇍\n\n`;
-        mensajeFinal += `Equipo 1 (${duelo.jugador1.split('@')[0]}):\n${equipo1.equipo.map(p => p.nombre).join(", ")}\nTotal: ${Math.floor(equipo1.valorTotal)}\n\n`;
-        mensajeFinal += `Equipo 2 (${duelo.jugador2.split('@')[0]}):\n${equipo2.equipo.map(p => p.nombre).join(", ")}\nTotal: ${Math.floor(equipo2.valorTotal)}\n\n`;
-        mensajeFinal += `» GANADOR: @${ganadorId.split('@')[0]}\n» Robó $${robo.toLocaleString()}`;
-
-        // --- FRASES DE CIERRE DE DEADPOOL ---
-        const equipoGanador = poder1 > poder2 ? equipo1 : equipo2;
-        if (equipoGanador.equipo.some(p => p.nombre === 'Deadpool')) {
-            mensajeFinal += `\n\n🔴 *DEADPOOL:* ¡Victoria! Ahora vámonos antes de que el dueño del bot se de cuenta de que hice trampa. 🌮`;
-        }
-
-        // Ganadores y Perdedores ganan XP (Tu lógica de XP se mantiene igual)
-        const ganadoresP = equipoGanador.equipo;
-        const perdedoresP = poder1 > poder2 ? equipo2.equipo : equipo1.equipo;
-
-        ganadoresP.forEach(p => {
-            p.exp += 50; 
-            let xpReq = Math.floor(100 * Math.pow(1.1, p.level - 1));
-            if (p.exp >= xpReq) { p.level += 1; p.exp = 0; }
-        });
-
-        perdedoresP.forEach(p => {
-            p.exp += 15; 
-            let xpReq = Math.floor(100 * Math.pow(1.1, p.level - 1));
-            if (p.exp >= xpReq) { p.level += 1; p.exp = 0; }
-        });
-
-        guardarEconomia(economia);
-        guardarHarem(haremPorGrupo);
-
-        client.sendMessage(message.from, mensajeFinal, { mentions: [duelo.jugador1, duelo.jugador2] });
-        delete duelosActivos[grupoId];
+    } catch (e) {
+        console.error("Error en pick Mongo:", e);
+        message.reply("❌ Error al procesar la selección.");
     }
 }
+	
 
 
     if (comando === 'info') {
@@ -1843,15 +1801,14 @@ if (comando.startsWith('pick')) {
         return message.reply(`Tu número random es: ${num}`);
     }
 
-// --------- ?rw (PARCHEADO) ---------
+// ================= COMANDO ?rw (ROLL WAIFU - MONGODB READY) =================
 if (comando === 'rw') {
     const userId = message.author || message._data.participant || message.from;
+    const chatId = message.from;
+    const grupoId = message.from;
 
-    // 1. BLOQUEO ANTI-SPAM (EL BUG QUE MENCIONASTE)
-    // Si ya está procesando una petición en este chat, ignoramos las nuevas
     if (procesandoRW.has(chatId)) return; 
 
-    // 2. Manejo de Cooldowns de tiempo (15 min)
     if (!cooldownsRW[grupoId]) cooldownsRW[grupoId] = {};
     const totalRW = 15 * 60 * 1000;
 
@@ -1863,70 +1820,58 @@ if (comando === 'rw') {
         }
     }
 
-    // REGISTRAMOS QUE EMPEZAMOS A PROCESAR
     procesandoRW.add(chatId);
 
     try {
-        // 3. Lógica de Selección
-        let personaje;
+        // Lógica de pesos exacta de tu archivo
         const listaPesos = personajes.map(p => {
             const v = parseInt(p.valor) || 1000;
-            let pesoFinal;
-            if (v >= 17000) {
-                pesoFinal = 100 / Math.pow(v / 17000, 2.5); 
-            } else {
-                pesoFinal = 100; 
-            }
+            let pesoFinal = (v >= 17000) ? (100 / Math.pow(v / 17000, 2.5)) : 100;
             return { p, peso: pesoFinal };
         });
 
         const sumaPesosTotal = listaPesos.reduce((s, i) => s + i.peso, 0);
         let randomNum = Math.random() * sumaPesosTotal;
-        
-        personaje = personajes[Math.floor(Math.random() * personajes.length)];
+        let personajeSeleccionado = personajes[Math.floor(Math.random() * personajes.length)];
 
         for (const item of listaPesos) {
             randomNum -= item.peso;
             if (randomNum <= 0) {
-                personaje = item.p;
+                personajeSeleccionado = item.p;
                 break;
             }
         }
 
-        // 4. Verificación de Estado
-        let estado = "Libre";
-        if (haremPorGrupo[grupoId]) {
-            const yaReclamado = Object.values(haremPorGrupo[grupoId]).some(list =>
-                list.find(p => p.nombre === personaje.nombre)
-            );
-            if (yaReclamado) estado = "Ya fue reclamado en este grupo";
-        }
+        // --- VERIFICACIÓN EN MONGODB ---
+        // Buscamos si alguien ya tiene este personaje en este grupo en la DB
+        const yaReclamadoEnDB = await HaremModel.findOne({ 
+            grupoId: grupoId, 
+            "personajes.nombre": personajeSeleccionado.nombre 
+        });
 
-        // 5. Envío de imagen
-        const url = personaje.imagen;
-        const response = await fetch(url);
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'personaje.jpg');
+        let estado = yaReclamadoEnDB ? "Ya fue reclamado en este grupo" : "Libre";
+
+        const media = await MessageMedia.fromUrl(personajeSeleccionado.imagen);
 
         let avisoRareza = "";
-        const vNum = parseInt(personaje.valor);
+        const vNum = parseInt(personajeSeleccionado.valor);
         if (vNum >= 20000) avisoRareza = "\n🌌 *¡ENTIDAD CÓSMICA DETECTADA!* 🌌";
         else if (vNum >= 17000) avisoRareza = "\n💎 *¡PERSONAJE LEGENDARIO!* 💎";
 
         const msgTexto = `✪ ¡Tiraste un personaje!${avisoRareza}
-⟡ Nombre: ${personaje.nombre}
-⚡︎ Valor: ${personaje.valor}
-⚥ Género: ${personaje.genero}
+⟡ Nombre: ${personajeSeleccionado.nombre}
+⚡︎ Valor: ${personajeSeleccionado.valor}
+⚥ Género: ${personajeSeleccionado.genero}
 ⊹ Estado: ${estado}
-➣ Fuente: ${personaje.fuente}
+➣ Fuente: ${personajeSeleccionado.fuente}
 
 ◇ Tienes 1 minuto para reclamar con ?c`;
 
-        const sentMsg = await message.reply(media, undefined, { caption: msgTexto });
+        const sentMsg = await client.sendMessage(grupoId, media, { caption: msgTexto });
 
-        // 6. Guardar tirada temporal y cooldown
+        // Guardamos la tirada para el comando ?c
         tiradasTemporales[sentMsg.id._serialized] = {
-            personaje,
+            personaje: personajeSeleccionado,
             grupoId,
             reclamado: false
         };
@@ -1938,10 +1883,9 @@ if (comando === 'rw') {
         }, 60 * 1000);
 
     } catch (error) {
-        console.log('Error en RW:', error.message);
-        message.reply('⚠ No pude cargar la imagen, pero sigo vivo por suerte!.');
+        console.log('Error en RW:', error);
+        message.reply('⚠ Hubo un problema al generar la tirada.');
     } finally {
-        // 7. EL FINALLY MÁGICO: Pase lo que pase, liberamos el comando
         procesandoRW.delete(chatId);
     }
 }
@@ -2118,64 +2062,36 @@ if (comando.startsWith('wimage')) {
 
 // --------- ?charinfo (CORREGIDO) ---------
 if (comando.startsWith('charinfo')) {
-    const nombreBusqueda = message.body.slice(prefix.length + 8).trim().toLowerCase(); 
-    if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
-
-    // Refrescar memoria desde el archivo antes de buscar
-    haremPorGrupo = cargarHarem(); 
-
-    const grupoId = message.from;
-    const userId = message.author || message.from;
-
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) {
-        return message.reply("❒ Tu harem está vacío en este grupo.");
-    }
-
-    const miHarem = haremPorGrupo[grupoId][userId];
-
-    // --- LÓGICA DE BÚSQUEDA PRIORIZADA ---
-    // 1. Intentamos buscar una coincidencia EXACTA primero
-    let personaje = miHarem.find(p => p.nombre.toLowerCase() === nombreBusqueda);
-
-    // 2. Si no hay exacta, buscamos uno que EMPIECE por ese nombre
-    if (!personaje) {
-        personaje = miHarem.find(p => p.nombre.toLowerCase().startsWith(nombreBusqueda));
-    }
-
-    // 3. Si aún no hay nada, buscamos que CONTENGA el nombre (como último recurso)
-    if (!personaje) {
-        personaje = miHarem.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
-    }
-
-    if (!personaje) return message.reply(`❌ No tienes a "${nombreBusqueda}" en tu colección.`);
-
-    // Asegurar valores por defecto
-    const lvl = Number(personaje.level) || 1;
-    const exp = Number(personaje.exp) || 0;
-    const stamina = personaje.stamina !== undefined ? personaje.stamina : 100;
-    
-    // Fórmulas consistentes con el resto del bot
-    const xpSiguienteNivel = lvl * 100; // Ajustado a tu nueva lógica de nivelación
-    const poderReal = Math.floor(Number(personaje.valor) * Math.pow(1.20, (lvl - 1)));
-
-    let infoMsg = `👤 *DETALLES DEL PERSONAJE*\n`;
-    infoMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-    infoMsg += `⭐ *Nombre:* ${personaje.nombre}\n`;
-    infoMsg += `🎬 *Serie:* ${personaje.fuente}\n`;
-    infoMsg += `📊 *Nivel:* ${lvl}\n`;
-    infoMsg += `✨ *XP:* ${exp} / ${xpSiguienteNivel}\n`;
-    infoMsg += `⚔️ *Poder Real:* ${poderReal.toLocaleString()}\n`;
-    infoMsg += `⚡ *Energía:* ${stamina}%\n\n`;
-    infoMsg += `━━━━━━━━━━━━━━━━━━━━`;
+    const nombrePj = comando.replace('charinfo', '').trim();
+    if (!nombrePj) return message.reply("🔍 Dime el nombre del personaje.");
 
     try {
-        const response = await axios.get(personaje.imagen, { responseType: 'arraybuffer' });
-        const media = new MessageMedia('image/jpeg', Buffer.from(response.data).toString('base64'), 'char.jpg');
-        await client.sendMessage(grupoId, media, { caption: infoMsg });
-    } catch (error) {
-        message.reply(infoMsg);
+        const datosHarem = await HaremModel.findOne({ grupoId: message.from, userId: userId });
+        const miPj = datosHarem?.personajes.find(p => p.nombre.toLowerCase() === nombrePj.toLowerCase());
+
+        if (!miPj) return message.reply("❌ No tienes a ese personaje en este grupo.");
+
+        const lvl = miPj.level || 1;
+        const poder = Math.floor(Number(miPj.valor) * Math.pow(1.20, lvl - 1));
+        const expProx = lvl * 100;
+
+        const info = `👤 *${miPj.nombre}*
+⭐ Nivel: ${lvl}
+⚔️ Poder: ${poder.toLocaleString()}
+📈 EXP: ${miPj.exp || 0}/${expProx}
+🎬 Serie: ${miPj.fuente}`;
+
+        if (miPj.imagen) {
+            const media = await MessageMedia.fromUrl(miPj.imagen);
+            client.sendMessage(message.from, media, { caption: info });
+        } else {
+            message.reply(info);
+        }
+    } catch (e) {
+        message.reply("❌ Error al consultar la base de datos.");
     }
 }
+	
 
 
 // --------- COMANDO ?dice (APUESTAS) ---------
@@ -2257,52 +2173,48 @@ if (comando.startsWith('ship')) {
 
 
 // --------- ?givechar ---------
-if (comando === 'givechar') {
+if (comando.startsWith('givechar')) {
+    const mentariado = message.mentionedIds[0];
+    const nombrePj = comando.replace('givechar', '').replace(/@\d+/, '').trim();
 
-    if (!message.from.endsWith("@g.us"))
-        return message.reply("Este comando solo funciona en grupos.");
+    if (!mentariado || !nombrePj) {
+        return message.reply("❌ Uso: *?givechar @user Nombre del Personaje*");
+    }
 
-    const mencionado = message.mentionedIds[0];
-    if (!mencionado)
-        return message.reply(`Uso: ${prefix}givechar @usuario Nombre`);
+    if (mentariado === userId) return message.reply("❓ No puedes regalarte algo a ti mismo.");
 
-    const nombre = message.body
-        .slice(prefix.length + 8)
-        .replace(/@\d+\s*/g, "")
-        .trim()
-        .toLowerCase();
+    try {
+        // 1. Buscamos el harem del donante (el que escribe el mensaje)
+        const miHarem = await HaremModel.findOne({ grupoId: message.from, userId: userId });
+        const pj = miHarem?.personajes.find(p => p.nombre.toLowerCase() === nombrePj.toLowerCase());
 
-    const giver = userId;
-    const grupo = grupoId;
+        if (!pj) {
+            return message.reply(`❌ No tienes a *${nombrePj}* en tu harem de este grupo.`);
+        }
 
-    if (!haremPorGrupo[grupo]?.[giver])
-        return message.reply("❌ No tienes personajes.");
+        // 2. Quitamos el personaje al donante
+        await HaremModel.updateOne(
+            { grupoId: message.from, userId: userId },
+            { $pull: { personajes: { nombre: pj.nombre } } }
+        );
 
-    if (!haremPorGrupo[grupo]?.[mencionado])
-        haremPorGrupo[grupo][mencionado] = [];
+        // 3. Se lo entregamos al receptor
+        await HaremModel.findOneAndUpdate(
+            { grupoId: message.from, userId: mentariado },
+            { $push: { personajes: pj } },
+            { upsert: true }
+        );
 
-    const harem = haremPorGrupo[grupo][giver];
+        message.reply(`🎁 ¡@${userId.split('@')[0]} le ha regalado a *${pj.nombre}* a @${mentariado.split('@')[0]}!`, { 
+            mentions: [userId, mentariado] 
+        });
 
-    const index = harem.findIndex(p => 
-        p.nombre.toLowerCase() === nombre
-    );
-
-    if (index === -1)
-        return message.reply(`❌ No tienes a ${nombre}.`);
-
-    const [personaje] = harem.splice(index, 1);
-
-    haremPorGrupo[grupo][mencionado].push(personaje);
-
-    guardarHarem(haremPorGrupo);
-
-    return client.sendMessage(
-        message.from,
-        `🎁 *Hecho*\n\n${personaje.nombre} fue entregado a @${mencionado.split('@')[0]}`,
-        { mentions: [mencionado] }
-    );
+    } catch (e) {
+        console.error("Error en givechar:", e);
+        message.reply("❌ Hubo un error al procesar el regalo en la base de datos.");
+    }
 }
-
+	
 	
 // --- COMANDO TRADUCTOR ---
 if (message.body.startsWith(prefix + 'tr ')) {
@@ -2325,94 +2237,68 @@ if (message.body.startsWith(prefix + 'tr ')) {
 
 // --------- ?trade ---------
 if (comando.startsWith('trade')) {
-    if (!message.from.endsWith("@g.us")) return message.reply("Solo en grupos.");
-    if (tradesPendientes[grupoId]) return message.reply("Ya hay un trade pendiente aquí.");
+    const mentariado = message.mentionedIds[0];
+    if (!mentariado) return message.reply("❌ Menciona a quién quieres proponerle el intercambio.");
+    
+    const partes = comando.replace('trade', '').split('|');
+    if (partes.length < 2) return message.reply("❌ Usa: *?trade @user Mi Personaje | Su Personaje*");
 
-    const mentioned = message.mentionedIds[0];
-    if (!mentioned) return message.reply("Debes mencionar a alguien.");
+    const miPjNombre = partes[0].replace(/@\d+/, '').trim();
+    const suPjNombre = partes[1].trim();
 
-    // Limpiamos el texto para sacar solo los nombres de los personajes
-    const textoSinComando = message.body.slice(prefix.length + 5).trim(); 
-    const partes = textoSinComando.split("|");
+    try {
+        const miHarem = await HaremModel.findOne({ grupoId: message.from, userId: userId });
+        const suHarem = await HaremModel.findOne({ grupoId: message.from, userId: mentariado });
 
-    if (partes.length !== 2) {
-        return message.reply("Uso: ?trade @usuario MiPersonaje | SuPersonaje");
+        const miPj = miHarem?.personajes.find(p => p.nombre.toLowerCase() === miPjNombre.toLowerCase());
+        const suPj = suHarem?.personajes.find(p => p.nombre.toLowerCase() === suPjNombre.toLowerCase());
+
+        if (!miPj) return message.reply(`❌ No tienes a *${miPjNombre}*.`);
+        if (!suPj) return message.reply(`❌ @${mentariado.split('@')[0]} no tiene a *${suPjNombre}*.`, { mentions: [mentariado] });
+
+        tradesTemporales[message.from] = {
+            u1: userId, u2: mentariado,
+            pj1: miPj, pj2: suPj
+        };
+
+        message.reply(`🤝 @${userId.split('@')[0]} propone un intercambio:\n\n🔄 Da: *${miPj.nombre}*\n🔄 Recibe: *${suPj.nombre}*\n\nUsa *?aceptartrade* para confirmar.`, { mentions: [userId, mentariado] });
+    } catch (e) {
+        message.reply("❌ Error en la base de datos.");
     }
+}
+	
+if (comando === 'aceptartrade') {
+    const trade = tradesTemporales[message.from];
+    if (!trade) return message.reply("❌ No hay ninguna propuesta de intercambio activa en este grupo.");
+    if (userId !== trade.u2) return message.reply("❌ Solo la persona mencionada puede aceptar el intercambio.");
 
-    // Limpiamos menciones y espacios de los nombres
-    const miNombre = partes[0].replace(/@\d+\s*/g, "").trim();
-    const suNombre = partes[1].trim();
+    try {
+        // 1. Quitar personajes de los dueños originales y dárselos al nuevo
+        // Para el Usuario 1
+        await HaremModel.findOneAndUpdate(
+            { grupoId: message.from, userId: trade.u1 },
+            { 
+                $pull: { personajes: { nombre: trade.pj1.nombre } }, // Quita el suyo
+                $push: { personajes: trade.pj2 } // Recibe el otro
+            }
+        );
 
-    if (!haremPorGrupo[grupoId]?.[userId]) return message.reply("No tienes personajes.");
+        // Para el Usuario 2 (El que aceptó)
+        await HaremModel.findOneAndUpdate(
+            { grupoId: message.from, userId: trade.u2 },
+            { 
+                $pull: { personajes: { nombre: trade.pj2.nombre } }, // Quita el suyo
+                $push: { personajes: trade.pj1 } // Recibe el otro
+            }
+        );
 
-    const miPersonaje = haremPorGrupo[grupoId][userId].find(p => p.nombre.toLowerCase() === miNombre.toLowerCase());
-    const suPersonaje = haremPorGrupo[grupoId][mentioned]?.find(p => p.nombre.toLowerCase() === suNombre.toLowerCase());
-
-    if (!miPersonaje) return message.reply(`No tienes a "${miNombre}" en tu harem.`);
-    if (!suPersonaje) return message.reply(`Esa persona no tiene a "${suNombre}".`);
-
-    tradesPendientes[grupoId] = {
-        iniciador: userId,
-        receptor: mentioned,
-        miPersonaje,
-        suPersonaje,
-        timeout: setTimeout(() => { delete tradesPendientes[grupoId]; }, 60000)
-    };
-
-    const contactReceptor = await client.getContactById(mentioned);
-    return client.sendMessage(message.from, 
-        `🔄 *PROPUESTA DE INTERCAMBIO*\n\n` +
-        `@${userId.split('@')[0]} ofrece: *${miPersonaje.nombre}*\n` +
-        `@${mentioned.split('@')[0]} ofrece: *${suPersonaje.nombre}*\n\n` +
-        `✅ @${mentioned.split('@')[0]}, responde *?aceptartrade* en 60s.`,
-        { mentions: [userId, mentioned] }
-    );
+        message.reply(`✅ ¡Intercambio realizado con éxito!\n\n✨ *${trade.pj1.nombre}* ↔️ *${trade.pj2.nombre}*`);
+        delete tradesTemporales[message.from];
+    } catch (e) {
+        message.reply("❌ Error crítico al ejecutar el intercambio en MongoDB.");
+    }
 }
 
-// --------- ?aceptartrade ---------
-if (comando === "aceptartrade") {
-
-    const grupo = grupoId;
-
-    if (!tradesPendientes[grupo]) {
-        return message.reply("❌ No hay ningún intercambio pendiente.");
-    }
-
-    const trade = tradesPendientes[grupo];
-
-    if (userId !== trade.receptor) {
-        return message.reply("❌ Solo el usuario que recibió la oferta puede aceptarla.");
-    }
-
-    const haremA = haremPorGrupo[grupo][trade.iniciador];
-    const haremB = haremPorGrupo[grupo][trade.receptor];
-
-    if (!haremA || !haremB) {
-        return message.reply("❌ Error con los harems.");
-    }
-
-    const indexA = haremA.findIndex(p => p.nombre === trade.miPersonaje.nombre);
-    const indexB = haremB.findIndex(p => p.nombre === trade.suPersonaje.nombre);
-
-    if (indexA === -1 || indexB === -1) {
-        return message.reply("❌ Uno de los personajes ya no está disponible.");
-    }
-
-    const [personajeA] = haremA.splice(indexA, 1);
-    const [personajeB] = haremB.splice(indexB, 1);
-
-    haremA.push(personajeB);
-    haremB.push(personajeA);
-
-    guardarHarem(haremPorGrupo);
-
-    delete tradesPendientes[grupo];
-
-    return client.sendMessage(
-        message.from,
-        `🤝 *Intercambio completado*\n\n${personajeA.nombre} ↔ ${personajeB.nombre}`
-    );
-}
 	
 // ============ COMANDO ?wtired ================
 if (message.body.startsWith(prefix + 'wtired')) {
