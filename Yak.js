@@ -39,6 +39,23 @@ http.createServer((req, res) => {
   console.log(`Servidor de salud escuchando en el puerto ${process.env.PORT || 3000}`);
 });
 
+// ================= CONEXIÓN MONGO =================
+const mongoose = require('mongoose');
+const mongoURI = process.env.MONGODB_URL; // Railway la da automática
+
+mongoose.connect(mongoURI)
+    .then(() => console.log('✅ Conectado a MongoDB'))
+    .catch(err => console.error('❌ Error Mongo:', err));
+
+const HaremSchema = new mongoose.Schema({
+    grupoId: { type: String, index: true },
+    userId: { type: String, index: true },
+    personajes: { type: Array, default: [] }
+});
+const HaremModel = mongoose.model('Harem', HaremSchema);
+// ==================================================
+
+
 // ==========================================
 //        ANTI-CRASH GLOBAL (REPARADO)
 // ==========================================
@@ -2646,31 +2663,69 @@ if (comando === 'fight') {
         return client.sendMessage(message.from, `🔴 *DEADPOOL:* ${fraseElegida}\n\n_¡Deadpool ha invadido el harem de @${targetClean}!_`, { mentions: [mencionado] });
     }
 
+	// ============= MIGRAR DE JSON A MONGO =============
+if (comando === 'migrardatos') {
+    const adminID = '232246195839008@lid';
+    if (userId !== adminID) return;
+
+    try {
+        message.reply("⏳ Iniciando migración... esto puede tardar si el JSON es gigante.");
+        const hData = JSON.parse(fs.readFileSync(dataFolder + 'harem.json', 'utf-8'));
+        let total = 0;
+
+        for (let gId in hData) {
+            for (let uId in hData[gId]) {
+                await HaremModel.findOneAndUpdate(
+                    { grupoId: gId, userId: uId },
+                    { personajes: hData[gId][uId] },
+                    { upsert: true }
+                );
+                total++;
+            }
+        }
+        message.reply(`✅ ¡Migración exitosa! ${total} harems movidos a Mongo.`);
+    } catch (e) {
+        message.reply("❌ Error: " + e.message);
+    }
+    return;
+}
+
 	// ============= RESETEAR NIVELES (LÍMITE 1,000) =============
 if (comando === 'fixlevels') {
     const adminID = '232246195839008@lid'; 
     if (userId !== adminID) return;
 
-    const hData = cargarHarem();
-    let cont = 0;
+    try {
+        const path = dataFolder + 'harem.json';
+        let hData = JSON.parse(fs.readFileSync(path, 'utf-8'));
+        let cont = 0;
 
-    for (let g in hData) {
-        for (let u in hData[g]) {
-            hData[g][u].forEach(p => {
-                let lvl = Number(p.level);
-                // Si el nivel es mayor a 1,000 o es Infinito/NaN
-                if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
-                    p.level = 1;
-                    p.exp = 0;
-                    cont++;
-                }
-            });
+        for (let g in hData) {
+            for (let u in hData[g]) {
+                hData[g][u].forEach(p => {
+                    let lvl = Number(p.level);
+                    if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
+                        p.level = 1;
+                        p.exp = 0;
+                        cont++;
+                    }
+                });
+            }
         }
-    }
 
-    guardarHarem(hData);
-    message.reply(`✨ *PURIFICACIÓN COMPLETADA* ✨\n\nSe han reseteado **${cont}** personajes que superaban el nivel 1,000.\n\n*(Tu Admin Char y personajes legales no han sido afectados)*.`);
+        if (cont > 0) {
+            fs.writeFileSync(path, JSON.stringify(hData)); // Sin indentación para ahorrar RAM
+            message.reply(`✅ Se han reseteado ${cont} personajes bugueados.`);
+        } else {
+            message.reply("🔍 No hay niveles corruptos.");
+        }
+        hData = null;
+    } catch (e) {
+        message.reply("❌ Error de memoria al procesar el JSON.");
+    }
+    return;
 }
+	
 
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
 if (message.body.startsWith(prefix + 'addmoney')) {
