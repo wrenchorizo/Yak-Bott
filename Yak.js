@@ -419,6 +419,10 @@ function actualizarCharShop(grupoId, forzar = false) {
     }
 }
 
+	let duelosPendientes = {}; // { grupoId: { retador, retado, aceptado: false } }
+let duelosEnCurso = {};    // { grupoId: { p1, p2, picks1: [], picks2: [] } }
+	
+
 const tiradasTemporales = {};
 const cooldownsRW = {};
 const cooldownsC = {};
@@ -1076,56 +1080,50 @@ if (comando === 'ping') {
 }
 
 
+// ================= COMANDO ?charlist (CATÁLOGO GLOBAL) =================
+if (comando.startsWith('charlist')) {
+    const argumento = comando.replace('charlist', '').trim();
 
-if (message.body.startsWith("?charlist")) {
+    // 1. SI NO HAY ARGUMENTO: Mostrar lista de series (Fuentes)
+    if (!argumento) {
+        // Sacamos todas las fuentes, las limpiamos de repetidos y las ordenamos
+        const fuentes = [...new Set(personajes.map(p => p.fuente))].sort();
+        
+        let msg = "📚 *SERIES DISPONIBLES EN YAK* 📚\n\n";
+        msg += fuentes.map(f => `• ${f}`).join('\n');
+        msg += `\n\n💡 Usa *${prefix}charlist [Nombre de la Serie]* para ver sus personajes.`;
+        
+        return message.reply(msg);
+    }
 
-  const fs = require("fs");
-  const personajes = JSON.parse(fs.readFileSync("./personajes.json"));
+    // 2. CON ARGUMENTO: Buscar personajes de esa serie
+    const serieBuscada = argumento.toLowerCase();
+    const listaPjs = personajes.filter(p => p.fuente.toLowerCase().includes(serieBuscada));
 
-  const args = message.body.split(" ").slice(1);
-  const filtroFuente = args.join(" ").trim();
+    if (listaPjs.length === 0) {
+        return message.reply(`❌ No encontré ninguna serie que coincida con "${argumento}".`);
+    }
 
-  // Si NO escribe fuente → mostrar resumen general
-  if (!filtroFuente) {
+    // Ordenamos por valor para que se vea quiénes son los mejores de esa serie
+    listaPjs.sort((a, b) => Number(b.valor) - Number(a.valor));
 
-    const fuentes = {};
-
-    personajes.forEach(p => {
-      if (!fuentes[p.fuente]) {
-        fuentes[p.fuente] = 0;
-      }
-      fuentes[p.fuente]++;
+    let msg = `🎬 *PERSONAJES DE: ${listaPjs[0].fuente.toUpperCase()}* 🎬\n\n`;
+    
+    listaPjs.forEach((p, index) => {
+        msg += `${index + 1}. *${p.nombre}* (Poder: ${Number(p.valor).toLocaleString()})\n`;
     });
 
-    let respuesta = `📜 LISTA DE FUENTES\n\n`;
-    respuesta += `Total de personajes: ${personajes.length}\n\n`;
-
-    Object.keys(fuentes).sort().forEach(f => {
-      respuesta += `🔹 ${f} (${fuentes[f]})\n`;
-    });
-
-    return message.reply(respuesta);
-  }
-
-  // Si SÍ escribe fuente → mostrar personajes de esa fuente
-
-  const filtrados = personajes.filter(p =>
-    p.fuente.toLowerCase() === filtroFuente.toLowerCase()
-  );
-
-  if (filtrados.length === 0) {
-    return message.reply("❌ No se encontró esa fuente.");
-  }
-
-  let respuesta = `📜 ${filtroFuente.toUpperCase()}\n\n`;
-  respuesta += `Personajes: ${filtrados.length}\n\n`;
-
-  filtrados.forEach(p => {
-    respuesta += `• ${p.nombre}\n`;
-  });
-
-  message.reply(respuesta);
+    // Si el mensaje es muy largo, lo enviamos en partes para que WhatsApp no lo corte
+    if (msg.length > 4000) {
+        const partes = msg.match(/[\s\S]{1,4000}/g);
+        for (const parte of partes) {
+            await client.sendMessage(message.from, parte);
+        }
+    } else {
+        message.reply(msg);
+    }
 }
+	
 
 // --------- ?pay ---------
 
@@ -1970,55 +1968,53 @@ if (cooldownsC[grupoId][userId]) {
     message.reply(`꧁¡Reclamaste a ${tirada.personaje.nombre}!꧂`);
 } // <--- Este cierra el IF de ?c
 
+// ================= COMANDO ?harem (VISOR DE COLECCIÓN - MONGO) =================
+if (comando === 'harem') {
+    const grupoId = message.from;
+    const userId = message.author || message._data.participant || message.from;
 
-// --------- ?harem ---------
-if (comando.startsWith('harem')) {
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId] || haremPorGrupo[grupoId][userId].length === 0) {
-        return message.reply('❒ Tu harem está vacío.');
-    }
+    try {
+        // Buscamos el documento del usuario en este grupo
+        const datosHarem = await HaremModel.findOne({ grupoId: grupoId, userId: userId });
 
-    const argsH = message.body.slice(prefix.length + 5).trim().split(/\s+/);
-    let pagina = parseInt(argsH[0]) || 1; 
-    const personajesPorPagina = 20;
-
-    let listaOrdenada = [...haremPorGrupo[grupoId][userId]];
-    listaOrdenada.sort((a, b) => {
-        const vA = Math.floor(Number(a.valor) * Math.pow(1.20, (a.level || 1) - 1));
-        const vB = Math.floor(Number(b.valor) * Math.pow(1.20, (b.level || 1) - 1));
-        return vB - vA;
-    });
-
-    const totalPaginas = Math.ceil(listaOrdenada.length / personajesPorPagina);
-    if (pagina < 1) pagina = 1;
-    if (pagina > totalPaginas) pagina = totalPaginas;
-
-    const inicio = (pagina - 1) * personajesPorPagina;
-    const fin = inicio + personajesPorPagina;
-    const personajesPagina = listaOrdenada.slice(inicio, fin);
-
-    let respuesta = `༺ ${message._data.notifyName.toUpperCase()} ༻\n`;
-    respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-    respuesta += `          ᴘᴀ́ɢɪɴᴀ ${pagina} ᴅᴇ ${totalPaginas}\n\n`;
-
-    personajesPagina.forEach((p, index) => {
-        const valorReal = Math.floor(Number(p.valor) * Math.pow(1.20, (p.level || 1) - 1));
-        let numGlobal = (inicio + index + 1).toString().padStart(2, '0');
-        
-        if (p.nombre === 'Deadpool') {
-            respuesta += `⌁ ${numGlobal} ⌁ 🔴 *DEADPOOL*\n`;
-            respuesta += `    ╰┈─ ➤ Marvel ✦ (Me tomé la libertad de cambiar mi valor a uno insuperable)\n\n`;
-        } else {
-            respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre}\n`;
-            respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ ${valorReal.toLocaleString()}\n\n`;
+        if (!datosHarem || !datosHarem.personajes || datosHarem.personajes.length === 0) {
+            return message.reply("跑 Tu harem está vacío. ¡Usa *?rw* para buscar personajes!");
         }
-    });
 
-    respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-    respuesta += `⌬ Total: ${listaOrdenada.length} ⌁ Paginas: ${totalPaginas}\n`;
-    respuesta += `⌬ Usa: ?harem [número]`;
+        // Ordenamos por nivel (del más alto al más bajo)
+        const listaPjs = [...datosHarem.personajes].sort((a, b) => (b.level || 1) - (a.level || 1));
 
-    return message.reply(respuesta);
+        let msg = `🎎 *TU HAREM* (@${userId.split('@')[0]})\n`;
+        msg += `✨ Total: ${listaPjs.length} personajes\n`;
+        msg += `━━━━━━━━━━━━━━━\n\n`;
+
+        listaPjs.forEach((p, index) => {
+            const lvl = p.level || 1;
+            // Cálculo de poder: ValorBase * 1.20^(lvl-1)
+            const poder = Math.floor(Number(p.valor) * Math.pow(1.20, lvl - 1));
+            
+            msg += `${index + 1}. *${p.nombre}* ⭐ Lvl: ${lvl} | ⚔️ Poder: ${poder.toLocaleString()}\n`;
+        });
+
+        msg += `\n━━━━━━━━━━━━━━━\n🔍 Usa *?charinfo [nombre]* para ver detalles.`;
+
+        // Si el mensaje es muy largo (más de 100 personajes), WhatsApp lo corta
+        // Así que lo enviamos en partes de ser necesario
+        if (msg.length > 4000) {
+            const partes = msg.match(/[\s\S]{1,4000}/g);
+            for (const parte of partes) {
+                await client.sendMessage(grupoId, parte, { mentions: [userId] });
+            }
+        } else {
+            message.reply(msg, { mentions: [userId] });
+        }
+
+    } catch (e) {
+        console.error("Error en ?harem Mongo:", e);
+        message.reply("❌ Error al cargar tu harem desde la base de datos.");
+    }
 }
+
 
 if (comando.startsWith('wimage')) {
         const args = message.body.split(/\s+/).slice(1);
@@ -2349,152 +2345,141 @@ if (message.body.startsWith(prefix + 'wtired')) {
     return message.reply(respuesta);
 }
 
-//============= COMANDO ?smob (VERSIÓN FINAL COMPLETA) ===============
+// ================ SMOB =================
 if (comando === 'smob') {
     const ahora = Date.now();
-    const tiempoEspera = 15 * 60 * 1000; // 15 minutos entre búsquedas
+    const tiempoEspera = 15 * 60 * 1000; 
     const grupoId = message.from;
     const userId = message.author || message.from;
 
-    // --- SISTEMA DE COOLDOWN ---
     if (!cooldownsBuscarmob[grupoId]) cooldownsBuscarmob[grupoId] = {};
     if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
         const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
-        return message.reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min** para buscar otro mob.`);
+        return message.reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min**.`);
     }
 
-    const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
-    const hData = cargarHarem();
-    const misPersonajes = hData[grupoId]?.[userId] || [];
-    
-    // --- LÓGICA DE PODER CONTROLADA ---
-    let poderBase = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
-    let bonoNivel = 0;
+    try {
+        // --- SELECCIÓN DE TUS 3 MOBS REALES ---
+        const seleccion = [];
+        let copiaMoms = [...mobsData]; // Copiamos tu lista original
+        for(let i=0; i<3; i++) {
+            if (copiaMoms.length === 0) break;
+            const index = Math.floor(Math.random() * copiaMoms.length);
+            seleccion.push(copiaMoms.splice(index, 1)[0].nombre); // Sacamos el nombre de TU lista
+        }
 
-    if (misPersonajes.length > 0) {
-        // Promedio de los 3 mejores (solo si no son nivel bugueado)
-        const mejores = misPersonajes
-            .sort((a, b) => (b.level || 1) - (a.level || 1))
-            .slice(0, 3);
-        
-        const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
-        
-        // Cada nivel promedio añade 1,500 de poder (Lineal, no exponencial)
-        bonoNivel = nivelPromedio * 1500;
+        // Poder entre 10k y 200k
+        let poderMob = Math.floor(Math.random() * (200000 - 10000 + 1)) + 10000;
+
+        mobActual[grupoId] = {
+            nombres: seleccion,
+            poderTotal: poderMob,
+            vencido: false,
+            creadoEn: ahora
+        };
+
+        cooldownsBuscarmob[grupoId][userId] = ahora;
+
+        const msg = `⚠️ *¡ALERTA! SE HA DETECTADO UNA TERCIA ENEMIGA* ⚠️\n\n` +
+                    `👾 *Enemigos:* ${seleccion.join(", ")}\n` +
+                    `💪 Poder Combinado: *${poderMob.toLocaleString()}*\n\n` +
+                    `> Tienes **7 minutos** para pelear antes de que escapen. Usa *?fight*`;
+
+        message.reply(msg);
+
+    } catch (e) {
+        console.error("Error en smob:", e);
+        message.reply("❌ Error al escanear la zona (revisa que mobsData exista).");
     }
-
-    let poderMob = Math.floor(poderBase + bonoNivel);
-
-    // 🔥 ESCUDO ANTI-INFINITO (MÁXIMO 500k)
-    if (poderMob > 500000 || !isFinite(poderMob)) {
-        poderMob = 500000; 
-    }
-
-    // Guardar mob en memoria del grupo
-    mobActual[grupoId] = {
-        nombre: mobTemplate.nombre,
-        poderTotal: poderMob,
-        vencido: false,
-        creadoEn: ahora // Para que expire en 7 mins
-    };
-
-    cooldownsBuscarmob[grupoId][userId] = ahora;
-
-    message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n>Tienes **7 minutos** para pelear antes de que escape.`);
 }
-
+	
 	
 //============= COMANDO ?fight (CORREGIDO) ===============
-if (comando === 'fight') {
+if (comando.startsWith('fight')) {
     const grupoId = message.from;
     const userId = message.author || message.from;
 
     if (!mobActual[grupoId] || mobActual[grupoId].vencido) {
-        return message.reply("❌ No hay mobs en esta zona. Usa *?smob* para buscar uno.");
+        return message.reply("❌ No hay enemigos cerca.");
     }
 
-    const ahora = Date.now();
-    if (ahora - mobActual[grupoId].creadoEn > 7 * 60 * 1000) {
+    if (Date.now() - mobActual[grupoId].creadoEn > 7 * 60 * 1000) {
         delete mobActual[grupoId];
-        return message.reply("⏰ El mob se ha escapado...");
+        return message.reply("⏰ Los enemigos han escapado...");
     }
 
     const nombresPjs = message.body.slice(prefix.length + 5).split(',').map(n => n.trim().toLowerCase());
     if (nombresPjs.length === 0 || !nombresPjs[0]) return message.reply("❌ Uso: *?fight pj1, pj2...*");
 
-    const hData = cargarHarem();
-    const userHarem = hData[grupoId]?.[userId] || [];
-    let equipo = [];
+    try {
+        const datosHarem = await HaremModel.findOne({ grupoId, userId });
+        if (!datosHarem) return message.reply("❌ No tienes personajes.");
 
-    for (let nombrePj of nombresPjs) {
-        let pj = userHarem.find(p => p.nombre.toLowerCase() === nombrePj);
-        if (pj) {
-            actualizarStamina(pj);
-            if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}%).`);
-            if (!equipo.find(e => e.nombre === pj.nombre)) equipo.push(pj);
+        let equipo = [];
+        for (let nombrePj of nombresPjs) {
+            let pj = datosHarem.personajes.find(p => p.nombre.toLowerCase() === nombrePj);
+            if (pj) {
+                if (typeof actualizarStamina === 'function') actualizarStamina(pj);
+                if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado.`);
+                if (!equipo.find(e => e.nombre === pj.nombre)) equipo.push(pj);
+            }
         }
+
+        if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
+
+        const mob = mobActual[grupoId];
+        let poderTuEquipo = equipo.reduce((sum, p) => {
+            const nivel = Number(p.level) || 1;
+            const valorBase = Number(p.valor) || 0;
+            return sum + (valorBase * Math.pow(1.20, nivel - 1));
+        }, 0);
+
+        poderTuEquipo *= (0.95 + Math.random() * 0.15);
+
+        message.reply(`⚔️ *ENFRENTANDO A LA TERCIA* ⚔️\n\n🛡️ Tu Poder: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
+
+        setTimeout(async () => {
+            if (!mobActual[grupoId]) return;
+
+            if (poderTuEquipo >= mob.poderTotal) {
+                // TUS RANGOS SOLICITADOS
+                const gananciaDinero = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
+                const xpGanada = Math.floor(Math.random() * (1000 - 100 + 1)) + 100; 
+
+                if (!perfiles[userId]) perfiles[userId] = { money: 0 };
+                perfiles[userId].money = (Number(perfiles[userId].money) || 0) + gananciaDinero;
+                guardarPerfiles(perfiles);
+
+                let avisosNivel = "";
+                equipo.forEach(p => {
+                    p.exp = (Number(p.exp) || 0) + xpGanada;
+                    p.stamina = Math.max(0, (p.stamina || 100) - 15);
+                    p.lastUpdate = Date.now();
+
+                    let nivelesSubidos = 0;
+                    while (p.exp >= (Number(p.level) || 1) * 100) {
+                        p.exp -= (Number(p.level) || 1) * 100;
+                        p.level = (Number(p.level) || 1) + 1;
+                        nivelesSubidos++;
+                    }
+                    if (nivelesSubidos > 0) avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
+                });
+
+                datosHarem.markModified('personajes');
+                await datosHarem.save();
+                
+                mobActual[grupoId].vencido = true;
+                message.reply(`✅ *¡VICTORIA TOTAL!* 🎉\n\nHas derrotado a: ${mob.nombres.join(", ")}\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
+            } else {
+                message.reply(`💀 *DERROTA...* Los enemigos te superaron.`);
+            }
+        }, 2000);
+
+    } catch (e) {
+        console.error(e);
+        message.reply("❌ Error en la batalla.");
     }
-
-    if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
-
-    const mob = mobActual[grupoId];
-
-    // CÁLCULO DE PODER REAL (Usa tus valores de harem con niveles)
-    let poderTuEquipo = equipo.reduce((sum, p) => {
-        const nivel = Number(p.level) || 1;
-        const valorBase = Number(p.valor) || 0;
-        return sum + (valorBase * Math.pow(1.20, nivel - 1));
-    }, 0);
-
-    poderTuEquipo *= (0.95 + Math.random() * 0.15);
-
-    message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
-
-    setTimeout(() => {
-        if (!mobActual[grupoId]) return;
-
-        if (poderTuEquipo >= mob.poderTotal) {
-            const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
-            
-            // EXP ajustada: Si el mob tiene 50,000 poder, da 250 XP. 
-            // Con nivel 1 pidiendo 100 XP, subirás 2 niveles aprox.
-            const xpGanada = Math.floor(mob.poderTotal / 200); 
-
-            const eco = cargarEconomia();
-            asegurarUsuario(eco, userId);
-            eco[userId].dinero = (Number(eco[userId].dinero) || 0) + gananciaDinero;
-            guardarEconomia(eco);
-
-            let avisosNivel = "";
-            equipo.forEach(p => {
-                p.exp = (Number(p.exp) || 0) + xpGanada;
-                p.stamina = Math.max(0, p.stamina - 15);
-                p.lastUpdate = Date.now();
-
-                // Lógica de subida de nivel (expNecesaria = nivel * 100)
-                let nivelesSubidos = 0;
-                while (p.exp >= (Number(p.level) || 1) * 100) {
-                    p.exp -= (Number(p.level) || 1) * 100;
-                    p.level = (Number(p.level) || 1) + 1;
-                    nivelesSubidos++;
-                }
-
-                if (nivelesSubidos > 0) {
-                    avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
-                }
-            });
-
-            hData[grupoId][userId] = userHarem;
-            guardarHarem(hData);
-            mobActual[grupoId].vencido = true;
-
-            message.reply(`✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
-        } else {
-            message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
-        }
-    }, 2000);
 }
-
 	
 
 // --------- COMANDO ADMIN: INVOCAR DEADPOOL ---------
@@ -2576,40 +2561,49 @@ if (comando === 'migrardatos') {
     return;
 }
 
-	// ============= RESETEAR NIVELES (LÍMITE 1,000) =============
+// ================= COMANDO ?fixlevels (ADMIN - OPTIMIZADO) =================
 if (comando === 'fixlevels') {
-    const adminID = '232246195839008@lid'; 
+    const adminID = '232246195839008@lid';
     if (userId !== adminID) return;
 
-    try {
-        const path = dataFolder + 'harem.json';
-        let hData = JSON.parse(fs.readFileSync(path, 'utf-8'));
-        let cont = 0;
+    message.reply("⏳ Iniciando mantenimiento de niveles en la base de datos...");
 
-        for (let g in hData) {
-            for (let u in hData[g]) {
-                hData[g][u].forEach(p => {
-                    let lvl = Number(p.level);
-                    if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
-                        p.level = 1;
-                        p.exp = 0;
-                        cont++;
-                    }
-                });
+    try {
+        // Obtenemos todos los documentos de harem
+        const todosLosHarems = await HaremModel.find({});
+        let modificados = 0;
+
+        for (const harem de todosLosHarems) {
+            let huboCambio = false;
+
+            harem.personajes.forEach(p => {
+                // Si el nivel es infinito, NaN o absurdamente alto (ej. > 500)
+                if (!p.level || isNaN(p.level) || p.level > 500) {
+                    p.level = 1;
+                    p.exp = 0;
+                    huboCambio = true;
+                }
+                
+                // Si el valor base se corrompió, lo recuperamos del JSON original
+                const base = personajes.find(bp => bp.nombre === p.nombre);
+                if (base && p.valor !== base.valor) {
+                    p.valor = base.valor;
+                    huboCambio = true;
+                }
+            });
+
+            if (huboCambio) {
+                harem.markModified('personajes');
+                await harem.save();
+                modificados++;
             }
         }
 
-        if (cont > 0) {
-            fs.writeFileSync(path, JSON.stringify(hData)); // Sin indentación para ahorrar RAM
-            message.reply(`✅ Se han reseteado ${cont} personajes bugueados.`);
-        } else {
-            message.reply("🔍 No hay niveles corruptos.");
-        }
-        hData = null;
+        message.reply(`✅ Mantenimiento completado.\nSe limpiaron **${modificados}** perfiles con niveles o valores erróneos sin saturar la memoria.`);
     } catch (e) {
-        message.reply("❌ Error de memoria al procesar el JSON.");
+        console.error(e);
+        message.reply("❌ Error crítico durante el fix de niveles.");
     }
-    return;
 }
 	
 
