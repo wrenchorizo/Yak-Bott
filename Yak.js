@@ -521,9 +521,23 @@ client.on('message_create', async (message) => {
 
     const args = message.body.slice(prefix.length).trim().split(/ +/);
     const comando = args.shift().toLowerCase();
-	console.log("Comando detectado:", comando);
+    console.log("Comando detectado:", comando);
     const texto = message.body.toLowerCase().trim();
     if (!texto.startsWith(prefix)) return;
+
+    // --- AQUÍ PEGAS ESTO (JUSTO DESPUÉS DE LAS DEFINICIONES) ---
+    let targetId = null;
+
+    if (message.mentionedIds && message.mentionedIds.length > 0) {
+        targetId = message.mentionedIds[0];
+    } 
+    else if (message.hasQuotedMsg) {
+        // Obtenemos el mensaje al que estás respondiendo
+        const quotedMsg = await message.getQuotedMessage(); 
+        // Sacamos el ID de la persona que escribió ese mensaje
+        targetId = quotedMsg.author || quotedMsg.from;
+    }
+	const pushname = message._data.notifyName || "Usuario";
 	
     const chatId = message.from;
 if (message.isGroup) {
