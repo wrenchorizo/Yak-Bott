@@ -1490,7 +1490,6 @@ if (comando.startsWith('buy')) {
 // ==========================================
 //          COMANDOS DE CHARSHOP (NUEVO FORMATO)
 // ==========================================
-
 if (comando === 'charshop') {
     actualizarCharShop(grupoId);
     const shopDelGrupo = charShopsPorGrupo[grupoId];
@@ -1504,7 +1503,7 @@ if (comando === 'charshop') {
         msg += "⚠️ No hay personajes disponibles en esta rotación.";
     } else {
         shopDelGrupo.personajes.forEach((p, i) => {
-            msg += `*${i + 1}*\n`; // El número solo
+            msg += `*${i + 1}*\n`;
             msg += `╰┈─ ➤ *Personaje:* ${p.nombre}\n`;
             msg += `╰┈─ ➤ *Anime:* ${p.fuente}\n`;
             msg += `╰┈─ ➤ *Costo:* $${p.precio.toLocaleString()}\n`;
@@ -1512,76 +1511,75 @@ if (comando === 'charshop') {
         });
     }
 
-    const economia = cargarEconomia();
-    const saldo = economia[userId] ? (economia[userId].dinero || 0) : 0;
+    // --- SINCRONIZACIÓN CON RAM ---
+    asegurarUsuario(carteras, userId); 
+    const saldo = carteras[userId].dinero || 0;
+    
     msg += `━━━━━━━━━━━━━━━━━━━━\n⌬ Tu Saldo: *$${saldo.toLocaleString()}*`;
     
     return message.reply(msg);
 }
-
+	
 if (comando.startsWith('bchar')) {
-        actualizarCharShop(grupoId);
-        const shopDelGrupo = charShopsPorGrupo[grupoId];
-        
-        // Separamos por espacios y agarramos el segundo elemento (el número)
-        const argsB = message.body.trim().split(/\s+/);
-        const numeroInput = parseInt(argsB[1]);
-        const indice = numeroInput - 1;
+    actualizarCharShop(grupoId);
+    const shopDelGrupo = charShopsPorGrupo[grupoId];
+    
+    const argsB = message.body.trim().split(/\s+/);
+    const numeroInput = parseInt(argsB[1]);
+    const indice = numeroInput - 1;
 
-        console.log(`[DEBUG] Intentando compra: Usuario ${userId}, Número ${numeroInput}`);
-
-        if (isNaN(numeroInput) || !shopDelGrupo || !shopDelGrupo.personajes[indice]) {
-            return message.reply("❌ Número inválido. Usa: `?bchar [número]` (Mira los números en `?charshop`)");
-        }
-
-        const item = shopDelGrupo.personajes[indice];
-        const economia = cargarEconomia();
-        
-        if (!economia[userId]) economia[userId] = { dinero: 0 };
-        const dineroUsuario = economia[userId].dinero || 0;
-
-        if (dineroUsuario < item.precio) {
-            const falta = item.precio - dineroUsuario;
-            return message.reply(`❌ No tienes suficiente dinero.\n💰 Precio: *$${item.precio.toLocaleString()}*\n💵 Tienes: *$${dineroUsuario.toLocaleString()}*\n📉 Te faltan: *$${falta.toLocaleString()}*`);
-        }
-
-        // Inicializar Harem si no existe
-        if (!haremPorGrupo[grupoId]) haremPorGrupo[grupoId] = {};
-        if (!haremPorGrupo[grupoId][userId]) haremPorGrupo[grupoId][userId] = [];
-
-        try {
-            // TRANSACCIÓN
-            economia[userId].dinero -= item.precio;
-
-            const nuevoPersonaje = { 
-                nombre: item.nombre,
-                fuente: item.fuente,
-                valor: item.valor,
-                imagen: item.imagen || "",
-                level: 1, 
-                exp: 0, 
-                stamina: 100, 
-                lastUpdate: Date.now() 
-            };
-
-            // Guardar en memoria
-            haremPorGrupo[grupoId][userId].push(nuevoPersonaje);
-            
-            // Quitar de la tienda
-            shopDelGrupo.personajes.splice(indice, 1);
-
-            // Guardar en archivos JSON
-            guardarEconomia(economia);
-            guardarHarem(haremPorGrupo);
-
-            console.log(`[SUCCESS] ${item.nombre} comprado por ${userId}`);
-            return message.reply(`🎉 ¡COMPRA EXITOSA!\n\nHas adquirido a: *${item.nombre}*\nFuente: _${item.fuente}_\n💰 Saldo restante: *$${economia[userId].dinero.toLocaleString()}*`);
-            
-        } catch (e) {
-            console.log("Error crítico en bchar:", e);
-            return message.reply("⚠️ Error al procesar la base de datos.");
-        }
+    if (isNaN(numeroInput) || !shopDelGrupo || !shopDelGrupo.personajes[indice]) {
+        return message.reply("❌ Número inválido. Usa: `?bchar [número]`");
     }
+
+    const item = shopDelGrupo.personajes[indice];
+    
+    // --- USAR CARTERAS (GLOBAL) ---
+    asegurarUsuario(carteras, userId);
+    const dineroUsuario = carteras[userId].dinero || 0;
+
+    if (dineroUsuario < item.precio) {
+        const falta = item.precio - dineroUsuario;
+        return message.reply(`❌ Dinero insuficiente.\n💰 Precio: *$${item.precio.toLocaleString()}*\n💵 Tienes: *$${dineroUsuario.toLocaleString()}*\n📉 Faltan: *$${falta.toLocaleString()}*`);
+    }
+
+    // Inicializar Harem en RAM si no existe
+    if (!haremPorGrupo[grupoId]) haremPorGrupo[grupoId] = {};
+    if (!haremPorGrupo[grupoId][userId]) haremPorGrupo[grupoId][userId] = [];
+
+    try {
+        // TRANSACCIÓN EN RAM
+        carteras[userId].dinero -= item.precio;
+
+        const nuevoPersonaje = { 
+            nombre: item.nombre,
+            fuente: item.fuente,
+            valor: item.valor,
+            imagen: item.imagen || "",
+            level: 1, 
+            exp: 0, 
+            stamina: 100, 
+            lastUpdate: Date.now() 
+        };
+
+        // Guardar en RAM
+        haremPorGrupo[grupoId][userId].push(nuevoPersonaje);
+        
+        // Quitar de la tienda
+        shopDelGrupo.personajes.splice(indice, 1);
+
+        // --- ACTIVAR BANDERAS PARA EL RELOJ ---
+        economiaSucia = true;
+        haremSucio = true;
+
+        return message.reply(`🎉 ¡COMPRA EXITOSA!\n\nHas adquirido a: *${item.nombre}*\n💰 Saldo restante: *$${carteras[userId].dinero.toLocaleString()}*`);
+        
+    } catch (e) {
+        console.log("Error en bchar:", e);
+        return message.reply("⚠️ Error al procesar la compra.");
+    }
+}
+
 
 // ============= COMANDO ?baltop (RANKING) =============
 if (comando === 'baltop') {
