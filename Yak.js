@@ -1355,12 +1355,15 @@ if (comando === 'daily') {
 }
 
 if (message.body === "?bal") {
+    const userId = message.author || message.author || message.from;
+    
+    // 1. Usa 'carteras', que es la variable global que usa el resto del bot
+    asegurarUsuario(carteras, userId); 
 
-    const userId = message.author || message._data.participant || message.from;
+    // 2. Lee el dato de 'carteras'
+    const saldo = carteras[userId].dinero || 0;
 
-    asegurarUsuario(economia, userId);
-
-    message.reply(`» Tu balance actual es: $${economia[userId].dinero}`);
+    message.reply(`💰 *TU BILLETERA*\n━━━━━━━━━━━━━━\n» Balance actual: *$${saldo.toLocaleString()}*`);
 }
 
 // ==========================================
@@ -1369,8 +1372,8 @@ if (message.body === "?bal") {
 
 // --------- COMANDO ?shop ---------
 if (comando === 'shop') {
-    const economia = cargarEconomia();
-    asegurarUsuario(economia, userId);
+    asegurarUsuario(carteras, userId); 
+    const economia = carteras[userId].dinero || 0;
     
     let tabla = `🛒 *TIENDA DE LUJO YAKBOT*\n`;
     tabla += `━━━━━━━━━━━━━━━━━━━━\n\n`;
