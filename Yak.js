@@ -2712,26 +2712,31 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     const parts = message.body.split(/\s+/); 
     let cantidad = parseInt(parts[1]); 
 
-    if (isNaN(cantidad)) return message.reply("❌ Uso: `?addmoney [cantidad]`");
+    if (isNaN(cantidad)) return message.reply("❌ Uso: `?addmoney [cantidad] [@usuario]`");
 
-    // 1. IMPORTANTE: Usamos 'carteras', que es la que usa el comando ?bal
-    // Si en tu bot la variable global se llama 'carteras', usa esa.
-    asegurarUsuario(carteras, userId); 
-    
-    // 2. Sumamos a la variable GLOBAL
-    carteras[userId].dinero = (Number(carteras[userId].dinero) || 0) + cantidad;
-    
-    // 3. Activamos el interruptor para que el reloj de 5 min lo guarde al disco
+    // --- LÓGICA DE DESTINATARIO ---
+    let targetId = userId; // Por defecto, tú mismo
+
+    // Si hay una mención en el mensaje, usamos el ID del mencionado
+    if (message.mentionedIds && message.mentionedIds.length > 0) {
+        targetId = message.mentionedIds[0];
+    }
+    // 1. Usamos la variable GLOBAL 'carteras'
+    asegurarUsuario(carteras, targetId); 
+    // 2. Sumamos directamente en la RAM
+    carteras[targetId].dinero = (Number(carteras[targetId].dinero) || 0) + cantidad;
+    // 3. Avisamos al reloj de guardado
     economiaSucia = true;
+    // 4. Preparamos el mensaje según a quién se lo diste
+    const totalActual = carteras[targetId].dinero;
+    const nombreDestino = targetId === userId ? "tu cuenta" : `@${targetId.split('@')[0]}`;
+    const menciones = targetId === userId ? [] : [targetId];
 
-    // 4. Mensaje de confirmación con el total real de la RAM
-    const totalActual = carteras[userId].dinero;
-    
-    if (typeof darLogro === 'function' && darLogro(perfiles, userId, "admin_money")) {
+    if (typeof darLogro === 'function' && darLogro(perfiles, targetId, "admin_money")) {
         perfilesSucios = true;
-        message.reply(`🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}*.\n✨ Total actual: *$${totalActual.toLocaleString()}*`);
+        client.sendMessage(message.from, `🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a ${nombreDestino}.\n✨ Saldo: *$${totalActual.toLocaleString()}*`, { mentions: menciones });
     } else {
-        message.reply(`✅ Dinero añadido.\n💰 Cantidad: *$${cantidad.toLocaleString()}*\n✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`);
+        client.sendMessage(message.from, `✅ Dinero enviado.\n💰 Cantidad: *$${cantidad.toLocaleString()}*\n👤 Destino: ${nombreDestino}\n✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`, { mentions: menciones });
     }
 }
 
