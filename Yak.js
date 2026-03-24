@@ -2045,19 +2045,29 @@ if (cooldownsC[grupoId][userId]) {
 
 
 // --------- ?harem ---------
-if (comando.startsWith('harem')) {
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId] || haremPorGrupo[grupoId][userId].length === 0) {
-        return message.reply('❒ Tu harem está vacío.');
+if (comando === 'harem') {
+    // 1. Identificar de quién es el harem (el tuyo o el de alguien más)
+    const idUsuarioHarem = targetId || userId; 
+    
+    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][idUsuarioHarem] || haremPorGrupo[grupoId][idUsuarioHarem].length === 0) {
+        const mensajeVacio = idUsuarioHarem === userId ? '❒ Tu harem está vacío.' : '❒ Este usuario no tiene personajes.';
+        return message.reply(mensajeVacio);
     }
 
-    const argsH = message.body.slice(prefix.length + 5).trim().split(/\s+/);
-    let pagina = parseInt(argsH[0]) || 1; 
+    // 2. Obtener el nombre del dueño del harem
+    const contacto = await client.getContactById(idUsuarioHarem);
+    const nombreTitulo = (contacto.pushname || "Usuario").toUpperCase();
+
+    // 3. Manejo de páginas (Detecta si el número está en args[0] o args[1])
+    let pIndex = (message.mentionedIds.length > 0 || message.hasQuotedMsg) ? 1 : 0;
+    let pagina = parseInt(args[pIndex]) || 1; 
     const personajesPorPagina = 20;
 
-    let listaOrdenada = [...haremPorGrupo[grupoId][userId]];
+    // 4. Ordenar por Valor Real (RAM)
+    let listaOrdenada = [...haremPorGrupo[grupoId][idUsuarioHarem]];
     listaOrdenada.sort((a, b) => {
-        const vA = Math.floor(Number(a.valor) * Math.pow(1.20, (a.level || 1) - 1));
-        const vB = Math.floor(Number(b.valor) * Math.pow(1.20, (b.level || 1) - 1));
+        const vA = Math.floor((Number(a.valor) || 0) * Math.pow(1.20, (a.level || 1) - 1));
+        const vB = Math.floor((Number(b.valor) || 0) * Math.pow(1.20, (b.level || 1) - 1));
         return vB - vA;
     });
 
@@ -2069,29 +2079,34 @@ if (comando.startsWith('harem')) {
     const fin = inicio + personajesPorPagina;
     const personajesPagina = listaOrdenada.slice(inicio, fin);
 
-    let respuesta = `༺ ${message._data.notifyName.toUpperCase()} ༻\n`;
+    let respuesta = `༺ ${nombreTitulo} ༻\n`;
     respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
     respuesta += `          ᴘᴀ́ɢɪɴᴀ ${pagina} ᴅᴇ ${totalPaginas}\n\n`;
 
     personajesPagina.forEach((p, index) => {
-        const valorReal = Math.floor(Number(p.valor) * Math.pow(1.20, (p.level || 1) - 1));
+        // Cálculo de valor con protección contra errores
+        const valBase = Number(p.valor) || 0;
+        const lvl = p.level || 1;
+        const valorReal = Math.floor(valBase * Math.pow(1.20, lvl - 1));
+        
         let numGlobal = (inicio + index + 1).toString().padStart(2, '0');
         
         if (p.nombre === 'Deadpool') {
             respuesta += `⌁ ${numGlobal} ⌁ 🔴 *DEADPOOL*\n`;
-            respuesta += `    ╰┈─ ➤ Marvel ✦ (Me tomé la libertad de cambiar mi valor a uno insuperable)\n\n`;
+            respuesta += `    ╰┈─ ➤ Marvel ✦ (Valor Insuperable)\n\n`;
         } else {
-            respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre}\n`;
-            respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ ${valorReal.toLocaleString()}\n\n`;
+            respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre} (Lvl ${lvl})\n`;
+            respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ $${valorReal.toLocaleString()}\n\n`;
         }
     });
 
     respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
     respuesta += `⌬ Total: ${listaOrdenada.length} ⌁ Paginas: ${totalPaginas}\n`;
-    respuesta += `⌬ Usa: ?harem [número]`;
+    respuesta += `⌬ Usa: ?harem [número] o ?harem @user`;
 
     return message.reply(respuesta);
 }
+
 
 if (comando.startsWith('wimage')) {
         const args = message.body.split(/\s+/).slice(1);
@@ -2274,48 +2289,36 @@ if (comando.startsWith('ship')) {
 
 // --------- ?givechar ---------
 if (comando === 'givechar') {
+    if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
+    
+    // Usamos el targetId universal (mención o respuesta)
+    if (!targetId) return message.reply("❌ Menciona a alguien o responde a su mensaje.");
 
-    if (!message.from.endsWith("@g.us"))
-        return message.reply("Este comando solo funciona en grupos.");
-
-    const mencionado = message.mentionedIds[0];
-    if (!mencionado)
-        return message.reply(`Uso: ${prefix}givechar @usuario Nombre`);
-
-    const nombre = message.body
-        .slice(prefix.length + 8)
-        .replace(/@\d+\s*/g, "")
-        .trim()
-        .toLowerCase();
+    // Limpiamos el nombre: quitamos la mención y unimos el resto
+    const nombrePJ = args.join(" ").replace(/@\d+\s*/g, "").trim().toLowerCase();
+    if (!nombrePJ) return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre`);
 
     const giver = userId;
-    const grupo = grupoId;
+    const receptor = targetId;
 
-    if (!haremPorGrupo[grupo]?.[giver])
-        return message.reply("❌ No tienes personajes.");
+    if (!haremPorGrupo[grupoId]?.[giver]) return message.reply("❌ No tienes personajes.");
+    if (!haremPorGrupo[grupoId][receptor]) haremPorGrupo[grupoId][receptor] = [];
 
-    if (!haremPorGrupo[grupo]?.[mencionado])
-        haremPorGrupo[grupo][mencionado] = [];
+    // Buscamos ignorando mayúsculas
+    const miHarem = haremPorGrupo[grupoId][giver];
+    const index = miHarem.findIndex(p => p.nombre.toLowerCase() === nombrePJ);
 
-    const harem = haremPorGrupo[grupo][giver];
+    if (index === -1) return message.reply(`❌ No tienes a "${nombrePJ}". Revisa el nombre en ?charlist`);
 
-    const index = harem.findIndex(p => 
-        p.nombre.toLowerCase() === nombre
-    );
+    // --- OPERACIÓN ---
+    const [personaje] = miHarem.splice(index, 1);
+    haremPorGrupo[grupoId][receptor].push(personaje);
 
-    if (index === -1)
-        return message.reply(`❌ No tienes a ${nombre}.`);
+    haremSucio = true; // Guardado automático
 
-    const [personaje] = harem.splice(index, 1);
-
-    haremPorGrupo[grupo][mencionado].push(personaje);
-
-    guardarHarem(haremPorGrupo);
-
-    return client.sendMessage(
-        message.from,
-        `🎁 *Hecho*\n\n${personaje.nombre} fue entregado a @${mencionado.split('@')[0]}`,
-        { mentions: [mencionado] }
+    return client.sendMessage(message.from, 
+        `🎁 *REGALO EXITOSO*\n\n*${personaje.nombre}* ahora le pertenece a @${receptor.split('@')[0]}`,
+        { mentions: [receptor] }
     );
 }
 
@@ -2340,93 +2343,74 @@ if (message.body.startsWith(prefix + 'tr ')) {
 }
 
 // --------- ?trade ---------
-if (comando.startsWith('trade')) {
-    if (!message.from.endsWith("@g.us")) return message.reply("Solo en grupos.");
-    if (tradesPendientes[grupoId]) return message.reply("Ya hay un trade pendiente aquí.");
+if (comando === 'trade') {
+    if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
+    if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un trade pendiente aquí.");
+    if (!targetId || targetId === userId) return message.reply("❌ Menciona a alguien para tradear.");
 
-    const mentioned = message.mentionedIds[0];
-    if (!mentioned) return message.reply("Debes mencionar a alguien.");
+    const textoTrade = args.join(" ").replace(/@\d+\s*/g, "");
+    const partes = textoTrade.split("|");
 
-    // Limpiamos el texto para sacar solo los nombres de los personajes
-    const textoSinComando = message.body.slice(prefix.length + 5).trim(); 
-    const partes = textoSinComando.split("|");
+    if (partes.length !== 2) return message.reply("❌ Uso: `?trade @usuario Mi PJ | Su PJ` (Usa el palito `|`) ");
 
-    if (partes.length !== 2) {
-        return message.reply("Uso: ?trade @usuario MiPersonaje | SuPersonaje");
-    }
+    const miNombre = partes[0].trim().toLowerCase();
+    const suNombre = partes[1].trim().toLowerCase();
 
-    // Limpiamos menciones y espacios de los nombres
-    const miNombre = partes[0].replace(/@\d+\s*/g, "").trim();
-    const suNombre = partes[1].trim();
+    const miPJ = haremPorGrupo[grupoId]?.[userId]?.find(p => p.nombre.toLowerCase() === miNombre);
+    const suPJ = haremPorGrupo[grupoId]?.[targetId]?.find(p => p.nombre.toLowerCase() === suNombre);
 
-    if (!haremPorGrupo[grupoId]?.[userId]) return message.reply("No tienes personajes.");
-
-    const miPersonaje = haremPorGrupo[grupoId][userId].find(p => p.nombre.toLowerCase() === miNombre.toLowerCase());
-    const suPersonaje = haremPorGrupo[grupoId][mentioned]?.find(p => p.nombre.toLowerCase() === suNombre.toLowerCase());
-
-    if (!miPersonaje) return message.reply(`No tienes a "${miNombre}" en tu harem.`);
-    if (!suPersonaje) return message.reply(`Esa persona no tiene a "${suNombre}".`);
+    if (!miPJ) return message.reply(`❌ No tienes a "${miNombre}".`);
+    if (!suPJ) return message.reply(`❌ Esa persona no tiene a "${suNombre}".`);
 
     tradesPendientes[grupoId] = {
         iniciador: userId,
-        receptor: mentioned,
-        miPersonaje,
-        suPersonaje,
+        receptor: targetId,
+        miPJNombre: miPJ.nombre, // Guardamos el nombre real (con mayúsculas)
+        suPJNombre: suPJ.nombre,
         timeout: setTimeout(() => { delete tradesPendientes[grupoId]; }, 60000)
     };
 
-    const contactReceptor = await client.getContactById(mentioned);
     return client.sendMessage(message.from, 
-        `🔄 *PROPUESTA DE INTERCAMBIO*\n\n` +
-        `@${userId.split('@')[0]} ofrece: *${miPersonaje.nombre}*\n` +
-        `@${mentioned.split('@')[0]} ofrece: *${suPersonaje.nombre}*\n\n` +
-        `✅ @${mentioned.split('@')[0]}, responde *?aceptartrade* en 60s.`,
-        { mentions: [userId, mentioned] }
+        `🔄 *PROPUESTA DE TRADE*\n\n` +
+        `👤 @${userId.split('@')[0]} ofrece: *${miPJ.nombre}*\n` +
+        `👤 @${targetId.split('@')[0]} ofrece: *${suPJ.nombre}*\n\n` +
+        `✅ @${targetId.split('@')[0]}, pon *?aceptartrade* para confirmar.`,
+        { mentions: [userId, targetId] }
     );
 }
 
 // --------- ?aceptartrade ---------
 if (comando === "aceptartrade") {
+    const trade = tradesPendientes[grupoId];
+    if (!trade) return message.reply("❌ No hay intercambios pendientes.");
+    if (userId !== trade.receptor) return message.reply("❌ Solo el receptor puede aceptar.");
 
-    const grupo = grupoId;
+    const haremA = haremPorGrupo[grupoId][trade.iniciador];
+    const haremB = haremPorGrupo[grupoId][trade.receptor];
 
-    if (!tradesPendientes[grupo]) {
-        return message.reply("❌ No hay ningún intercambio pendiente.");
+    // Buscamos los índices en el momento exacto de la aceptación
+    const idxA = haremA.findIndex(p => p.nombre === trade.miPJNombre);
+    const idxB = haremB.findIndex(p => p.nombre === trade.suPJNombre);
+
+    if (idxA === -1 || idxB === -1) {
+        delete tradesPendientes[grupoId];
+        return message.reply("❌ El trade falló: uno de los personajes ya no está disponible.");
     }
 
-    const trade = tradesPendientes[grupo];
+    // INTERCAMBIO REAL
+    const [pjA] = haremA.splice(idxA, 1);
+    const [pjB] = haremB.splice(idxB, 1);
 
-    if (userId !== trade.receptor) {
-        return message.reply("❌ Solo el usuario que recibió la oferta puede aceptarla.");
-    }
+    haremA.push(pjB);
+    haremB.push(pjA);
 
-    const haremA = haremPorGrupo[grupo][trade.iniciador];
-    const haremB = haremPorGrupo[grupo][trade.receptor];
+    haremSucio = true; // Sincroniza con el archivo harem.json
+    clearTimeout(trade.timeout);
+    delete tradesPendientes[grupoId];
 
-    if (!haremA || !haremB) {
-        return message.reply("❌ Error con los harems.");
-    }
-
-    const indexA = haremA.findIndex(p => p.nombre === trade.miPersonaje.nombre);
-    const indexB = haremB.findIndex(p => p.nombre === trade.suPersonaje.nombre);
-
-    if (indexA === -1 || indexB === -1) {
-        return message.reply("❌ Uno de los personajes ya no está disponible.");
-    }
-
-    const [personajeA] = haremA.splice(indexA, 1);
-    const [personajeB] = haremB.splice(indexB, 1);
-
-    haremA.push(personajeB);
-    haremB.push(personajeA);
-
-    guardarHarem(haremPorGrupo);
-
-    delete tradesPendientes[grupo];
-
-    return client.sendMessage(
-        message.from,
-        `🤝 *Intercambio completado*\n\n${personajeA.nombre} ↔ ${personajeB.nombre}`
+    return client.sendMessage(message.from, 
+        `🤝 *TRADE COMPLETADO*\n\n¡Intercambio realizado con éxito entre @${trade.iniciador.split('@')[0]} y @${trade.receptor.split('@')[0]}!`,
+        { mentions: [trade.iniciador, trade.receptor] }
     );
 }
 	
