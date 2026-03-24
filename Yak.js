@@ -2707,22 +2707,24 @@ if (message.body.startsWith(prefix + 'addmoney')) {
 
     if (isNaN(cantidad)) return message.reply("❌ Uso: `?addmoney [cantidad]`");
 
-    // EL ERROR ESTABA AQUÍ: 
-    // Debes usar 'carteras' (la global) y no 'economia' (la local que borramos)
+    // 1. IMPORTANTE: Usamos 'carteras', que es la que usa el comando ?bal
+    // Si en tu bot la variable global se llama 'carteras', usa esa.
     asegurarUsuario(carteras, userId); 
     
-    // Sumamos a la variable GLOBAL que lee el comando ?bal
+    // 2. Sumamos a la variable GLOBAL
     carteras[userId].dinero = (Number(carteras[userId].dinero) || 0) + cantidad;
     
-    // IMPORTANTE: Avisar al reloj de guardado
+    // 3. Activamos el interruptor para que el reloj de 5 min lo guarde al disco
     economiaSucia = true;
 
-    // Logro (usando la global 'perfiles')
+    // 4. Mensaje de confirmación con el total real de la RAM
+    const totalActual = carteras[userId].dinero;
+    
     if (typeof darLogro === 'function' && darLogro(perfiles, userId, "admin_money")) {
         perfilesSucios = true;
-        message.reply(`🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
+        message.reply(`🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}*.\n✨ Total actual: *$${totalActual.toLocaleString()}*`);
     } else {
-        message.reply(`✅ Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta. (Total: $${carteras[userId].dinero.toLocaleString()})`);
+        message.reply(`✅ Dinero añadido.\n💰 Cantidad: *$${cantidad.toLocaleString()}*\n✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`);
     }
 }
 
