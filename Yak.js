@@ -15,6 +15,10 @@ const qrcode = require('qrcode-terminal');
 const dataFolder = './data/';
 const fs = require('fs');
 
+const haremFile = './harem.json';
+const economiaFile = './economia.json';
+const perfilesFile = './data/perfiles.json';
+
 let perfilesSucios = false;
 let haremSucio = false;
 let economiaSucia = false;
@@ -197,8 +201,6 @@ const mobsData = [
 
 const procesandoRW = new Set(); 
 
-const haremFile = './harem.json';
-
 function msToTime(ms) {
     const minutos = Math.floor(ms / 60000);
     const segundos = Math.floor((ms % 60000) / 1000);
@@ -218,8 +220,6 @@ function guardarHarem(data) {
 
 const duelosActivos = {};
 const tradesPendientes = {};
-
-const economiaFile = './economia.json';
 
 function cargarEconomia() {
     const path = dataFolder + 'economia.json';
@@ -438,8 +438,6 @@ function personajeRandom(listaPersonajes) {
     }
     return filtrados[filtrados.length - 1];
 }
-
-const perfilesFile = './data/perfiles.json';
 
 function cargarPerfiles() {
     if (!fs.existsSync(perfilesFile)) {
