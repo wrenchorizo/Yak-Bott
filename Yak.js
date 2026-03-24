@@ -989,7 +989,6 @@ if (comando === 'gay') {
 // =========== COMANDO ?profile =============
 if (comando === "profile") {
 
-    const perfiles = cargarPerfiles();
     asegurarPerfil(perfiles, userId);
 
     const p = perfiles[userId];
@@ -1032,7 +1031,6 @@ if (comando === "profile") {
 
 if (comando === "logros") {
 
-    const perfiles = cargarPerfiles();
     asegurarPerfil(perfiles, userId);
 
     const lista = perfiles[userId].logros;
@@ -1358,7 +1356,6 @@ if (comando === 'daily') {
 
 if (message.body === "?bal") {
 
-    const economia = cargarEconomia();
     const userId = message.author || message._data.participant || message.from;
 
     asegurarUsuario(economia, userId);
@@ -1563,7 +1560,6 @@ if (comando.startsWith('bchar')) {
 
 // ============= COMANDO ?baltop (RANKING) =============
 if (comando === 'baltop') {
-    const eco = cargarEconomia();
     let usuarios = [];
 
     // Convertimos el objeto en una lista para poder ordenarla
