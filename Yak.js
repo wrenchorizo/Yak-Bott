@@ -2997,48 +2997,31 @@ const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh',
 const comandoLimpio = comando.split(/\s+/)[0];
 
 if (listaReacciones.includes(comandoLimpio)) {
-	
-	perfiles[userId].reacciones += 1;
-
-if (perfiles[userId].reacciones >= 40) {
-    if (darLogro(perfiles, userId, "react_40")) {
-        message.reply("🏆 Logro desbloqueado: Hacer 40 reacciones de anime");
-    }
-}
-
-if (perfiles[userId].reacciones >= 100) {
-    if (darLogro(perfiles, userId, "react_100")) {
-        message.reply("🏆 Logro desbloqueado: Hacer 100 reacciones de anime");
-    }
-}
-
-if (perfiles[userId].reacciones >= 200) {
-    if (darLogro(perfiles, userId, "react_200")) {
-        message.reply("🏆 Logro desbloqueado: Hacer 200 reacciones de anime");
-    }
-}
-
-if (perfiles[userId].reacciones >= 500) {
-    if (darLogro(perfiles, userId, "react_500")) {
-        message.reply("🏆 Logro desbloqueado: Hacer 500 reacciones de anime");
-    }
-}
-	
-    const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
-    const gifPath = path.join(__dirname, rawGifPath);
-    const outputPath = `./temp_${Date.now()}.mp4`; 
     
+    // 1. Lógica de Logros y RAM
+    perfiles[userId].reacciones = (perfiles[userId].reacciones || 0) + 1;
+    perfilesSucios = true; // Usamos el reloj en lugar de guardarPerfiles()
+
+    const metas = { "react_40": 40, "react_100": 100, "react_200": 200, "react_500": 500 };
+    for (let slug in metas) {
+        if (perfiles[userId].reacciones >= metas[slug]) {
+            if (darLogro(perfiles, userId, slug)) {
+                message.reply(`🏆 Logro desbloqueado: Hacer ${metas[slug]} reacciones de anime`);
+            }
+        }
+    }
+
+    // 2. Preparación de nombres y menciones (USANDO targetId que definimos arriba)
     const authorContact = await message.getContact();
     const authorName = authorContact.pushname || 'Usuario';
-    const mencionadoId = message.mentionedIds[0];
     
     let nombreMencionado = "";
-    if (mencionadoId) {
-        const contactMencionado = await client.getContactById(mencionadoId);
-        nombreMencionado = `@${contactMencionado.pushname || contactMencionado.number.split('@')[0]}`;
+    if (targetId) {
+        const contactMencionado = await client.getContactById(targetId);
+        // Si es mencionado, sacamos su nombre para la frase
+        nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
     }
 
-    // --- MAPEO DE FRASES PERSONALIZADAS ---
     const frases = {
         cry: { solo: `*${authorName}* se puso a llorar... `, con: `*${authorName}* está llorando por culpa de ${nombreMencionado}` },
         sad: { solo: `*${authorName}* está triste...`, con: `*${authorName}* se siente triste por ${nombreMencionado}` },
@@ -3052,47 +3035,41 @@ if (perfiles[userId].reacciones >= 500) {
         cafe: { solo: `*${authorName}* toma cafe caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
         hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
         kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` },
-		punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
-		run: { solo: `*${authorName}* salió corriendo lejos de aquí... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
-		kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató a sin piedad a ${nombreMencionado}` },
-		pat: { solo: `*${authorName}* se da palmadas en la cabeza a sí mismo`, con: `*${authorName}* le da palmadas en la cabeza a ${nombreMencionado} con cariño` },
-		preg: { solo: `*${authorName}* se embarazó solito... misterioso... `, con: `*${authorName}* embarazó a ${nombreMencionado} y ahora deben pensar en nombres` }
+        punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
+        run: { solo: `*${authorName}* salió corriendo lejos de aquí... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
+        kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató sin piedad a ${nombreMencionado}` },
+        pat: { solo: `*${authorName}* se da palmadas en la cabeza a sí mismo`, con: `*${authorName}* le da palmadas en la cabeza a ${nombreMencionado} con cariño` },
+        preg: { solo: `*${authorName}* se embarazó solito... misterioso... `, con: `*${authorName}* embarazó a ${nombreMencionado} y ahora deben pensar en nombres` }
     };
 
-    // Elegimos la frase según si hay mención o no
-    let textoFinal = mencionadoId ? frases[comandoLimpio].con : frases[comandoLimpio].solo;
+    // Elegimos la frase según si existe un objetivo (por mención o respuesta)
+    let textoFinal = targetId ? frases[comandoLimpio].con : frases[comandoLimpio].solo;
 
-    // PROCESAMIENTO FFMPEG
+    // 3. Selección de GIF y proceso FFMPEG
+    const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
+    const gifPath = path.join(__dirname, rawGifPath);
+    const outputPath = `./temp_${Date.now()}.mp4`; 
+
     ffmpeg(gifPath)
         .setFfmpegPath(ffmpegPath)
-        .outputOptions([
-            '-pix_fmt yuv420p',
-            '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'
-        ])
+        .outputOptions(['-pix_fmt yuv420p', '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'])
         .toFormat('mp4')
         .on('end', async () => {
-    try {
-        const media = MessageMedia.fromFilePath(outputPath);
-        await client.sendMessage(message.from, media, {
-            caption: textoFinal,
-            sendVideoAsGif: true,
-            mentions: mencionadoId ? [mencionadoId] : []
-        });
-
-        // BORRADO ÚNICO Y SEGURO
-        if (fs.existsSync(outputPath)) {
-            fs.unlinkSync(outputPath);
-        }
-    } catch (e) { 
-        console.log("Error en envío/borrado:", e); 
-    }
-})
+            try {
+                const media = MessageMedia.fromFilePath(outputPath);
+                await client.sendMessage(message.from, media, {
+                    caption: textoFinal,
+                    sendVideoAsGif: true,
+                    mentions: targetId ? [targetId] : [] // Menciona al objetivo real
+                });
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+            } catch (e) { console.log("Error enviando reacción:", e); }
+        })
         .on('error', (err) => {
             console.log("Error FFMPEG:", err);
             message.reply("❌ Error al procesar el GIF.");
         })
         .save(outputPath);
-	guardarPerfiles(perfiles);
 
     return;
 }
