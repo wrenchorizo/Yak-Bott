@@ -14,8 +14,6 @@
     "puppeteer": "^22.0.0",
     "qrcode-terminal": "^0.12.0",
     "@whiskeysockets/baileys": "^6.7.0",
-    "yt-search": "^2.10.4",
-    "@distube/ytdl-core": "^4.15.1",
     "play-dl": "^1.9.7",
     "sharp": "^0.34.5",
     "mongoose": "^8.0.0",
