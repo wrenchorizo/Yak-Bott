@@ -14,6 +14,15 @@ const { MongoStore } = require('wwebjs-mongo');
 const qrcode = require('qrcode-terminal');
 const dataFolder = './data/';
 const fs = require('fs');
+
+let perfilesSucios = false;
+let haremSucio = false;
+let economiaSucia = false;
+
+let perfiles = cargarPerfiles();
+let haremPorGrupo = cargarHarem();
+let carteras = cargarEconomia();
+
 const sharp = require('sharp');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
@@ -206,7 +215,7 @@ function cargarHarem() {
 
 function guardarHarem(data) {
     haremPorGrupo = data; 
-    fs.writeFileSync(dataFolder + 'harem.json', JSON.stringify(data, null, 2));
+    haremSucio = true; // Solo marcamos que hubo un cambio
 }
 
 const duelosActivos = {};
@@ -227,8 +236,9 @@ function cargarEconomia() {
 }
 
 function guardarEconomia(data) {
-    // Guardamos en ./data/economia.json
-    fs.writeFileSync(dataFolder + 'economia.json', JSON.stringify(data, null, 2));
+    // En lugar de escribir el archivo aquí, solo avisamos al reloj
+    carteras = data; // Asegúrate de que la variable coincida con la que usas
+    economiaSucia = true; 
 }
 
 function sleep(ms){
@@ -275,7 +285,7 @@ function actualizarStamina(personaje) {
 // Cliente
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: './data/session' // Asegura que se guarde en tu volumen de Railway
+        dataPath: './data/session'
     }),
     puppeteer: {
         headless: true,
@@ -284,11 +294,13 @@ const client = new Client({
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--no-zygote',
-            '--single-process'
+            '--single-process',
+            '--disable-accelerated-2d-canvas', // Nueva
+            '--disable-gpu',                   // Nueva
+            '--no-first-run'                   // Nueva
         ],
     }
 });
-
 
 
 client.on('code', (code) => {
@@ -313,6 +325,13 @@ client.on('qr', (qr) => {
 // Bot listo
 client.on('ready', () => {
     console.log('✅ YakBot listo y conectado');
+	
+// LIMPIEZA DE CACHÉ
+    const cacheDir = './.wwebjs_cache';
+    if (fs.existsSync(cacheDir)) {
+        fs.rmSync(cacheDir, { recursive: true, force: true });
+        console.log('🗑️ Caché de WhatsApp Web limpia para ahorrar espacio.');
+    }
 // Ejecutar limpieza de personajes antiguos al encender
     haremPorGrupo = cargarHarem(); // Recargamos por si acaso
     limpiarHaremNaN(haremPorGrupo);
@@ -432,7 +451,7 @@ function cargarPerfiles() {
 }
 
 function guardarPerfiles(data) {
-    fs.writeFileSync(perfilesFile, JSON.stringify(data, null, 2));
+    perfilesSucios = true; // Solo marcamos que hubo un cambio
 }
 
 function asegurarPerfil(perfiles, userId) {
@@ -3040,16 +3059,22 @@ if (perfiles[userId].reacciones >= 500) {
         ])
         .toFormat('mp4')
         .on('end', async () => {
-            try {
-                const media = MessageMedia.fromFilePath(outputPath);
-                await client.sendMessage(message.from, media, {
-                    caption: textoFinal,
-                    sendVideoAsGif: true,
-                    mentions: mencionadoId ? [mencionadoId] : []
-                });
-                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-            } catch (e) { console.log("Error enviando:", e); }
-        })
+    try {
+        const media = MessageMedia.fromFilePath(outputPath);
+        await client.sendMessage(message.from, media, {
+            caption: textoFinal,
+            sendVideoAsGif: true,
+            mentions: mencionadoId ? [mencionadoId] : []
+        });
+
+        // BORRADO ÚNICO Y SEGURO
+        if (fs.existsSync(outputPath)) {
+            fs.unlinkSync(outputPath);
+        }
+    } catch (e) { 
+        console.log("Error en envío/borrado:", e); 
+    }
+})
         .on('error', (err) => {
             console.log("Error FFMPEG:", err);
             message.reply("❌ Error al procesar el GIF.");
@@ -3082,13 +3107,24 @@ setInterval(() => {
 })().catch(err => console.error("❌ Error crítico al iniciar:", err));
 // FIN DEL ARCHIVO
 
-
-
-
-
-
-
-
+// Reloj de guardado inteligente (Cada 5 minutos)
+setInterval(() => {
+    if (perfilesSucios) {
+        fs.writeFileSync('./data/perfiles.json', JSON.stringify(perfiles, null, 2));
+        perfilesSucios = false;
+        console.log("💾 Perfiles guardados.");
+    }
+    if (haremSucio) {
+        fs.writeFileSync('./data/harem.json', JSON.stringify(haremPorGrupo, null, 2));
+        haremSucio = false;
+        console.log("💾 Harem guardado.");
+    }
+    if (economiaSucia) { // <--- AÑADE ESTO
+        fs.writeFileSync('./data/economia.json', JSON.stringify(carteras, null, 2));
+        economiaSucia = false;
+        console.log("💾 Economía guardada.");
+    }
+}, 300000);
 
 
 
