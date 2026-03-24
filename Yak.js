@@ -2700,30 +2700,29 @@ if (comando === 'fixlevels') {
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
 if (message.body.startsWith(prefix + 'addmoney')) {
     const adminID = '232246195839008@lid'; 
-    if (userId !== adminID) return message.reply("⚠️ No tienes permiso para crear dinero.");
+    if (userId !== adminID) return message.reply("⚠️ No tienes permiso.");
 
     const parts = message.body.split(/\s+/); 
     let cantidad = parseInt(parts[1]); 
 
-    if (isNaN(cantidad)) {
-        return message.reply("❌ Uso: `?addmoney [cantidad]`");
-    }
+    if (isNaN(cantidad)) return message.reply("❌ Uso: `?addmoney [cantidad]`");
 
-    // 1. Usamos la variable global 'carteras'
-    asegurarUsuario(carteras, userId);
+    // EL ERROR ESTABA AQUÍ: 
+    // Debes usar 'carteras' (la global) y no 'economia' (la local que borramos)
+    asegurarUsuario(carteras, userId); 
     
-    // 2. Sumamos directamente en la RAM
+    // Sumamos a la variable GLOBAL que lee el comando ?bal
     carteras[userId].dinero = (Number(carteras[userId].dinero) || 0) + cantidad;
     
-    // 3. Avisamos al reloj que hay cambios
+    // IMPORTANTE: Avisar al reloj de guardado
     economiaSucia = true;
 
-    // 4. Usamos la global 'perfiles' (que ya cargaste al inicio del bot)
-    if (darLogro(perfiles, userId, "admin_money")) {
-        message.reply(`🏆 Logro desbloqueado: Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
-        perfilesSucios = true; // Avisamos al reloj de perfiles
+    // Logro (usando la global 'perfiles')
+    if (typeof darLogro === 'function' && darLogro(perfiles, userId, "admin_money")) {
+        perfilesSucios = true;
+        message.reply(`🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
     } else {
-        message.reply(`✅ Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
+        message.reply(`✅ Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta. (Total: $${carteras[userId].dinero.toLocaleString()})`);
     }
 }
 
