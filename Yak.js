@@ -2711,7 +2711,6 @@ if (message.body.startsWith(prefix + 'addmoney')) {
     }
 
     try {
-        const economia = cargarEconomia();
         asegurarUsuario(economia, userId);
         
         // Sumar la cantidad al dinero actual
