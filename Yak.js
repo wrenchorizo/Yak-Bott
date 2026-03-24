@@ -2345,36 +2345,44 @@ if (message.body.startsWith(prefix + 'tr ')) {
 // --------- ?trade ---------
 if (comando === 'trade') {
     if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
-    if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un trade pendiente aquí.");
-    if (!targetId || targetId === userId) return message.reply("❌ Menciona a alguien para tradear.");
+    if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un trade pendiente. Espera a que termine o expire.");
+
+    if (!targetId || targetId === userId) return message.reply("❌ Menciona a alguien o responde su mensaje.");
 
     const textoTrade = args.join(" ").replace(/@\d+\s*/g, "");
     const partes = textoTrade.split("|");
 
-    if (partes.length !== 2) return message.reply("❌ Uso: `?trade @usuario Mi PJ | Su PJ` (Usa el palito `|`) ");
+    if (partes.length !== 2) return message.reply("❌ Uso: `?trade @usuario Mi PJ | Su PJ` (Usa el separador `|`) ");
 
-    const miNombre = partes[0].trim().toLowerCase();
-    const suNombre = partes[1].trim().toLowerCase();
+    const miNombreBusqueda = partes[0].trim().toLowerCase();
+    const suNombreBusqueda = partes[1].trim().toLowerCase();
 
-    const miPJ = haremPorGrupo[grupoId]?.[userId]?.find(p => p.nombre.toLowerCase() === miNombre);
-    const suPJ = haremPorGrupo[grupoId]?.[targetId]?.find(p => p.nombre.toLowerCase() === suNombre);
+    // Buscamos los objetos reales en la RAM
+    const miPJ = haremPorGrupo[grupoId]?.[userId]?.find(p => p.nombre.toLowerCase() === miNombreBusqueda);
+    const suPJ = haremPorGrupo[grupoId]?.[targetId]?.find(p => p.nombre.toLowerCase() === suNombreBusqueda);
 
-    if (!miPJ) return message.reply(`❌ No tienes a "${miNombre}".`);
-    if (!suPJ) return message.reply(`❌ Esa persona no tiene a "${suNombre}".`);
+    if (!miPJ) return message.reply(`❌ No tienes a "${miNombreBusqueda}".`);
+    if (!suPJ) return message.reply(`❌ Esa persona no tiene a "${suNombreBusqueda}".`);
 
+    // Guardamos la propuesta con los NOMBRES EXACTOS (Case Sensitive) para el findIndex posterior
     tradesPendientes[grupoId] = {
         iniciador: userId,
         receptor: targetId,
-        miPJNombre: miPJ.nombre, // Guardamos el nombre real (con mayúsculas)
-        suPJNombre: suPJ.nombre,
-        timeout: setTimeout(() => { delete tradesPendientes[grupoId]; }, 60000)
+        nombrePJIniciador: miPJ.nombre, 
+        nombrePJReceptor: suPJ.nombre,
+        timeout: setTimeout(() => { 
+            if (tradesPendientes[grupoId]) {
+                delete tradesPendientes[grupoId];
+                console.log(`[INFO] Trade expirado en ${grupoId}`);
+            }
+        }, 60000)
     };
 
     return client.sendMessage(message.from, 
-        `🔄 *PROPUESTA DE TRADE*\n\n` +
+        `🔄 *PROPUESTA DE INTERCAMBIO*\n\n` +
         `👤 @${userId.split('@')[0]} ofrece: *${miPJ.nombre}*\n` +
         `👤 @${targetId.split('@')[0]} ofrece: *${suPJ.nombre}*\n\n` +
-        `✅ @${targetId.split('@')[0]}, pon *?aceptartrade* para confirmar.`,
+        `✅ @${targetId.split('@')[0]}, escribe *?aceptartrade* para confirmar.`,
         { mentions: [userId, targetId] }
     );
 }
@@ -2382,36 +2390,53 @@ if (comando === 'trade') {
 // --------- ?aceptartrade ---------
 if (comando === "aceptartrade") {
     const trade = tradesPendientes[grupoId];
-    if (!trade) return message.reply("❌ No hay intercambios pendientes.");
-    if (userId !== trade.receptor) return message.reply("❌ Solo el receptor puede aceptar.");
+    if (!trade) return message.reply("❌ No hay intercambios pendientes en este grupo.");
 
-    const haremA = haremPorGrupo[grupoId][trade.iniciador];
-    const haremB = haremPorGrupo[grupoId][trade.receptor];
-
-    // Buscamos los índices en el momento exacto de la aceptación
-    const idxA = haremA.findIndex(p => p.nombre === trade.miPJNombre);
-    const idxB = haremB.findIndex(p => p.nombre === trade.suPJNombre);
-
-    if (idxA === -1 || idxB === -1) {
-        delete tradesPendientes[grupoId];
-        return message.reply("❌ El trade falló: uno de los personajes ya no está disponible.");
+    if (userId !== trade.receptor) {
+        return message.reply("❌ Solo la persona que recibió la oferta puede aceptar.");
     }
 
-    // INTERCAMBIO REAL
-    const [pjA] = haremA.splice(idxA, 1);
-    const [pjB] = haremB.splice(idxB, 1);
+    // Referencias directas a los arrays en RAM
+    const haremIniciador = haremPorGrupo[grupoId][trade.iniciador];
+    const haremReceptor = haremPorGrupo[grupoId][trade.receptor];
 
-    haremA.push(pjB);
-    haremB.push(pjA);
+    // Buscamos los índices usando los nombres exactos que guardamos en la propuesta
+    const idxIniciador = haremIniciador.findIndex(p => p.nombre === trade.nombrePJIniciador);
+    const idxReceptor = haremReceptor.findIndex(p => p.nombre === trade.nombrePJReceptor);
 
-    haremSucio = true; // Sincroniza con el archivo harem.json
-    clearTimeout(trade.timeout);
-    delete tradesPendientes[grupoId];
+    // Verificación de seguridad: ¿Siguen ahí los personajes?
+    if (idxIniciador === -1 || idxReceptor === -1) {
+        clearTimeout(trade.timeout);
+        delete tradesPendientes[grupoId];
+        return message.reply("❌ El intercambio falló: uno de los personajes ya no está en el harem de su dueño.");
+    }
 
-    return client.sendMessage(message.from, 
-        `🤝 *TRADE COMPLETADO*\n\n¡Intercambio realizado con éxito entre @${trade.iniciador.split('@')[0]} y @${trade.receptor.split('@')[0]}!`,
-        { mentions: [trade.iniciador, trade.receptor] }
-    );
+    try {
+        // --- LA OPERACIÓN MAESTRA ---
+        // 1. Quitamos los personajes de sus dueños originales
+        const [pjDelIniciador] = haremIniciador.splice(idxIniciador, 1);
+        const [pjDelReceptor] = haremReceptor.splice(idxReceptor, 1);
+
+        // 2. Los metemos en el harem del nuevo dueño
+        haremIniciador.push(pjDelReceptor);
+        haremReceptor.push(pjDelIniciador);
+
+        // 3. Sincronizamos y limpiamos
+        haremSucio = true; 
+        clearTimeout(trade.timeout);
+        delete tradesPendientes[grupoId];
+
+        return client.sendMessage(message.from, 
+            `🤝 *¡INTERCAMBIO COMPLETADO!*\n\n` +
+            `✅ *${pjDelIniciador.nombre}* ahora es de @${trade.receptor.split('@')[0]}\n` +
+            `✅ *${pjDelReceptor.nombre}* ahora es de @${trade.iniciador.split('@')[0]}`,
+            { mentions: [trade.iniciador, trade.receptor] }
+        );
+
+    } catch (err) {
+        console.error("Error crítico en trade:", err);
+        return message.reply("⚠️ Ocurrió un error al procesar el intercambio.");
+    }
 }
 	
 // ============ COMANDO ?wtired ================
