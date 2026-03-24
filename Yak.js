@@ -2699,35 +2699,31 @@ if (comando === 'fixlevels') {
 
 // --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
 if (message.body.startsWith(prefix + 'addmoney')) {
-    const adminID = '232246195839008@lid'; // ID del Administrador
+    const adminID = '232246195839008@lid'; 
     if (userId !== adminID) return message.reply("⚠️ No tienes permiso para crear dinero.");
 
-    // Extraer la cantidad del mensaje
-    const parts = message.body.split(/\s+/); // Divide el mensaje por espacios
-    let cantidad = parseInt(parts[1]); // Toma el primer número después del comando
+    const parts = message.body.split(/\s+/); 
+    let cantidad = parseInt(parts[1]); 
 
     if (isNaN(cantidad)) {
-        return message.reply("❌ Uso: `?addmoney [cantidad]`\nEjemplo: `?addmoney 1000000` ");
+        return message.reply("❌ Uso: `?addmoney [cantidad]`");
     }
 
-    try {
-        asegurarUsuario(economia, userId);
-        
-        // Sumar la cantidad al dinero actual
-        economia[userId].dinero = (Number(economia[userId].dinero) || 0) + cantidad;
-        guardarEconomia(economia);
+    // 1. Usamos la variable global 'carteras'
+    asegurarUsuario(carteras, userId);
+    
+    // 2. Sumamos directamente en la RAM
+    carteras[userId].dinero = (Number(carteras[userId].dinero) || 0) + cantidad;
+    
+    // 3. Avisamos al reloj que hay cambios
+    economiaSucia = true;
 
-        // Lógica de logros (opcional, según tu versión)
-        const perfiles = cargarPerfiles();
-        if (darLogro(perfiles, userId, "admin_money")) {
-            message.reply(`🏆 Logro desbloqueado: Conseguir que el admin te de dinero\n💰 Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
-            guardarPerfiles(perfiles);
-        } else {
-            message.reply(`✅ Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
-        }
-    } catch (e) {
-        console.log("Error en addmoney:", e);
-        message.reply("❌ Error al procesar la economía.");
+    // 4. Usamos la global 'perfiles' (que ya cargaste al inicio del bot)
+    if (darLogro(perfiles, userId, "admin_money")) {
+        message.reply(`🏆 Logro desbloqueado: Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
+        perfilesSucios = true; // Avisamos al reloj de perfiles
+    } else {
+        message.reply(`✅ Se han añadido *$${cantidad.toLocaleString()}* a tu cuenta.`);
     }
 }
 
