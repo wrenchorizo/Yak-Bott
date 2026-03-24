@@ -1402,64 +1402,82 @@ if (comando === 'shop') {
 }
 
 // --------- COMANDO ?buy ---------
-// --------- COMANDO ?buy ---------
 if (comando.startsWith('buy')) {
-    const economia = cargarEconomia();
-    asegurarUsuario(economia, userId);
+    // 1. LIMPIEZA: No cargamos archivos, usamos carteras (global)
+    asegurarUsuario(carteras, userId);
     const args = message.body.slice(prefix.length + 3).trim().split(/\s+/);
     const itemNum = args[0];
     const targetName = args.slice(1).join(' ').toLowerCase().trim();
 
     if (!itemNum || !targetName) return message.reply(`❌ Uso: ${prefix}buy [número] [nombre del personaje]`);
 
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) return message.reply("No tienes un harem en este grupo.");
-
-    const userHarem = haremPorGrupo[grupoId][userId];
+    // Usamos haremPorGrupo (global)
+    const userHarem = haremPorGrupo[grupoId]?.[userId] || [];
     const index = userHarem.findIndex(p => p.nombre.toLowerCase() === targetName);
     if (index === -1) return message.reply(`❌ No tienes a **${targetName}**.`);
 
     let personaje = userHarem[index];
+    let mensajeExtra = ""; // Para avisar de la evolución
 
     if (itemNum === '1') { // POCIÓN
-        if (economia[userId].dinero < 15000) return message.reply("No tienes suficiente dinero ($15,000).");
-        economia[userId].dinero -= 15000;
+        if (carteras[userId].dinero < 15000) return message.reply("No tienes suficiente dinero ($15,000).");
+        carteras[userId].dinero -= 15000;
         personaje.stamina = Math.min(100, (personaje.stamina || 0) + 50);
         message.reply(`🧪 *Poción* usada en ${personaje.nombre}. Stamina: ${personaje.stamina}%`);
-    } else if (itemNum === '2') { // AMULETO
-        if (economia[userId].dinero < 35000) return message.reply("No tienes suficiente dinero ($35,000).");
-        economia[userId].dinero -= 35000;
+    } 
+    else if (itemNum === '2') { // AMULETO
+        if (carteras[userId].dinero < 35000) return message.reply("No tienes suficiente dinero ($35,000).");
+        carteras[userId].dinero -= 35000;
         personaje.exp = (personaje.exp || 0) + 100;
-        let xpReq = Math.floor(100 * Math.pow(1.1, (personaje.level || 1) - 1));
-        let subio = false;
-        if (personaje.exp >= xpReq) {
-            personaje.level = (personaje.level || 1) + 1;
-            personaje.exp = 0;
-            subio = true;
+        
+        // Usamos tu lógica de nivelación de 100 XP por nivel para ser consistentes
+        while (personaje.exp >= (Number(personaje.level) || 1) * 100) {
+            personaje.exp -= (Number(personaje.level) || 1) * 100;
+            personaje.level = (Number(personaje.level) || 1) + 1;
+            mensajeExtra = `\n🆙 ¡SUBIÓ AL NIVEL ${personaje.level}!`;
         }
-        message.reply(`✨ *Amuleto* usado en ${personaje.nombre}.${subio ? ' \n🆙 ¡SUBIÓ AL NIVEL ' + personaje.level + '!' : ''}`);
-    } else if (itemNum === '3') { // PIEDRA
-        if (economia[userId].dinero < 80000) return message.reply("No tienes suficiente dinero ($80,000).");
-        economia[userId].dinero -= 80000;
-        personaje.level = (personaje.level || 1) + 1;
-        message.reply(`⭐ ¡${personaje.nombre} ha evolucionado al nivel ${personaje.level}!`);
-    } else if (itemNum === '4') { // BENDICIÓN
-        if (economia[userId].dinero < 150000) return message.reply("No tienes suficiente dinero ($150,000).");
-        economia[userId].dinero -= 150000;
+    } 
+    else if (itemNum === '3') { // PIEDRA
+        if (carteras[userId].dinero < 80000) return message.reply("No tienes suficiente dinero ($80,000).");
+        carteras[userId].dinero -= 80000;
+        personaje.level = (Number(personaje.level) || 1) + 1;
+        message.reply(`⭐ ¡${personaje.nombre} subió al nivel ${personaje.level}!`);
+    } 
+    else if (itemNum === '4') { // BENDICIÓN
+        if (carteras[userId].dinero < 150000) return message.reply("No tienes suficiente dinero ($150,000).");
+        carteras[userId].dinero -= 150000;
         personaje.stamina = 100;
-        personaje.level = (personaje.level || 1) + 2;
+        personaje.level = (Number(personaje.level) || 1) + 2;
         message.reply(`💖 ¡${personaje.nombre} ha sido bendecido!\n🆙 +2 Niveles (Nivel actual: ${personaje.level})\n⚡ Energía al 100%`);
-    } else if (itemNum === '5') { // CONTRATO
-        if (economia[userId].dinero < 300000) return message.reply("No tienes suficiente dinero ($300,000).");
-        economia[userId].dinero -= 300000;
+    } 
+    else if (itemNum === '5') { // CONTRATO
+        if (carteras[userId].dinero < 300000) return message.reply("No tienes suficiente dinero ($300,000).");
+        carteras[userId].dinero -= 300000;
         personaje.valor = Math.floor(personaje.valor * 1.5);
-        message.reply(`📜 *Contrato Eterno* firmado.\n📈 El valor base de ${personaje.nombre} ha subido a ${personaje.valor.toLocaleString()}.`);
-    } else {
-        return message.reply("❌ Ese número de objeto no existe.");
+        message.reply(`📜 *Contrato Eterno* firmado.\n📈 Valor base subió a ${personaje.valor.toLocaleString()}.`);
+    } 
+
+    // --- BLOQUE DE EVOLUCIÓN AUTOMÁTICA (Para items 2, 3 y 4) ---
+    if (personaje.nivelEvo && personaje.level >= personaje.nivelEvo) {
+        const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === personaje.evolucion.toLowerCase());
+        if (datosEvo) {
+            const nombreViejo = personaje.nombre;
+            personaje.nombre = datosEvo.nombre;
+            personaje.imagen = datosEvo.imagen;
+            personaje.valor = datosEvo.valor;
+            personaje.evolucion = datosEvo.evolucion || null;
+            personaje.nivelEvo = datosEvo.nivelEvo || null;
+            
+            // Enviamos mensaje de evolución
+            message.reply(`✨ ¡Increíble! Gracias al objeto, *${nombreViejo}* ha evolucionado a... ¡*${personaje.nombre}*! 🎉`);
+        }
     }
 
-    guardarEconomia(economia);
-    guardarHarem(haremPorGrupo);
-} // CIERRE CORRECTO DE ?buy
+    // AVISAMOS AL RELOJ (No guardamos a disco manualmente)
+    economiaSucia = true;
+    haremSucio = true;
+}
+
 	
 
 // ==========================================
