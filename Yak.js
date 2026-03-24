@@ -475,8 +475,6 @@ function darLogro(perfiles, userId, logro) {
 }
 	const logrosInfo = {
 
-cmd_1: "Usar un comando por primera vez",
-
 cmd_500: "Usar 500 comandos",
 cmd_1000: "Usar 1,000 comandos",
 cmd_10000: "Usar 10,000 comandos",
@@ -578,13 +576,6 @@ if (perfiles[userId].xp >= xpNecesaria) {
     perfiles[userId].level += 1;
 
     message.reply(`⭐ ¡Subiste al nivel ${perfiles[userId].level}!`);
-}
-
-	perfiles[userId].comandos += 1;
-	if (perfiles[userId].comandos === 1) {
-    if (darLogro(perfiles, userId, "cmd_1")) {
-        message.reply("🏆 Logro desbloqueado: Usar un comando por primera vez");
-    }
 }
 
 if (perfiles[userId].comandos === 500) {
