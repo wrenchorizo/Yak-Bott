@@ -1372,8 +1372,11 @@ if (message.body === "?bal") {
 
 // --------- COMANDO ?shop ---------
 if (comando === 'shop') {
+    // 1. Aseguramos que el usuario exista en la variable GLOBAL 'carteras'
     asegurarUsuario(carteras, userId); 
-    const economia = carteras[userId].dinero || 0;
+    
+    // 2. Extraemos el dinero directamente de la RAM
+    const miDinero = carteras[userId].dinero || 0;
     
     let tabla = `🛒 *TIENDA DE LUJO YAKBOT*\n`;
     tabla += `━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -1399,7 +1402,8 @@ if (comando === 'shop') {
     tabla += `   ╰┈─ ➤ Uso: ?buy 5 Nombre\n\n`;
     
     tabla += `━━━━━━━━━━━━━━━━━━━━\n`;
-    tabla += `⌬ Tu Balance: *$${economia[userId].dinero.toLocaleString()}*`;
+    // 3. Mostramos el balance usando la variable que creamos arriba
+    tabla += `⌬ Tu Balance: *$${miDinero.toLocaleString()}*`;
     
     return message.reply(tabla);
 }
