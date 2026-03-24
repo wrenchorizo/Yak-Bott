@@ -1692,148 +1692,135 @@ duelo.timeoutPick = setTimeout(() => {
 
 // --------- ?pick (3v3) ---------
 if (comando.startsWith('pick')) {
+    // 1. Seguridad: Verificar si existe el duelo en este grupo
     if (!duelosActivos[grupoId]) return;
     const duelo = duelosActivos[grupoId];
+    
+    // Verificar que el que escribe sea uno de los participantes
     if (userId !== duelo.jugador1 && userId !== duelo.jugador2) return;
 
     const textoOriginal = message.body.slice(prefix.length + 5).trim();
     const nombres = textoOriginal.split(",").map(n => n.trim());
 
     if (nombres.length < 1 || nombres.length > 3) {
-        return message.reply("Debes elegir entre 1 y 3 personajes separados por coma.");
+        return message.reply("❌ Debes elegir entre 1 y 3 personajes separados por coma.");
     }
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId]) {
-        return message.reply("No tienes personajes.");
-    }
+
+    const miHarem = haremPorGrupo[grupoId]?.[userId] || [];
+    if (miHarem.length === 0) return message.reply("❌ No tienes personajes en este grupo.");
 
     let equipo = [];
     let valorTotal = 0;
-    let tieneADeadpool = false; // Check para el diálogo
+    let tieneADeadpool = false;
 
     for (let nombre of nombres) {
-        const personaje = haremPorGrupo[grupoId][userId]
-            .find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
+        const personaje = miHarem.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
 
-        if (!personaje) {
-            return message.reply(`No tienes a ${nombre}.`);
-        }
+        if (!personaje) return message.reply(`❌ No tienes a ${nombre}.`);
 
-        // --- LÓGICA DEADPOOL: STAMINA ---
         actualizarStamina(personaje);
         
         if (personaje.nombre === 'Deadpool') {
             tieneADeadpool = true;
-            personaje.stamina = 100; // Deadpool nunca se cansa (Factor de curación)
+            personaje.stamina = 100; 
         } else if (personaje.stamina <= 10) {
-            return message.reply(`Noup, ${personaje.nombre} está muy cansado (${personaje.stamina}%). ¡Déjalo dormir!`);
+            return message.reply(`😫 ${personaje.nombre} está muy cansado (${personaje.stamina}%).`);
         }
 
-        // Calcular valor real
+        // Poder basado en nivel
         let valorReal = Number(personaje.valor) * Math.pow(1.20, (personaje.level - 1));
 
-        // --- LÓGICA DEADPOOL: TRAMPA DE VALOR ---
-        if (personaje.nombre === 'Deadpool') {
-            // 20% de probabilidad de que su valor sea absurdamente alto por "guion"
-            if (Math.random() < 0.20) {
-                valorReal *= 5; 
-                message.reply("🔴 *DEADPOOL:* ¡Le robé el teclado al programador y me subí las stats! ¡Miren ese poder! 💥");
-            }
+        if (personaje.nombre === 'Deadpool' && Math.random() < 0.20) {
+            valorReal *= 5; 
+            message.reply("🔴 *DEADPOOL:* ¡Me subí las stats hackeando el bot! 💥");
         }
 
         valorTotal += valorReal; 
 
-        // Restar energía (Excepto a Deadpool)
         if (personaje.nombre !== 'Deadpool') {
-            personaje.stamina -= 30; 
-            if (personaje.stamina < 0) personaje.stamina = 0;
+            personaje.stamina = Math.max(0, personaje.stamina - 30);
             personaje.lastUpdate = Date.now();
         }
 
-        if (equipo.find(p => p.nombre === personaje.nombre)) {
-            return message.reply("No puedes repetir personajes.");
-        }
-
+        if (equipo.find(p => p.nombre === personaje.nombre)) return message.reply("❌ No puedes repetir personajes.");
         equipo.push(personaje);
     }
 
+    // Guardar picks en RAM
+    if (!duelo.picks) duelo.picks = {};
     duelo.picks[userId] = { equipo, valorTotal };
     
-    let msgConfirm = "Equipo seleccionado.";
-    if (tieneADeadpool) msgConfirm = "Equipo seleccionado. 🔴 *DP:* ¡Prepárense para la masacre! Traje chimichangas para todos (menos para los perdedores).";
+    let msgConfirm = "✅ Equipo seleccionado.";
+    if (tieneADeadpool) msgConfirm += "\n🔴 *DP:* ¡Prepárense para la masacre! 🌮";
     message.reply(msgConfirm);
 
-    // Si ambos ya eligieron
+    // --- RESOLUCIÓN DEL DUELO ---
     if (duelo.picks[duelo.jugador1] && duelo.picks[duelo.jugador2]) {
         clearTimeout(duelo.timeoutPick);
 
         const equipo1 = duelo.picks[duelo.jugador1];
         const equipo2 = duelo.picks[duelo.jugador2];
 
-        // RNG leve ±5%
         let poder1 = equipo1.valorTotal * (0.95 + Math.random() * 0.1);
         let poder2 = equipo2.valorTotal * (0.95 + Math.random() * 0.1);
 
-        // --- LÓGICA DEADPOOL: VICTORIA FORZADA ---
-        // Si alguien tiene a Deadpool, hay un 10% de probabilidad extra de ganar por "Deus Ex Machina"
+        // Trampas de Deadpool
         if (equipo1.equipo.some(p => p.nombre === 'Deadpool') && Math.random() < 0.10) {
             poder1 += poder2; 
-            message.reply("🔴 *DEADPOOL:* ¿Iba perdiendo? ¡JA! Eso era un señuelo de cartón, el verdadero yo acaba de apuñalar al otro equipo por la espalda. ¡Ganamos!");
+            message.reply("🔴 *DEADPOOL:* ¡Victoria por Deus Ex Machina! Ganamos.");
         } else if (equipo2.equipo.some(p => p.nombre === 'Deadpool') && Math.random() < 0.10) {
             poder2 += poder1;
-            message.reply("🔴 *DEADPOOL:* ¡BOOM! Puse C4 en las estadísticas del oponente. ¡Victoria para mi dueño!");
+            message.reply("🔴 *DEADPOOL:* ¡Puse C4 en sus stats! Victoria.");
         }
 
-        const economia = cargarEconomia();
-        asegurarUsuario(economia, duelo.jugador1);
-        asegurarUsuario(economia, duelo.jugador2);
-
-        let mensajeFinal = "";
         const ganadorId = poder1 > poder2 ? duelo.jugador1 : duelo.jugador2;
         const perdedorId = poder1 > poder2 ? duelo.jugador2 : duelo.jugador1;
-		if (ganadorId !== adminNumber && perdedorId === adminNumber) {
-    if (darLogro(perfiles, ganadorId, "beat_admin")) {
-        client.sendMessage(
-            message.from,
-            `🏆 Logro desbloqueado: Derrotar al admin en duel`,
-            { mentions: [ganadorId] }
-        );
-    }
-		}
-		guardarPerfiles(perfiles);
-        const robo = Math.floor(economia[perdedorId].dinero * 0.50);
 
-        economia[perdedorId].dinero -= robo;
-        economia[ganadorId].dinero += robo;
+        // Economía (Usando variable global carteras)
+        asegurarUsuario(carteras, ganadorId);
+        asegurarUsuario(carteras, perdedorId);
+        const robo = Math.floor((carteras[perdedorId].dinero || 0) * 0.15); // Bajé el robo al 15% para que no sea tan cruel
 
-        mensajeFinal = `⇏ RESULTADO 3v3 ⇍\n\n`;
-        mensajeFinal += `Equipo 1 (${duelo.jugador1.split('@')[0]}):\n${equipo1.equipo.map(p => p.nombre).join(", ")}\nTotal: ${Math.floor(equipo1.valorTotal)}\n\n`;
-        mensajeFinal += `Equipo 2 (${duelo.jugador2.split('@')[0]}):\n${equipo2.equipo.map(p => p.nombre).join(", ")}\nTotal: ${Math.floor(equipo2.valorTotal)}\n\n`;
-        mensajeFinal += `» GANADOR: @${ganadorId.split('@')[0]}\n» Robó $${robo.toLocaleString()}`;
+        carteras[perdedorId].dinero -= robo;
+        carteras[ganadorId].dinero += robo;
+        economiaSucia = true;
 
-        // --- FRASES DE CIERRE DE DEADPOOL ---
-        const equipoGanador = poder1 > poder2 ? equipo1 : equipo2;
-        if (equipoGanador.equipo.some(p => p.nombre === 'Deadpool')) {
-            mensajeFinal += `\n\n🔴 *DEADPOOL:* ¡Victoria! Ahora vámonos antes de que el dueño del bot se de cuenta de que hice trampa. 🌮`;
-        }
+        // Lógica de XP y EVOLUCIÓN
+        [equipo1, equipo2].forEach(eq => {
+            const esGanador = (eq === (poder1 > poder2 ? equipo1 : equipo2));
+            const xpGanada = esGanador ? 60 : 20;
 
-        // Ganadores y Perdedores ganan XP (Tu lógica de XP se mantiene igual)
-        const ganadoresP = equipoGanador.equipo;
-        const perdedoresP = poder1 > poder2 ? equipo2.equipo : equipo1.equipo;
+            eq.equipo.forEach(p => {
+                p.exp = (Number(p.exp) || 0) + xpGanada;
+                let subioNivel = false;
 
-        ganadoresP.forEach(p => {
-            p.exp += 50; 
-            let xpReq = Math.floor(100 * Math.pow(1.1, p.level - 1));
-            if (p.exp >= xpReq) { p.level += 1; p.exp = 0; }
+                while (p.exp >= (Number(p.level) || 1) * 100) {
+                    p.exp -= (Number(p.level) || 1) * 100;
+                    p.level = (Number(p.level) || 1) + 1;
+                    subioNivel = true;
+                }
+
+                // CHECK DE EVOLUCIÓN
+                if (subioNivel && p.nivelEvo && p.level >= p.nivelEvo) {
+                    const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
+                    if (datosEvo) {
+                        p.nombre = datosEvo.nombre;
+                        p.imagen = datosEvo.imagen;
+                        p.valor = datosEvo.valor;
+                        p.evolucion = datosEvo.evolucion || null;
+                        p.nivelEvo = datosEvo.nivelEvo || null;
+                        client.sendMessage(message.from, `✨ ¡*${p.nombre}* ha evolucionado después del duelo!`);
+                    }
+                }
+            });
         });
 
-        perdedoresP.forEach(p => {
-            p.exp += 15; 
-            let xpReq = Math.floor(100 * Math.pow(1.1, p.level - 1));
-            if (p.exp >= xpReq) { p.level += 1; p.exp = 0; }
-        });
+        haremSucio = true;
 
-        guardarEconomia(economia);
-        guardarHarem(haremPorGrupo);
+        let mensajeFinal = `⇏ *RESULTADO DUELO 3v3* ⇍\n\n`;
+        mensajeFinal += `👤 @${duelo.jugador1.split('@')[0]}: ${Math.floor(poder1).toLocaleString()}\n`;
+        mensajeFinal += `👤 @${duelo.jugador2.split('@')[0]}: ${Math.floor(poder2).toLocaleString()}\n\n`;
+        mensajeFinal += `🏆 GANADOR: @${ganadorId.split('@')[0]}\n💰 Recompensa: $${robo.toLocaleString()}`;
 
         client.sendMessage(message.from, mensajeFinal, { mentions: [duelo.jugador1, duelo.jugador2] });
         delete duelosActivos[grupoId];
