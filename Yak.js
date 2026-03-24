@@ -19,6 +19,29 @@ const haremFile = './harem.json';
 const economiaFile = './economia.json';
 const perfilesFile = './data/perfiles.json';
 
+function cargarHarem() {
+    const path = dataFolder + 'harem.json';
+    if (fs.existsSync(path)) return JSON.parse(fs.readFileSync(path, 'utf-8'));
+    return {};
+}
+function cargarEconomia() {
+    const path = dataFolder + 'economia.json';
+    try {
+        if (fs.existsSync(path)) {
+            return JSON.parse(fs.readFileSync(path, 'utf-8'));
+        }
+    } catch (error) {
+        console.log("Error leyendo economía, creando una nueva...");
+    }
+    return {}; // Si no existe, devuelve carteras vacías
+}
+function cargarPerfiles() {
+    if (!fs.existsSync(perfilesFile)) {
+        fs.writeFileSync(perfilesFile, JSON.stringify({}, null, 2));
+    }
+    return JSON.parse(fs.readFileSync(perfilesFile));
+}
+
 let perfilesSucios = false;
 let haremSucio = false;
 let economiaSucia = false;
@@ -207,12 +230,6 @@ function msToTime(ms) {
     return `${minutos}m ${segundos}s`;
 }
 
-function cargarHarem() {
-    const path = dataFolder + 'harem.json';
-    if (fs.existsSync(path)) return JSON.parse(fs.readFileSync(path, 'utf-8'));
-    return {};
-}
-
 function guardarHarem(data) {
     haremPorGrupo = data; 
     haremSucio = true; // Solo marcamos que hubo un cambio
@@ -221,17 +238,6 @@ function guardarHarem(data) {
 const duelosActivos = {};
 const tradesPendientes = {};
 
-function cargarEconomia() {
-    const path = dataFolder + 'economia.json';
-    try {
-        if (fs.existsSync(path)) {
-            return JSON.parse(fs.readFileSync(path, 'utf-8'));
-        }
-    } catch (error) {
-        console.log("Error leyendo economía, creando una nueva...");
-    }
-    return {}; // Si no existe, devuelve carteras vacías
-}
 
 function guardarEconomia(data) {
     // En lugar de escribir el archivo aquí, solo avisamos al reloj
@@ -437,13 +443,6 @@ function personajeRandom(listaPersonajes) {
         if (rnd <= 0) return p;
     }
     return filtrados[filtrados.length - 1];
-}
-
-function cargarPerfiles() {
-    if (!fs.existsSync(perfilesFile)) {
-        fs.writeFileSync(perfilesFile, JSON.stringify({}, null, 2));
-    }
-    return JSON.parse(fs.readFileSync(perfilesFile));
 }
 
 function guardarPerfiles(data) {
