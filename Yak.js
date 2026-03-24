@@ -30,7 +30,6 @@ const ffmpegPath = require('ffmpeg-static');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-const ytdl = require('@distube/ytdl-core');
 const play = require('play-dl');
 const { exec } = require('child_process');
 const axios = require('axios');
@@ -3088,7 +3087,7 @@ if (perfiles[userId].reacciones >= 500) {
 // --- DETECTOR DE COMANDO INEXISTENTE ---
     if (message.body.startsWith(prefix)) {
         const comandoBase = comando.split(/\s+/)[0];
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'delcahr', 'fixlevels', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 'yt', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
+        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'delcahr', 'fixlevels', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
         
         if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
             return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
