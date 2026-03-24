@@ -2118,8 +2118,7 @@ if (comando.startsWith('charinfo')) {
     const nombreBusqueda = message.body.slice(prefix.length + 8).trim().toLowerCase(); 
     if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
-    // Refrescar memoria desde el archivo antes de buscar
-    haremPorGrupo = cargarHarem(); 
+    
 
     const grupoId = message.from;
     const userId = message.author || message.from;
@@ -2533,8 +2532,9 @@ if (comando === 'fight') {
     const nombresPjs = message.body.slice(prefix.length + 5).split(',').map(n => n.trim().toLowerCase());
     if (nombresPjs.length === 0 || !nombresPjs[0]) return message.reply("❌ Uso: *?fight pj1, pj2...*");
 
-    const hData = cargarHarem();
-    const userHarem = hData[grupoId]?.[userId] || [];
+    // Usamos directamente haremPorGrupo que ya está en la memoria RAM
+const userHarem = haremPorGrupo[grupoId]?.[userId] || [];
+
     let equipo = [];
 
     for (let nombrePj of nombresPjs) {
@@ -2562,44 +2562,54 @@ if (comando === 'fight') {
     message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
 
     setTimeout(() => {
-        if (!mobActual[grupoId]) return;
+		// --- DENTRO DE LA VICTORIA ---
+if (poderTuEquipo >= mob.poderTotal) {
+    const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
+    const xpGanada = Math.floor(mob.poderTotal / 200); 
 
-        if (poderTuEquipo >= mob.poderTotal) {
-            const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
-            
-            // EXP ajustada: Si el mob tiene 50,000 poder, da 250 XP. 
-            // Con nivel 1 pidiendo 100 XP, subirás 2 niveles aprox.
-            const xpGanada = Math.floor(mob.poderTotal / 200); 
+    // USA LA RAM (Instantáneo)
+    asegurarUsuario(carteras, userId);
+    carteras[userId].dinero = (Number(carteras[userId].dinero) || 0) + gananciaDinero;
+    
+    // SOLO AVISA AL RELOJ
+    economiaSucia = true; 
 
-            const eco = cargarEconomia();
-            asegurarUsuario(eco, userId);
-            eco[userId].dinero = (Number(eco[userId].dinero) || 0) + gananciaDinero;
-            guardarEconomia(eco);
+    let avisosNivel = "";
+    for (let p of equipo) { // Usamos for para manejar mejor la evolución
+        p.exp = (Number(p.exp) || 0) + xpGanada;
+        p.stamina = Math.max(0, p.stamina - 15);
 
-            let avisosNivel = "";
-            equipo.forEach(p => {
-                p.exp = (Number(p.exp) || 0) + xpGanada;
-                p.stamina = Math.max(0, p.stamina - 15);
-                p.lastUpdate = Date.now();
+        let nivelesSubidos = 0;
+        while (p.exp >= (Number(p.level) || 1) * 100) {
+            p.exp -= (Number(p.level) || 1) * 100;
+            p.level = (Number(p.level) || 1) + 1;
+            nivelesSubidos++;
+        }
 
-                // Lógica de subida de nivel (expNecesaria = nivel * 100)
-                let nivelesSubidos = 0;
-                while (p.exp >= (Number(p.level) || 1) * 100) {
-                    p.exp -= (Number(p.level) || 1) * 100;
-                    p.level = (Number(p.level) || 1) + 1;
-                    nivelesSubidos++;
+        if (nivelesSubidos > 0) {
+            avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
+
+            // ✅ NUEVA LÓGICA DE EVOLUCIÓN
+            if (p.nivelEvo && p.level >= p.nivelEvo) {
+                const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
+                if (datosEvo) {
+                    const nombreViejo = p.nombre;
+                    p.nombre = datosEvo.nombre;
+                    p.imagen = datosEvo.imagen;
+                    p.valor = datosEvo.valor;
+                    p.evolucion = datosEvo.evolucion || null;
+                    p.nivelEvo = datosEvo.nivelEvo || null;
+                    avisosNivel += `\n✨ *${nombreViejo}* evolucionó a *${p.nombre}*!`;
                 }
+            }
+        }
+    }
 
-                if (nivelesSubidos > 0) {
-                    avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
-                }
-            });
-
-            hData[grupoId][userId] = userHarem;
-            guardarHarem(hData);
-            mobActual[grupoId].vencido = true;
-
-            message.reply(`✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
+    // SOLO AVISA AL RELOJ
+    haremSucio = true; 
+    mobActual[grupoId].vencido = true;
+        
+         message.reply(`✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
         } else {
             message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
         }
