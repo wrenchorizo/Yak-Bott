@@ -73,7 +73,6 @@ let botSettings = {};
 if (fs.existsSync('./botSettings.json')) {
     botSettings = JSON.parse(fs.readFileSync('./botSettings.json'));
 }
-const yts = require('yt-search');
 
 const animeGifs = {
     cry: [
