@@ -2087,7 +2087,7 @@ if (comando === 'harem') {
             respuesta += `    ╰┈─ ➤ Marvel ✦ (Valor Insuperable)\n\n`;
         } else {
             respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre} (Lvl ${lvl})\n`;
-            respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ $${valorReal.toLocaleString()}\n\n`;
+            respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ ${valorReal.toLocaleString()}\n\n`;
         }
     });
 
