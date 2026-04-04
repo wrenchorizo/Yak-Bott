@@ -9,7 +9,8 @@ if (!global.File) {
     };
 }
 
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const mongoose = require('mongoose');
+const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
 const { MongoStore } = require('wwebjs-mongo');
 const qrcode = require('qrcode-terminal');
 const dataFolder = './data/';
@@ -18,37 +19,28 @@ const fs = require('fs');
 const haremFile = './harem.json';
 const economiaFile = './economia.json';
 const perfilesFile = './data/perfiles.json';
+// Esquema para el Harem por Grupo
+const haremSchema = new mongoose.Schema({
+    idUnico: { type: String, required: true, unique: true }, // userId + grupoId
+    userId: String,
+    grupoId: String,
+    personajes: { type: Array, default: [] }
+});
+const Harem = mongoose.model('Harem', haremSchema);
 
-function cargarHarem() {
-    const path = dataFolder + 'harem.json';
-    if (fs.existsSync(path)) return JSON.parse(fs.readFileSync(path, 'utf-8'));
-    return {};
-}
-function cargarEconomia() {
-    const path = dataFolder + 'economia.json';
-    try {
-        if (fs.existsSync(path)) {
-            return JSON.parse(fs.readFileSync(path, 'utf-8'));
-        }
-    } catch (error) {
-        console.log("Error leyendo economía, creando una nueva...");
-    }
-    return {}; // Si no existe, devuelve carteras vacías
-}
-function cargarPerfiles() {
-    if (!fs.existsSync(perfilesFile)) {
-        fs.writeFileSync(perfilesFile, JSON.stringify({}, null, 2));
-    }
-    return JSON.parse(fs.readFileSync(perfilesFile));
-}
-
-let perfilesSucios = false;
-let haremSucio = false;
-let economiaSucia = false;
-
-let perfiles = cargarPerfiles();
-let haremPorGrupo = cargarHarem();
-let carteras = cargarEconomia();
+// Esquema para Economía y Perfiles
+const userSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true },
+    dinero: { type: Number, default: 0 },
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    mensajes: { type: Number, default: 0 },
+    comandos: { type: Number, default: 0 },
+    lastWork: { type: Number, default: 0 },
+    lastDaily: { type: Date, default: null },
+    logros: { type: Array, default: [] }
+});
+const User = mongoose.model('User', userSchema);
 
 const sharp = require('sharp');
 const path = require('path');
@@ -287,25 +279,46 @@ function actualizarStamina(personaje) {
 
 
 // Cliente
-const client = new Client({
-    authStrategy: new LocalAuth({
-        dataPath: './data/session'
-    }),
-    puppeteer: {
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--no-zygote',
-            '--single-process',
-            '--disable-accelerated-2d-canvas', // Nueva
-            '--disable-gpu',                   // Nueva
-            '--no-first-run'                   // Nueva
-        ],
-    }
-});
+const MONGO_URI = process.env.MONGO_URL || 'TU_LINK_DE_MONGODB_AQUI';
 
+mongoose.connect(MONGO_URI).then(() => {
+    console.log('✅ Conectado a MongoDB Atlas');
+    const store = new MongoStore({ mongoose: mongoose });
+
+    const client = new Client({
+        authStrategy: new RemoteAuth({
+            store: store,
+            backupSyncIntervalMs: 300000 // Respaldo cada 5 min
+        }),
+        puppeteer: {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--no-zygote',
+                '--single-process'
+            ],
+            executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+        }
+    });
+
+    // A partir de aquí siguen tus eventos: client.on('qr'), client.on('ready'), etc.
+    
+    client.on('qr', (qr) => {
+        qrcode.generate(qr, { small: true });
+        console.log(`QR Link: https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
+    });
+
+    client.on('ready', () => {
+        console.log('✅ YakBot listo y conectado con MongoDB');
+    });
+
+    client.initialize();
+}).catch(err => {
+    console.error('❌ Error fatal al conectar a MongoDB:', err);
+});
+	
 
 client.on('code', (code) => {
     console.log('\n Código para vincularte a Yak-bot:');
@@ -313,18 +326,6 @@ client.on('code', (code) => {
     console.log('Ve a WhatsApp > Dispositivos vinculados > Vincular con número');
 });
 
-
-// Mostrar QR
-client.on('qr', (qr) => {
-    // 1. Lo seguimos intentando en consola por si acaso
-    qrcode.generate(qr, { small: true });
-
-    // 2. LA SOLUCIÓN: Genera un link para que lo veas en el navegador
-    console.log("--------------------------------------------------");
-    console.log("SI EL QR DE ARRIBA SE VE MAL, ESCANEA ESTE:");
-    console.log(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
-    console.log("--------------------------------------------------");
-});
 
 // Bot listo
 client.on('ready', () => {
