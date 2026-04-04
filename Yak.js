@@ -279,7 +279,7 @@ function actualizarStamina(personaje) {
 
 
 // Cliente
-const MONGO_URI = process.env.MONGO_URL || 'TU_LINK_DE_MONGODB_AQUI';
+const MONGO_URI = process.env.MONGO_URL || 'https://mongodb+srv://memo:XboxKauzare10@cluster0.9wurfyb.mongodb.net/?appName=Cluster0';
 
 mongoose.connect(MONGO_URI).then(() => {
     console.log('✅ Conectado a MongoDB Atlas');
