@@ -40,6 +40,29 @@ const userSchema = new mongoose.Schema({
     lastDaily: { type: Date, default: null },
     logros: { type: Array, default: [] }
 });
+
+const logrosInfo = {
+    cmd_500: "Veterano de Comandos (500 usos)",
+    cmd_1000: "Adicto al Bot (1,000 usos)",
+    cmd_10000: "Leyenda Viviente (10,000 usos)",
+    cmd_50000: "DIOS de los Comandos (50,000 usos)",
+    three_am: "Insomnio Activo (3 AM)",
+    money_100k: "Ahorrador (100k)",
+    money_1m: "Millonario (1M)",
+    money_10m: "Magnate (10M)",
+    money_100m: "Dueño del Mundo (100M)",
+    chars_15: "Coleccionista Principiante (15 personajes)",
+    chars_30: "Dueño de Harem (30 personajes)",
+    chars_50: "Comandante de Almas (50 personajes)",
+    chars_100: "Soberano del Harem (100 personajes)"
+};
+const charShopSchema = new mongoose.Schema({
+    grupoId: { type: String, required: true, unique: true },
+    personajes: { type: Array, default: [] },
+    ultimaActualizacion: { type: Number, default: 0 }
+});
+const CharShop = mongoose.model('CharShop', charShopSchema);
+
 const User = mongoose.model('User', userSchema);
 
 const sharp = require('sharp');
@@ -279,8 +302,6 @@ function actualizarStamina(personaje) {
 
 
 // Cliente
-const MONGO_URI = process.env.MONGO_URL || 'https://mongodb+srv://memo:XboxKauzare10@cluster0.9wurfyb.mongodb.net/?appName=Cluster0';
-
 mongoose.connect(MONGO_URI).then(() => {
     console.log('✅ Conectado a MongoDB Atlas');
     const store = new MongoStore({ mongoose: mongoose });
@@ -288,58 +309,44 @@ mongoose.connect(MONGO_URI).then(() => {
     const client = new Client({
         authStrategy: new RemoteAuth({
             store: store,
-            backupSyncIntervalMs: 300000 // Respaldo cada 5 min
+            backupSyncIntervalMs: 300000 
         }),
         puppeteer: {
             headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--no-zygote',
-                '--single-process'
-            ],
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--no-zygote', '--single-process'],
             executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
         }
     });
-
+	
     // A partir de aquí siguen tus eventos: client.on('qr'), client.on('ready'), etc.
     
-    client.on('qr', (qr) => {
+client.on('qr', (qr) => {
         qrcode.generate(qr, { small: true });
         console.log(`QR Link: https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
     });
 
-    client.on('ready', () => {
-        console.log('✅ YakBot listo y conectado con MongoDB');
+    client.on('code', (code) => {
+        console.log('\n Código de vinculación:', code);
     });
 
+    client.on('ready', () => {
+        console.log('✅ YakBot listo y conectado');
+        
+        // Limpieza de caché (Ahora sí está en el lugar correcto)
+        const cacheDir = './.wwebjs_cache';
+        if (fs.existsSync(cacheDir)) {
+            fs.rmSync(cacheDir, { recursive: true, force: true });
+            console.log('🗑️ Caché limpia.');
+        }
+    });
+
+    // --- AQUÍ SIGUE TU client.on('message_create', async (message) => { ... ---
+    // (Todo el código de mensajes y Deadpool que pegaste arriba)
+
     client.initialize();
+
 }).catch(err => {
     console.error('❌ Error fatal al conectar a MongoDB:', err);
-});
-	
-
-client.on('code', (code) => {
-    console.log('\n Código para vincularte a Yak-bot:');
-    console.log(code);
-    console.log('Ve a WhatsApp > Dispositivos vinculados > Vincular con número');
-});
-
-
-// Bot listo
-client.on('ready', () => {
-    console.log('✅ YakBot listo y conectado');
-	
-// LIMPIEZA DE CACHÉ
-    const cacheDir = './.wwebjs_cache';
-    if (fs.existsSync(cacheDir)) {
-        fs.rmSync(cacheDir, { recursive: true, force: true });
-        console.log('🗑️ Caché de WhatsApp Web limpia para ahorrar espacio.');
-    }
-// Ejecutar limpieza de personajes antiguos al encender
-    haremPorGrupo = cargarHarem(); // Recargamos por si acaso
-    limpiarHaremNaN(haremPorGrupo);
 });
 
 		client.on("change_state", state => {
@@ -463,16 +470,6 @@ if (message.isGroup) {
     if (!botSettings[chatId]) {
         botSettings[chatId] = { enabled: true };
     }
-
-const isGroup = message.from.endsWith("@g.us");
-
-let userId;
-
-if (isGroup) {
-    userId = message.author || message._data.participant;
-} else {
-    userId = message.from;
-}
 
     if (!botSettings[chatId].enabled && !message.body.toLowerCase().startsWith(`${prefix}bot on`)) {
         return; // Ignora todos los comandos si está apagado
