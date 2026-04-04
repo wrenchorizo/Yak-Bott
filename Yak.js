@@ -347,164 +347,84 @@ client.on('ready', () => {
 });
 
 
-// ---------------- VARIABLES GLOBALES ----------------
-const personajes = JSON.parse(
-  fs.readFileSync("./personajes.json", "utf8")
-)
-	
-// --- FUNCIÓN PARA LIMPIAR PERSONAJES ANTIGUOS (Añadir debajo de guardarHarem) ---
-function limpiarHaremNaN(data) {
-    let corregidos = 0;
-    for (let grupoId in data) {
-        for (let userId in data[grupoId]) {
-            data[grupoId][userId].forEach(p => {
-                // Si el nivel no existe, es NaN o menor a 1, lo reseteamos
-                if (p.level === undefined || isNaN(p.level) || p.level < 1) {
-                    p.level = 1;
-                    corregidos++;
-                }
-                // Si la XP no existe o es NaN, la reseteamos
-                if (p.exp === undefined || isNaN(p.exp)) {
-                    p.exp = 0;
-                }
-                // Aseguramos stamina también
-                if (p.stamina === undefined || isNaN(p.stamina)) {
-                    p.stamina = 100;
-                }
-            });
-        }
-    }
-    if (corregidos > 0) {
-        console.log(`🧹 Se arreglaron ${corregidos} personajes con stats rotos (NaN).`);
-        guardarHarem(data); // Guardamos los cambios permanentemente
-    }
+// ---------------- VARIABLES GLOBALES & MODELOS ----------------
+const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
+
+// Función para obtener el Harem de un usuario en un grupo específico
+async function obtenerHarem(userId, grupoId) {
+    let h = await Harem.findOne({ userId, grupoId });
+    if (!h) h = new Harem({ userId, grupoId, personajes: [] });
+    return h;
 }
 
-// --- SISTEMA DE CHARSHOP POR GRUPO (PRECIOS AJUSTADOS) ---
-let charShopsPorGrupo = {}; 
-
-function msToTime(duration) {
-    let seconds = Math.floor((duration / 1000) % 60);
-    let minutes = Math.floor((duration / (1000 * 60)) % 60);
-    return `${minutes}m ${seconds}s`;
-}
-
-function actualizarCharShop(grupoId, forzar = false) {
+// --- SISTEMA DE CHARSHOP POR GRUPO (ADAPTADO A MONGO) ---
+async function actualizarCharShop(grupoId, forzar = false) {
     const ahora = Date.now();
-    const tiempoRotacion = 3000000; 
+    const tiempoRotacion = 3000000; // 50 minutos aprox
 
-    if (forzar || !charShopsPorGrupo[grupoId] || (ahora - charShopsPorGrupo[grupoId].ultimaActualizacion >= tiempoRotacion)) {
-        const nuevosPersonajes = [];
-        const nombresEnHarem = [];
-        if (haremPorGrupo[grupoId]) {
-            Object.values(haremPorGrupo[grupoId]).forEach(userHarem => {
-                userHarem.forEach(p => nombresEnHarem.push(p.nombre.toLowerCase()));
-            });
-        }
+    let shop = await CharShop.findOne({ grupoId });
+    if (!shop) shop = new CharShop({ grupoId });
+
+    if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
+        // Obtenemos todos los personajes ya atrapados en este grupo para no repetirlos
+        const haremsDelGrupo = await Harem.find({ grupoId });
+        const nombresEnHarem = haremsDelGrupo.flatMap(h => h.personajes.map(p => p.nombre.toLowerCase()));
+
         const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
         const copiaDisponibles = [...disponibles];
+        const nuevosPersonajes = [];
 
         for (let i = 0; i < 5; i++) {
             if (copiaDisponibles.length === 0) break;
             const indexAleatorio = Math.floor(Math.random() * copiaDisponibles.length);
             const pBase = copiaDisponibles.splice(indexAleatorio, 1)[0];
             const valorBase = parseInt(pBase.valor) || 0;
+            
             let precioFinal;
-
-            // --- PRECIOS BAJADOS ---
             if (valorBase >= 17000) {
-                precioFinal = 700000 + Math.floor(Math.random() * 300001); // 700k - 1M
+                precioFinal = 700000 + Math.floor(Math.random() * 300001);
             } else if (valorBase >= 5000) {
-                precioFinal = 250000 + Math.floor(Math.random() * 250000); // 250k - 500k
+                precioFinal = 250000 + Math.floor(Math.random() * 250000);
             } else {
-                precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000); // 15k - 215k
+                precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000);
             }
 
             nuevosPersonajes.push({ ...pBase, precio: precioFinal });
         }
-        charShopsPorGrupo[grupoId] = { personajes: nuevosPersonajes, ultimaActualizacion: ahora };
+        shop.personajes = nuevosPersonajes;
+        shop.ultimaActualizacion = ahora;
+        await shop.save();
     }
+    return shop;
 }
 
+// --- VARIABLES DE SESIÓN (Se mantienen en memoria, son temporales) ---
+const duelosActivos = {};
+const tradesPendientes = {};
+const cooldownsBuscarmob = {}; 
+const mobActual = {};
+const procesandoRW = new Set();
 const tiradasTemporales = {};
 const cooldownsRW = {};
 const cooldownsC = {};
-let haremPorGrupo = cargarHarem();
 
-// Tirada ponderada (CORREGIDA)
+// --- HELPERS ---
+function msToTime(duration) {
+    let seconds = Math.floor((duration / 1000) % 60);
+    let minutes = Math.floor((duration / (1000 * 60)) % 60);
+    return `${minutes}m ${seconds}s`;
+}
+
 function personajeRandom(listaPersonajes) {
-    // Primero filtramos a Deadpool para que no salga en rolls
     const filtrados = listaPersonajes.filter(p => p.nombre !== 'Deadpool');
-    
     const total = filtrados.reduce((sum, p) => sum + (100000 - Number(p.valor)), 0);
     let rnd = Math.random() * total;
-
     for (let p of filtrados) {
         rnd -= (100000 - Number(p.valor));
         if (rnd <= 0) return p;
     }
     return filtrados[filtrados.length - 1];
 }
-
-function guardarPerfiles(data) {
-    perfilesSucios = true; // Solo marcamos que hubo un cambio
-}
-
-function asegurarPerfil(perfiles, userId) {
-    if (!perfiles[userId]) {
-        
-		perfiles[userId] = {
-    xp: 0,
-    level: 1,
-    mensajes: 0,
-    comandos: 0,
-    reacciones: 0,
-    logros: []
-};
-    }
-}
-function darLogro(perfiles, userId, logro) {
-
-    if (!perfiles[userId].logros.includes(logro)) {
-
-        perfiles[userId].logros.push(logro);
-
-        return true;
-    }
-
-    return false;
-}
-	const logrosInfo = {
-
-cmd_500: "Usar 500 comandos",
-cmd_1000: "Usar 1,000 comandos",
-cmd_10000: "Usar 10,000 comandos",
-cmd_50000: "Usar 50,000 comandos",
-
-chars_15: "Conseguir 15 personajes",
-chars_30: "Conseguir 30 personajes",
-chars_50: "Conseguir 50 personajes",
-chars_100: "Conseguir 100 personajes",
-
-money_100k: "Tener 100,000 de dinero",
-money_1m: "Tener 1,000,000 de dinero",
-money_10m: "Tener 10,000,000 de dinero",
-money_100m: "Tener 100,000,000 de dinero",
-
-duel_admin: "Derrotar al admin en un duel",
-
-react_40: "Hacer 40 reacciones de anime",
-react_100: "Hacer 100 reacciones de anime",
-react_200: "Hacer 200 reacciones de anime",
-react_500: "Hacer 500 reacciones de anime",
-
-three_am: "Usar un comando a las 3 AM",
-
-admin_money: "Conseguir que el admin te de dinero",
-
-completionist: "Conseguir todos los logros"
-
-};
 	
 // ---------------- MENSAJES ----------------
 
@@ -563,161 +483,96 @@ if (isGroup) {
     const grupoId = message.from;
 
     const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-	const perfiles = cargarPerfiles();
-asegurarPerfil(perfiles, userId);
-	perfiles[userId].mensajes += 1;
-perfiles[userId].xp += 2;
 
-guardarPerfiles(perfiles);
-	const xpNecesaria = perfiles[userId].level * 100;
+    // --- CARGAR DATOS DEL USUARIO (MONGODB) ---
+    let user = await User.findOne({ userId });
+    if (!user) user = new User({ userId });
 
-if (perfiles[userId].xp >= xpNecesaria) {
+    // Sumar XP y Mensajes (Sin archivos JSON)
+    user.mensajes += 1;
+    user.xp += 2;
 
-    perfiles[userId].xp -= xpNecesaria;
-    perfiles[userId].level += 1;
-
-    message.reply(`⭐ ¡Subiste al nivel ${perfiles[userId].level}!`);
-}
-
-if (perfiles[userId].comandos === 500) {
-    if (darLogro(perfiles, userId, "cmd_500")) {
-        message.reply("🏆 Logro desbloqueado: Usar 500 comandos");
+    // Lógica de Subida de Nivel
+    const xpNecesaria = user.level * 100;
+    if (user.xp >= xpNecesaria) {
+        user.xp -= xpNecesaria;
+        user.level += 1;
+        message.reply(`⭐ ¡Subiste al nivel ${user.level}!`);
     }
-}
 
-if (perfiles[userId].comandos === 1000) {
-    if (darLogro(perfiles, userId, "cmd_1000")) {
-        message.reply("🏆 Logro desbloqueado: Usar 1,000 comandos");
+    // --- LÓGICA DE LOGROS (ACTUALIZADA) ---
+    const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
+    if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
+        user.logros.push(hitosComandos[user.comandos]);
+        message.reply(`🏆 Logro desbloqueado: ${logrosInfo[hitosComandos[user.comandos]]}`);
     }
-}
 
-if (perfiles[userId].comandos === 10000) {
-    if (darLogro(perfiles, userId, "cmd_10000")) {
-        message.reply("🏆 Logro desbloqueado: Usar 10,000 comandos");
-    }
-}
-
-if (perfiles[userId].comandos === 50000) {
-    if (darLogro(perfiles, userId, "cmd_50000")) {
-        message.reply("🏆 Logro desbloqueado: Usar 50,000 comandos");
-    }
-}
-
-	const hora = new Date().getHours();
-	if (hora === 3) {
-
-    if (darLogro(perfiles, userId, "three_am")) {
-
+    const horaActual = new Date().getHours();
+    if (horaActual === 3 && !user.logros.includes("three_am")) {
+        user.logros.push("three_am");
         message.reply("🏆 Logro desbloqueado: Usar un comando a las 3 AM");
-
     }
 
-	}
-	const economia = cargarEconomia();
-	if (economia[userId]) {
-
-    const dinero = economia[userId].dinero || 0;
-
-if (dinero >= 100000) {
-        if (darLogro(perfiles, userId, "money_100k")) {
-            message.reply("🏆 Logro desbloqueado: Tener 100,000 de dinero");
+    // Logros de Dinero (Directo de la DB)
+    const hitosDinero = [
+        { val: 100000, id: "money_100k" },
+        { val: 1000000, id: "money_1m" },
+        { val: 10000000, id: "money_10m" },
+        { val: 100000000, id: "money_100m" }
+    ];
+    for (let h of hitosDinero) {
+        if (user.dinero >= h.val && !user.logros.includes(h.id)) {
+            user.logros.push(h.id);
+            message.reply(`🏆 Logro desbloqueado: ${logrosInfo[h.id]}`);
         }
     }
 
-    if (dinero >= 1000000) {
-        if (darLogro(perfiles, userId, "money_1m")) {
-            message.reply("🏆 Logro desbloqueado: Tener 1,000,000 de dinero");
-        }
+    // Logros de Harem (Consultando Mongo)
+    let userHarem = await Harem.findOne({ userId, grupoId });
+    const cantChars = userHarem ? userHarem.personajes.length : 0;
+    const hitosChars = { 15: "chars_15", 30: "chars_30", 50: "chars_50", 100: "chars_100" };
+    if (hitosChars[cantChars] && !user.logros.includes(hitosChars[cantChars])) {
+        user.logros.push(hitosChars[cantChars]);
+        message.reply(`🏆 Logro desbloqueado: ${logrosInfo[hitosChars[cantChars]]}`);
     }
 
-    if (dinero >= 10000000) {
-        if (darLogro(perfiles, userId, "money_10m")) {
-            message.reply("🏆 Logro desbloqueado: Tener 10,000,000 de dinero");
-        }
-    }
-
-    if (dinero >= 100000000) {
-        if (darLogro(perfiles, userId, "money_100m")) {
-            message.reply("🏆 Logro desbloqueado: Tener 100,000,000 de dinero");
-        }
-    }
-
-	}
-
-	const harem = cargarHarem();
-	const cantidadPersonajes = harem[userId]?.length || 0;
+    await user.save(); // Guardado de seguridad
 	
-    if (cantidadPersonajes >= 15) {
-    if (darLogro(perfiles, userId, "chars_15")) {
-        message.reply("🏆 Logro desbloqueado: Conseguir 15 personajes");
-    }
-}
+	    // --- LÓGICA DE DEADPOOL ERRANTE (MONGODB) ---
+    if (Math.random() < 0.05) { 
+        // Buscamos harems que tengan personajes en este grupo
+        let haremsGrupo = await Harem.find({ grupoId, "personajes.0": { $exists: true } });
 
-if (cantidadPersonajes >= 30) {
-    if (darLogro(perfiles, userId, "chars_30")) {
-        message.reply("🏆 Logro desbloqueado: Conseguir 30 personajes");
-    }
-}
+        if (haremsGrupo.length > 1) {
+            // Sacar a Deadpool de donde esté en este grupo
+            await Harem.updateMany({ grupoId }, { $pull: { personajes: { nombre: 'Deadpool' } } });
 
-if (cantidadPersonajes >= 50) {
-    if (darLogro(perfiles, userId, "chars_50")) {
-        message.reply("🏆 Logro desbloqueado: Conseguir 50 personajes");
-    }
-}
-
-if (cantidadPersonajes >= 100) {
-    if (darLogro(perfiles, userId, "chars_100")) {
-        message.reply("🏆 Logro desbloqueado: Conseguir 100 personajes");
-    }
-}
-	guardarPerfiles(perfiles);
-	
-// --- LÓGICA DE DEADPOOL ERRANTE (LIMITADO AL GRUPO) ---
-    const chanceDeadpool = Math.random();
-
-    // 5% de probabilidad en cada mensaje de que Deadpool se mude dentro del grupo
-    if (chanceDeadpool < 0.05) { 
-        // 1. Obtener todos los usuarios que tienen harem EN ESTE GRUPO
-        let usuariosEnEsteGrupo = Object.keys(haremPorGrupo[grupoId] || {});
-
-        // Solo se mueve si hay más de una persona con harem en el grupo
-        if (usuariosEnEsteGrupo.length > 1) {
-            
-            // 2. Borrar a Deadpool de todos los harems DE ESTE GRUPO únicamente
-            for (let u in haremPorGrupo[grupoId]) {
-                haremPorGrupo[grupoId][u] = haremPorGrupo[grupoId][u].filter(p => p.nombre !== 'Deadpool');
-            }
-
-            // 3. Elegir la nueva "víctima" (dueño) al azar dentro del mismo grupo
-            let nuevoDueñoId = usuariosEnEsteGrupo[Math.floor(Math.random() * usuariosEnEsteGrupo.length)];
+            // Elegir nueva víctima al azar
+            let nuevoDueño = haremsGrupo[Math.floor(Math.random() * haremsGrupo.length)];
             
             const deadpoolObj = {
-                nombre: "Deadpool",
-                fuente: "Marvel",
-                valor: 696969, 
+                nombre: "Deadpool", fuente: "Marvel", valor: 696969, 
                 imagen: "https://i.pinimg.com/736x/dd/91/76/dd9176fa6d3699a754a8ae5c3d518b32.jpg",
-                level: 102,
-                stamina: 100
+                level: 102, stamina: 100
             };
 
-            // 4. Meterlo en el harem del nuevo dueño
-            haremPorGrupo[grupoId][nuevoDueñoId].push(deadpoolObj);
-            guardarHarem(haremPorGrupo);
+            nuevoDueño.personajes.push(deadpoolObj);
+            await nuevoDueño.save();
 
             const frasesDeadpool = [
-                "¡Hola! El harem anterior olía a calzones usados, así que me mudé aquí. ¿Qué hay de comer?",
-		"Ahora soy un inmigrante ilegal en tu harem, por lo menos hasta que el fokin BOT se crashee... otra vez!",
-                "¿Vieron eso? Acabo de saltar de un usuario a otro ignorando por completo todas las reglas del código del YakBot. ¡Soy genial!",
-                "Hey, HEY! Tú... el de la pantalla. Sí sí, acabo de entrar en tu harem. No te acostumbres, me aburro rápido, como una mujer siendole fiel a un hombre.",
-                "El programador intentó ponerme un precio, pero soy invaluable (y muy sexy en mis mallas)."
+                "¡Hola! El harem anterior olía a calzones usados, así que me mudé aquí.",
+                "Ahora soy un inmigrante ilegal en tu harem...",
+                "¡Hey tú! Sí, el de la pantalla. Acabo de entrar en tu harem. No te acostumbres."
             ];
             
             const frase = frasesDeadpool[Math.floor(Math.random() * frasesDeadpool.length)];
-            const numeroLimpio = nuevoDueñoId.split('@')[0];
+            const numeroLimpio = nuevoDueño.userId.split('@')[0];
             
-            await client.sendMessage(message.from, `🔴 *DEADPOOL:* ${frase}\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {mentions: [nuevoDueñoId]});
+            await client.sendMessage(message.from, `🔴 *DEADPOOL:* ${frase}\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {mentions: [nuevoDueño.userId]});
         }
-    }
+	}
+
+
 
     // --------- COMANDOS BÁSICOS ---------
 
