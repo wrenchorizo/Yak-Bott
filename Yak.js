@@ -2533,7 +2533,7 @@ client.on('message_create', async (message) => {
         break;
 			
 //------------------------------------------------DEFAULT (COMANDO NO ENCONTRADO)-------------------------------------------
-        default: {
+default: {
             // Si el mensaje empieza con el prefijo pero no cayó en ningún 'case' anterior
             if (message.body.startsWith(prefix)) {
                 const misComandos = [
@@ -2546,11 +2546,11 @@ client.on('message_create', async (message) => {
                 
                 // Si no está en la lista de comandos ni en la de reacciones
                 if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
-                    return message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
                 }
             }
+            break;
         }
-        break;
     } // CIERRE DEL SWITCH (comando)
 
 }); // CIERRE FINAL DE client.on('message_create')
