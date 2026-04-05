@@ -31,19 +31,16 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 // ==========================================
-// 2. ESQUEMAS DE MONGODB (TU BASE DE DATOS)
+// 2. ESQUEMAS DE MONGODB
 // ==========================================
-
-// Harem por Grupo
 const haremSchema = new mongoose.Schema({
-    idUnico: { type: String, required: true, unique: true }, // userId + grupoId
+    idUnico: { type: String, required: true, unique: true },
     userId: String,
     grupoId: String,
     personajes: { type: Array, default: [] }
 });
 const Harem = mongoose.model('Harem', haremSchema);
 
-// Usuarios, Economía y Perfiles
 const userSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
     dinero: { type: Number, default: 0 },
@@ -52,17 +49,16 @@ const userSchema = new mongoose.Schema({
     mensajes: { type: Number, default: 0 },
     comandos: { type: Number, default: 0 },
     lastWork: { type: Number, default: 0 },
-	lastDaily: { type: Number, default: 0 },
-rachaDaily: { type: Number, default: 0 },
+    lastDaily: { type: Number, default: 0 },
+    rachaDaily: { type: Number, default: 0 },
     lastCrime: { type: Number, default: 0 },
-	lastRW: { type: Number, default: 0 },
-lastClaim: { type: Number, default: 0 },
-lastSmob: { type: Number, default: 0 },
+    lastRW: { type: Number, default: 0 },
+    lastClaim: { type: Number, default: 0 },
+    lastSmob: { type: Number, default: 0 },
     logros: { type: Array, default: [] }
 });
 const User = mongoose.model('User', userSchema);
 
-// Tienda de personajes por grupo
 const charShopSchema = new mongoose.Schema({
     grupoId: { type: String, required: true, unique: true },
     personajes: { type: Array, default: [] },
@@ -74,108 +70,26 @@ const CharShop = mongoose.model('CharShop', charShopSchema);
 // 3. VARIABLES GLOBALES Y DATOS ESTATICOS
 // ==========================================
 const MONGO_URI = process.env.MONGO_URL;
+let client; // DECLARACIÓN GLOBAL PARA EVITAR REFERENCEERROR
 
 const animeGifs = {
-    cry: [
-        './gifs/cry1.gif',
-        './gifs/cry2.gif',
-        './gifs/cry3.gif',
-        './gifs/cry4.gif',
-        './gifs/cry5.gif'
-    ],
-    happy: [
-        './gifs/happy1.gif',
-        './gifs/happy2.gif',
-        './gifs/happy3.gif'
-    ],
-    angry: [
-        './gifs/angry1.gif',
-        './gifs/angry2.gif',
-        './gifs/angry3.gif'
-    ],
-    laugh: [
-        './gifs/laugh1.gif',
-        './gifs/laugh2.gif',
-        './gifs/laugh3.gif'
-    ],
-    hug: [
-        './gifs/hug1.gif',
-        './gifs/hug2.gif',
-        './gifs/hug3.gif'
-    ],
-    dance: [
-        './gifs/dance1.gif',
-        './gifs/dance2.gif',
-        './gifs/dance3.gif'
-    ],
-        cafe: [
-        './gifs/cafe1.gif',
-        './gifs/cafe2.gif',
-        './gifs/cafe3.gif'
-    ],
-    kiss: [
-        './gifs/kiss1.gif',
-        './gifs/kiss2.gif',
-        './gifs/kiss3.gif',
-        './gifs/kiss4.gif'
-    ],
-    sad: [
-        './gifs/sad1.gif',
-        './gifs/sad2.gif',
-        './gifs/sad3.gif',
-        './gifs/sad4.gif'
-    ],
-    eat: [
-        './gifs/eat1.gif',
-        './gifs/eat2.gif',
-        './gifs/eat3.gif',
-        './gifs/eat4.gif'
-    ],
-    sleep: [
-        './gifs/sleep1.gif',
-        './gifs/sleep2.gif',
-        './gifs/sleep3.gif',
-        './gifs/sleep4.gif'
-    ],
-    scared: [
-        './gifs/scared1.gif',
-        './gifs/scared2.gif',
-        './gifs/scared3.gif',
-        './gifs/scared4.gif'
-    ],
-	punch: [
-        './gifs/punch1.gif',
-        './gifs/punch2.gif',
-        './gifs/punch3.gif',
-        './gifs/punch4.gif'
-    ],
-	run: [
-        './gifs/run1.gif',
-        './gifs/run2.gif',
-        './gifs/run3.gif',
-        './gifs/run4.gif'
-    ],
-	kill: [
-        './gifs/kill1.gif',
-        './gifs/kill2.gif',
-        './gifs/kill3.gif',
-        './gifs/kill4.gif'
-    ],
-	preg: [
-        './gifs/Preg1.gif',
-        './gifs/Preg2.gif',
-        './gifs/Preg3.gif',
-        './gifs/Preg4.gif',
-		'./gifs/Preg5.gif',
-		'./gifs/Preg6.gif'
-    ],
-	pat: [
-        './gifs/Pat1.gif',
-        './gifs/Pat2.gif',
-        './gifs/Pat3.gif',
-        './gifs/Pat4.gif',
-		'./gifs/Pat5.gif'
-    ]
+    cry: ['./gifs/cry1.gif', './gifs/cry2.gif', './gifs/cry3.gif', './gifs/cry4.gif', './gifs/cry5.gif'],
+    happy: ['./gifs/happy1.gif', './gifs/happy2.gif', './gifs/happy3.gif'],
+    angry: ['./gifs/angry1.gif', './gifs/angry2.gif', './gifs/angry3.gif'],
+    laugh: ['./gifs/laugh1.gif', './gifs/laugh2.gif', './gifs/laugh3.gif'],
+    hug: ['./gifs/hug1.gif', './gifs/hug2.gif', './gifs/hug3.gif'],
+    dance: ['./gifs/dance1.gif', './gifs/dance2.gif', './gifs/dance3.gif'],
+    cafe: ['./gifs/cafe1.gif', './gifs/cafe2.gif', './gifs/cafe3.gif'],
+    kiss: ['./gifs/kiss1.gif', './gifs/kiss2.gif', './gifs/kiss3.gif', './gifs/kiss4.gif'],
+    sad: ['./gifs/sad1.gif', './gifs/sad2.gif', './gifs/sad3.gif', './gifs/sad4.gif'],
+    eat: ['./gifs/eat1.gif', './gifs/eat2.gif', './gifs/eat3.gif', './gifs/eat4.gif'],
+    sleep: ['./gifs/sleep1.gif', './gifs/sleep2.gif', './gifs/sleep3.gif', './gifs/sleep4.gif'],
+    scared: ['./gifs/scared1.gif', './gifs/scared2.gif', './gifs/scared3.gif', './gifs/scared4.gif'],
+    punch: ['./gifs/punch1.gif', './gifs/punch2.gif', './gifs/punch3.gif', './gifs/punch4.gif'],
+    run: ['./gifs/run1.gif', './gifs/run2.gif', './gifs/run3.gif', './gifs/run4.gif'],
+    kill: ['./gifs/kill1.gif', './gifs/kill2.gif', './gifs/kill3.gif', './gifs/kill4.gif'],
+    preg: ['./gifs/Preg1.gif', './gifs/Preg2.gif', './gifs/Preg3.gif', './gifs/Preg4.gif', './gifs/Preg5.gif', './gifs/Preg6.gif'],
+    pat: ['./gifs/Pat1.gif', './gifs/Pat2.gif', './gifs/Pat3.gif', './gifs/Pat4.gif', './gifs/Pat5.gif']
 };
 
 const logrosInfo = {
@@ -207,25 +121,21 @@ const mobsData = [
     { nombre: 'Guerreros Universales', lvls: [70000, 100000], desc: 'Los más fuertes de todos los universos.' }
 ];
 
-// Variables en memoria (Volátiles)
 let cooldownsBuscarmob = {}; 
 let mobActual = {};
 const procesandoRW = new Set();
 const duelosActivos = {};
 const tradesPendientes = {};
+let botSettings = {};
 
 // ==========================================
 // 4. FUNCIONES DE APOYO (HELPERS)
 // ==========================================
-
 function msToTime(ms) {
     const minutos = Math.floor(ms / 60000);
     const segundos = Math.floor((ms % 60000) / 1000);
     return `${minutos}m ${segundos}s`;
 }
-
-// Eliminamos "guardarHarem" y "guardarEconomia" porque 
-// ahora usaremos await user.save() directamente.
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -233,13 +143,9 @@ function actualizarStamina(personaje) {
     if (personaje.level === undefined) personaje.level = 1;
     if (personaje.stamina === undefined) personaje.stamina = 100;
     if (personaje.lastUpdate === undefined) personaje.lastUpdate = Date.now();
-
     const ahora = Date.now();
     const tiempoPasado = ahora - personaje.lastUpdate;
-    
-    // Recupera 10% cada 30 minutos
     const porcionRecuperada = Math.floor(tiempoPasado / 1800000) * 10;
-    
     if (porcionRecuperada > 0) {
         personaje.stamina = Math.min(100, personaje.stamina + porcionRecuperada);
         personaje.lastUpdate = ahora; 
@@ -247,303 +153,224 @@ function actualizarStamina(personaje) {
     return personaje;
 }
 
-// Servidor de Salud para Railway
-http.createServer((req, res) => {
-  res.write('YakBot está vivo');
-  res.end();
-}).listen(process.env.PORT || 3000);
+http.createServer((req, res) => { res.write('YakBot está vivo'); res.end(); }).listen(process.env.PORT || 3000);
 
-// Anti-Crash
 process.on('unhandledRejection', (reason) => console.error(' [ANTI-CRASH] Rechazo:', reason));
 process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción:', err));
 
 // ==========================================
-// 5. INICIO DE EJECUCIÓN
+// 5. INICIO DE EJECUCIÓN Y CONEXIÓN
 // ==========================================
 
 (async () => {
-
-// Cliente
-// ==========================================
-// 6. CONEXIÓN A MONGO Y ARRANQUE DEL CLIENTE (CON QR LINK)
-// ==========================================
-
-mongoose.connect(MONGO_URI || process.env.MONGO_URL).then(async () => {
-    console.log('✅ Conectado a MongoDB Atlas');
-    
-    const store = new MongoStore({ mongoose: mongoose });
-
-    const client = new Client({ // Cambiado a const para consistencia
-        authStrategy: new RemoteAuth({
-            store: store,
-            backupSyncIntervalMs: 300000 
-        }),
-        puppeteer: {
-            headless: true,
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox', 
-                '--disable-dev-shm-usage', 
-                '--no-zygote', 
-                '--single-process'
-            ],
-            executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+    try {
+        if (!MONGO_URI) {
+            console.error("❌ ERROR: La variable MONGO_URL no está definida.");
+            return;
         }
-    });
 
-    client.on('qr', (qr) => {
-        console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-        qrcode.generate(qr, { small: true });
-        const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-        console.log(`🔗 ESCANEA AQUÍ:\n${qrLink}`);
-    });
+        await mongoose.connect(MONGO_URI);
+        console.log('✅ Conectado a MongoDB Atlas');
 
-    client.on('ready', () => {
-        console.log('✅ YakBot listo y conectado');
-        if (fs.existsSync('./.wwebjs_cache')) {
-            fs.rmSync('./.wwebjs_cache', { recursive: true, force: true });
+        const store = new MongoStore({ mongoose: mongoose });
+
+        // Definimos el cliente (asegúrate de que 'let client' esté declarado arriba del todo)
+        client = new Client({
+            authStrategy: new RemoteAuth({
+                store: store,
+                backupSyncIntervalMs: 300000 
+            }),
+            puppeteer: {
+                headless: true,
+                args: [
+                    '--no-sandbox', 
+                    '--disable-setuid-sandbox', 
+                    '--disable-dev-shm-usage', 
+                    '--no-zygote', 
+                    '--single-process'
+                ],
+                executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+            }
+        });
+
+        // ==========================================
+        // 6. EVENTOS DEL CLIENTE (CON QR LINK)
+        // ==========================================
+
+        client.on('qr', (qr) => {
+            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+            qrcode.generate(qr, { small: true });
+            // EL LINK QUE NECESITABAS
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+            console.log(`🔗 ESCANEA AQUÍ:\n${qrLink}`);
+        });
+
+        client.on('ready', () => {
+            console.log('✅ YakBot listo y conectado');
+            if (fs.existsSync('./.wwebjs_cache')) {
+                fs.rmSync('./.wwebjs_cache', { recursive: true, force: true });
+            }
+        });
+
+        client.on('remote_session_saved', () => {
+            console.log('💾 Sesión guardada en MongoDB correctamente');
+        });
+
+        // Inicializar antes de cargar la lógica de mensajes
+        client.initialize();
+
+        // ==========================================
+        // 7. LÓGICA DE PERSONAJES Y TIENDA
+        // ==========================================
+
+        const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
+
+        async function obtenerHarem(userId, grupoId) {
+            const idUnico = `${userId}_${grupoId}`;
+            let h = await Harem.findOne({ idUnico });
+            if (!h) {
+                h = new Harem({ idUnico, userId, grupoId, personajes: [] });
+            }
+            return h;
         }
-    });
 
-    client.on('remote_session_saved', () => {
-        console.log('💾 Sesión guardada en MongoDB correctamente');
-    });
+        async function actualizarCharShop(grupoId, forzar = false) {
+            const ahora = Date.now();
+            const tiempoRotacion = 3000000; // 50 minutos
 
-    // Importante: Inicializar el cliente
-    client.initialize();
+            let shop = await CharShop.findOne({ grupoId });
+            if (!shop) shop = new CharShop({ grupoId });
 
-	
-// ---------------- VARIABLES GLOBALES & MODELOS ----------------
-// ==========================================
-// 7. LÓGICA DE PERSONAJES Y TIENDA (MIGRADO)
-// ==========================================
+            if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
+                const haremsDelGrupo = await Harem.find({ grupoId });
+                const nombresEnHarem = haremsDelGrupo.flatMap(h => 
+                    h.personajes.map(p => p.nombre.toLowerCase())
+                );
 
-// Base de datos estática de personajes
-const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
+                const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
+                const copiaDisponibles = [...disponibles];
+                const nuevosPersonajes = [];
 
-    async function obtenerHarem(userId, grupoId) {
-        const idUnico = `${userId}_${grupoId}`;
-        let h = await Harem.findOne({ idUnico });
-        if (!h) {
-            h = new Harem({ idUnico, userId, grupoId, personajes: [] });
+                for (let i = 0; i < 5; i++) {
+                    if (copiaDisponibles.length === 0) break;
+                    const indexAleatorio = Math.floor(Math.random() * copiaDisponibles.length);
+                    const pBase = copiaDisponibles.splice(indexAleatorio, 1)[0];
+                    const valorBase = parseInt(pBase.valor) || 0;
+                    
+                    let precioFinal;
+                    if (valorBase >= 17000) {
+                        precioFinal = 700000 + Math.floor(Math.random() * 300001);
+                    } else if (valorBase >= 5000) {
+                        precioFinal = 250000 + Math.floor(Math.random() * 250000);
+                    } else {
+                        precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000);
+                    }
+                    nuevosPersonajes.push({ ...pBase, precio: precioFinal });
+                }
+
+                shop.personajes = nuevosPersonajes;
+                shop.ultimaActualizacion = ahora;
+                await shop.save();
+            }
+            return shop;
         }
-        return h;
-    }
 
-async function actualizarCharShop(grupoId, forzar = false) {
-    const ahora = Date.now();
-    const tiempoRotacion = 3000000; // 50 minutos
+        // ==========================================
+        // 9. HELPERS DE PROBABILIDAD
+        // ==========================================
 
-    let shop = await CharShop.findOne({ grupoId });
-    if (!shop) shop = new CharShop({ grupoId });
+        function personajeRandom(listaPersonajes) {
+            const filtrados = listaPersonajes.filter(p => p.nombre !== 'Deadpool');
+            if (filtrados.length === 0) return null;
 
-    if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
-        // Buscamos todos los personajes atrapados en este grupo
-        const haremsDelGrupo = await Harem.find({ grupoId });
-        const nombresEnHarem = haremsDelGrupo.flatMap(h => 
-            h.personajes.map(p => p.nombre.toLowerCase())
-        );
+            const total = filtrados.reduce((sum, p) => sum + (100000 - Number(p.valor || 0)), 0);
+            let rnd = Math.random() * total;
 
-        // Filtramos los disponibles de la base de datos general
-        const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
-        const copiaDisponibles = [...disponibles];
-        const nuevosPersonajes = [];
+            for (let p of filtrados) {
+                rnd -= (100000 - Number(p.valor || 0));
+                if (rnd <= 0) return p;
+            }
+            return filtrados[filtrados.length - 1];
+        }
 
-        for (let i = 0; i < 5; i++) {
-            if (copiaDisponibles.length === 0) break;
-            const indexAleatorio = Math.floor(Math.random() * copiaDisponibles.length);
-            const pBase = copiaDisponibles.splice(indexAleatorio, 1)[0];
-            const valorBase = parseInt(pBase.valor) || 0;
+        // ==========================================
+        // 10. ÚNICO MANEJADOR DE MENSAJES (FUSIONADO)
+        // ==========================================
+
+        client.on('message_create', async (message) => {
+            if (message.fromMe) return;
             
-            let precioFinal;
-            if (valorBase >= 17000) {
-                precioFinal = 700000 + Math.floor(Math.random() * 300001);
-            } else if (valorBase >= 5000) {
-                precioFinal = 250000 + Math.floor(Math.random() * 250000);
-            } else {
-                precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000);
+            const prefix = '?'; 
+            if (!message.body.startsWith(prefix)) return;
+
+            const args = message.body.slice(prefix.length).trim().split(/\s+/);
+            const comando = args.shift().toLowerCase();
+            const userId = message.author || message._data.participant || message.from;
+            const grupoId = message.from;
+            const pushname = message._data.notifyName || "Usuario";
+
+            // Detección de Target
+            let targetId = null;
+            if (message.mentionedIds && message.mentionedIds.length > 0) {
+                targetId = message.mentionedIds[0];
+            } else if (message.hasQuotedMsg) {
+                const quotedMsg = await message.getQuotedMessage();
+                targetId = quotedMsg.author || quotedMsg.from;
             }
 
-            nuevosPersonajes.push({ ...pBase, precio: precioFinal });
-        }
+            // Filtro de Bot encendido/apagado
+            if (message.isGroup) {
+                if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
+                if (!botSettings[grupoId].enabled && comando !== 'bot') return;
+            }
 
-        shop.personajes = nuevosPersonajes;
-        shop.ultimaActualizacion = ahora;
-        await shop.save();
-    }
-    return shop;
-}
+            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-// ==========================================
-// 8. VARIABLES DE SESIÓN (EN MEMORIA)
-// ==========================================
-// Estas se limpian si el bot se reinicia (ideal para estados temporales)
-const duelosActivos = {};
-const tradesPendientes = {};
-const cooldownsBuscarmob = {}; 
-const mobActual = {};
-const procesandoRW = new Set();
-const tiradasTemporales = {};
-const cooldownsRW = {};
-const cooldownsC = {};
+            // Carga de Usuario
+            let user = await User.findOne({ userId });
+            if (!user) {
+                user = new User({ userId });
+                await user.save();
+            }
 
-// ==========================================
-// 9. HELPERS ADICIONALES
-// ==========================================
+            // Stats y Niveles
+            user.mensajes += 1;
+            user.xp += 2;
+            const xpNecesaria = user.level * 100;
+            if (user.xp >= xpNecesaria) {
+                user.xp -= xpNecesaria;
+                user.level += 1;
+                message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
+            }
 
-function msToTime(duration) {
-    let seconds = Math.floor((duration / 1000) % 60);
-    let minutes = Math.floor((duration / (1000 * 60)) % 60);
-    return `${minutes}m ${seconds}s`;
-}
+            // Logros
+            const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
+            if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
+                user.logros.push(hitosComandos[user.comandos]);
+                message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
+            }
 
-/**
- * Selecciona un personaje al azar con probabilidad inversa a su valor
- * (Los más caros son más difíciles de obtener).
- */
-function personajeRandom(listaPersonajes) {
-    const filtrados = listaPersonajes.filter(p => p.nombre !== 'Deadpool');
-    if (filtrados.length === 0) return null;
+            // Deadpool Errante
+            if (Math.random() < 0.05) { 
+                let haremsGrupo = await Harem.find({ grupoId, "personajes.0": { $exists: true } });
+                if (haremsGrupo.length > 1) {
+                    await Harem.updateMany({ grupoId }, { $pull: { personajes: { nombre: 'Deadpool' } } });
+                    let nuevoDueño = haremsGrupo[Math.floor(Math.random() * haremsGrupo.length)];
+                    const deadpoolObj = {
+                        nombre: "Deadpool", fuente: "Marvel", valor: 696969, 
+                        imagen: "https://i.pinimg.com/736x/dd/91/76/dd9176fa6d3699a754a8ae5c3d518b32.jpg",
+                        level: 102, stamina: 100, lastUpdate: Date.now()
+                    };
+                    nuevoDueño.personajes.push(deadpoolObj);
+                    await nuevoDueño.save();
+                    const numeroLimpio = nuevoDueño.userId.split('@')[0];
+                    await client.sendMessage(grupoId, `🔴 *DEADPOOL:* ¡Me mudé de harem!\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {
+                        mentions: [nuevoDueño.userId]
+                    });
+                }
+            }
 
-    const total = filtrados.reduce((sum, p) => sum + (100000 - Number(p.valor || 0)), 0);
-    let rnd = Math.random() * total;
-
-    for (let p of filtrados) {
-        rnd -= (100000 - Number(p.valor || 0));
-        if (rnd <= 0) return p;
-    }
-    return filtrados[filtrados.length - 1];
-}
-	
-// ==========================================
-// 10. ÚNICO MANEJADOR DE MENSAJES (FUSIONADO)
-// ==========================================
-
-client.on('message_create', async (message) => {
-        if (message.fromMe) return;
-        
-        const prefix = '?'; 
-        if (!message.body.startsWith(prefix)) return;
-
-        const args = message.body.slice(prefix.length).trim().split(/\s+/);
-        const comando = args.shift().toLowerCase();
-        const userId = message.author || message._data.participant || message.from;
-        const grupoId = message.from;
-    const pushname = message._data.notifyName || "Usuario";
-
-    // 3. Detección de Target (Menciones o Respuestas)
-    let targetId = null;
-    if (message.mentionedIds && message.mentionedIds.length > 0) {
-        targetId = message.mentionedIds[0];
-    } else if (message.hasQuotedMsg) {
-        const quotedMsg = await message.getQuotedMessage();
-        targetId = quotedMsg.author || quotedMsg.from;
-    }
-
-    // 4. Filtro de Bot encendido/apagado por grupo
-    if (message.isGroup) {
-        if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
-        // Permitimos el comando 'bot' para poder encenderlo
-        if (!botSettings[grupoId].enabled && comando !== 'bot') return;
-    }
-
-    // Importación de fetch para comandos que lo necesiten
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-    // 5. Carga y actualización de Usuario en MongoDB
-    let user = await User.findOne({ userId });
-    if (!user) {
-        user = new User({ userId });
-        await user.save();
-    }
-
-    // Actualización de estadísticas
-    user.mensajes += 1;
-    user.xp += 2;
-
-    // Lógica de niveles
-    const xpNecesaria = user.level * 100;
-    if (user.xp >= xpNecesaria) {
-        user.xp -= xpNecesaria;
-        user.level += 1;
-        message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
-    }
-
-    // 6. Sistema de Logros
-    // Comandos realizados
-    const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
-    if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
-        user.logros.push(hitosComandos[user.comandos]);
-        message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
-    }
-
-    // Insomnio (3 AM)
-    const horaActual = new Date().getHours();
-    if (horaActual === 3 && !user.logros.includes("three_am")) {
-        user.logros.push("three_am");
-        message.reply(`🏆 Logro desbloqueado: *${logrosInfo["three_am"]}*`);
-    }
-
-    // Dinero acumulado
-    const hitosDinero = [
-        { val: 100000, id: "money_100k" },
-        { val: 1000000, id: "money_1m" },
-        { val: 10000000, id: "money_10m" },
-        { val: 100000000, id: "money_100m" }
-    ];
-    for (let h of hitosDinero) {
-        if (user.dinero >= h.val && !user.logros.includes(h.id)) {
-            user.logros.push(h.id);
-            message.reply(`🏆 Logro desbloqueado: *${logrosInfo[h.id]}*`);
-        }
-    }
-
-    // Logros de Harem (Solo en comandos específicos para ahorrar recursos)
-    const comandosHarem = ['harem', 'c', 'buy', 'trade', 'givechar'];
-    if (comandosHarem.includes(comando)) {
-        let userHarem = await obtenerHarem(userId, grupoId);
-        const cantChars = userHarem.personajes.length;
-        const hitosChars = { 15: "chars_15", 30: "chars_30", 50: "chars_50", 100: "chars_100" };
-        if (hitosChars[cantChars] && !user.logros.includes(hitosChars[cantChars])) {
-            user.logros.push(hitosChars[cantChars]);
-            message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosChars[cantChars]]}*`);
-        }
-    }
-
-    // Guardado de progreso antes de procesar el comando
-    await user.save();
-
-    // 7. Lógica de Deadpool Errante
-    if (Math.random() < 0.05) { 
-        let haremsGrupo = await Harem.find({ grupoId, "personajes.0": { $exists: true } });
-        if (haremsGrupo.length > 1) {
-            await Harem.updateMany({ grupoId }, { $pull: { personajes: { nombre: 'Deadpool' } } });
-
-            let nuevoDueño = haremsGrupo[Math.floor(Math.random() * haremsGrupo.length)];
-            const deadpoolObj = {
-                nombre: "Deadpool", fuente: "Marvel", valor: 696969, 
-                imagen: "https://i.pinimg.com/736x/dd/91/76/dd9176fa6d3699a754a8ae5c3d518b32.jpg",
-                level: 102, stamina: 100, lastUpdate: Date.now()
-            };
-
-            nuevoDueño.personajes.push(deadpoolObj);
-            await nuevoDueño.save();
-
-            const frasesDP = [
-                "¡Hola! El harem anterior olía a calzones usados, así que me mudé aquí.",
-                "Ahora soy un inmigrante ilegal en tu harem...",
-                "¡Hey tú! Sí, el de la pantalla. Acabo de entrar en tu harem. No te acostumbres."
-            ];
-            const frase = frasesDP[Math.floor(Math.random() * frasesDP.length)];
-            const numeroLimpio = nuevoDueño.userId.split('@')[0];
-            
-            await client.sendMessage(grupoId, `🔴 *DEADPOOL:* ${frase}\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {
-                mentions: [nuevoDueño.userId]
-            });
-        }
-    }
-
-
+            await user.save();
 
 
 
