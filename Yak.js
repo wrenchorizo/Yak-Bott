@@ -2484,7 +2484,6 @@ default: {
     } // CIERRE DEL SWITCH (comando)
 }
 		  }
-														  }
 }); // CIERRE FINAL DE client.on('message_create')
 
 // --------- INICIALIZAR EL CLIENTE ---------
