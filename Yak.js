@@ -2292,54 +2292,52 @@ case 'tr': {
 		}
             break;
 
-        default: {
-            if (message.body.startsWith(prefix)) {
-                const misComandos = [
-                    'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
-                    'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
-                    'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
-                    'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
-                    'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
-                    'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
-                    'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
-                    'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
-                    'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
-                    'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
-                    'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
-                    'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
-                    'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
-                    'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
-                    'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
-                    'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
-                    'expulsar', 'ban', 's', 'sticker'
-                ];
-                const listaReacciones = [
-                    'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
-                    'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
-                ];
-                
-                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
-                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
-                }
+                default: {
+            const misComandos = [
+                'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
+                'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
+                'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
+                'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
+                'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
+                'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
+                'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
+                'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
+                'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
+                'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
+                'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
+                'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
+                'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
+                'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
+                'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
+                'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
+                'expulsar', 'ban', 's', 'sticker'
+            ];
+            const listaReacciones = [
+                'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
+                'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
+            ];
+            
+            if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
             break;
-        } // 1. Cierra el default
-    } // 2. Cierra el switch
-}); // 3. Cierra el client.on('message_create')
+        } 
+    } // Cierra el switch(comando)
+}); // Cierra el client.on('message_create')
 
 // ==========================================
-// ESTA LLAVE CIERRA LA CONEXIÓN A MONGO (El .then)
-// =--- NO lleva paréntesis extra al final ---=
-}).catch(err => console.error("❌ Error de conexión Mongoose:", err));
+// MONITOR Y FINAL DEL BLOQUE ASÍNCRONO
+// ==========================================
 
-// Inicialización y monitor fuera de los handlers
-client.initialize();
+        // Ya no usamos .then().catch() aquí porque estamos dentro de un bloque try/catch async
+        console.log("🚀 Todos los manejadores cargados correctamente.");
 
+    } catch (err) {
+        console.error("❌ Error crítico en el arranque:", err);
+    }
+})(); // Cierra el (async () => { inicial
+
+// El intervalo se queda afuera para que siempre corra
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
-
-// ==========================================
-// ESTE CIERRA EL (async () => { DEL PRINCIPIO
-// =--- AQUÍ SÍ SE EJECUTA CON () ---=
-})().catch(err => console.error("❌ Error crítico en el arranque:", err));
