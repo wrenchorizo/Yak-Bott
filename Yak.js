@@ -2321,22 +2321,26 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-                        break;
-        } // Cierra el default
-    } // Cierra el switch(comando)
-}); // Cierra el client.on('message_create')
+                                  break;
+        } 
+    } // CIERRA EL SWITCH
+}); // CIERRA EL client.on('message_create')
 
 // ==========================================
-// 11. FINALIZACIÓN Y MONITOREO
+// 11. CIERRE DE SEGURIDAD Y MONITOR
 // ==========================================
+
+        // Arrancamos el bot oficialmente
+        await client.initialize();
+        console.log("🚀 YakBot inicializado con éxito.");
 
     } catch (err) {
-        // Este bloque captura cualquier error de arranque y evita el SyntaxError
+        // Captura el error de IP de MongoDB o cualquier ReferenceError
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierra la función (async () => { del principio del archivo
+})(); // CIERRA EL (async () => { INICIAL
 
-// Monitor de actividad en consola (fuera del bloque asíncrono)
+// Monitor de actividad (fuera del bloque para que no dependa de la conexión)
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
