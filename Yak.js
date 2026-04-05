@@ -598,7 +598,8 @@ client.on('message_create', async (message) => {
         }
 			break;
 //------------------------------------------------GAY--------------------------------------------------------
-        case 'gay': {
+        case 'gay':
+		case 'homo': {
             if (!targetId) return message.reply(`Uso: ${prefix}gay @usuario o responde a su mensaje.`);
             const usuarioMencionado = `@${targetId.split('@')[0]}`;
 
@@ -962,7 +963,7 @@ client.on('message_create', async (message) => {
 //------------------------------------------------SHOP (TIENDA DE OBJETOS)--------------------------------------------------------
         case 'shop':
 		case 'tienda':
-		case 'items': {
+		case 'itemshop': {
             let tabla = `🛒 *TIENDA DE LUJO YAKBOT*\n`;
             tabla += `━━━━━━━━━━━━━━━━━━━━\n\n`;
             
@@ -1175,7 +1176,6 @@ client.on('message_create', async (message) => {
         }
         break;
 
-// --------- ?duel ---------
 
 //------------------------------------------------DUEL (INICIAR RETO)--------------------------------------------------------
         case 'duel':
@@ -1376,7 +1376,7 @@ client.on('message_create', async (message) => {
     case 'rw':
 	case 'roll':
 	case 'tirar':
-	case 'pj': {
+	case 'rpj': {
             // 1. Bloqueo Anti-Spam (Evita el bug de múltiples mensajes)
             if (procesandoRW.has(chatId)) return;
             procesandoRW.add(chatId);
@@ -1584,7 +1584,7 @@ client.on('message_create', async (message) => {
         //------------------------------------------------WIMAGE (BUSCAR IMAGEN)--------------------------------------------------------
         case 'wimage':
         case 'pjimg':
-        case 'verpj': {
+        case 'verchar': {
             const nombreBusqueda = args.join(" ").toLowerCase().trim();
             if (!nombreBusqueda) return message.reply(`❌ Uso: \`${prefix}wimage [nombre]\``);
 
@@ -1825,7 +1825,7 @@ client.on('message_create', async (message) => {
 //------------------------------------------------TRADE (PROPONER)--------------------------------------------------------
         case 'trade':
         case 'intercambio':
-        case 'truque':
+        case 'trueque':
         case 'cambiar': {
             if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
             
@@ -2285,78 +2285,9 @@ client.on('message_create', async (message) => {
         }
         break;
 	
-//------------------------------------------------KICK (EXPULSAR)--------------------------------------------------------
-        case 'kick':
-        case 'sacar':
-		case 'baniar':
-        case 'expulsar':
-        case 'ban': {
-            const chat = await message.getChat();
-
-            if (!chat.isGroup) {
-                return message.reply("❌ Este comando solo funciona en grupos.");
-            }
-
-            const botId = client.info.wid._serialized;
-
-            // 1. Obtener participantes clave (Remitente, Bot y Objetivo)
-            const senderParticipant = chat.participants.find(p => p.id._serialized === userId);
-            const botParticipant = chat.participants.find(p => p.id._serialized === botId);
-
-            // 2. Verificar permisos del que envía el comando
-            if (!senderParticipant?.isAdmin && !senderParticipant?.isSuperAdmin) {
-                return message.reply("❌ Solo los administradores pueden usar este comando.");
-            }
-
-            // 3. Verificar si el Bot es admin para poder ejecutar la acción
-            if (!botParticipant?.isAdmin && !botParticipant?.isSuperAdmin) {
-                return message.reply("⚠️ Necesito ser administrador del grupo para expulsar a alguien.");
-            }
-
-            // 4. Identificar al objetivo (usando tu lógica de mención o respuesta)
-            let objetivoId = targetId; // Ya lo tenemos de la configuración previa del switch
-
-            if (!objetivoId) {
-                return message.reply("❌ Debes mencionar al usuario o responder a su mensaje.");
-            }
-
-            // 5. Buscar al objetivo dentro de la lista del chat
-            const target = chat.participants.find(p => p.id._serialized === objetivoId);
-
-            if (!target) {
-                return message.reply("❌ No encontré a ese usuario en el grupo.");
-            }
-
-            // 6. Protecciones de seguridad
-            if (target.id._serialized === botId) {
-                return message.reply("❌ No puedo expulsarme a mí mismo, ¡sería un suicidio!");
-            }
-
-            if (target.isAdmin || target.isSuperAdmin) {
-                return message.reply("❌ No puedes expulsar a otro administrador del grupo.");
-            }
-
-            // 7. Ejecución de la expulsión
-            try {
-                const contacto = await client.getContactById(target.id._serialized);
-                const nombre = contacto.pushname || contacto.name || contacto.number;
-
-                // Acción de remover del grupo
-                await chat.removeParticipants([target.id._serialized]);
-
-                return client.sendMessage(message.from, `🚀 *JUSTICIA APLICADA*\n\nEl usuario *${nombre}* ha sido expulsado del grupo.`);
-
-            } catch (err) {
-                console.error("Error en Kick:", err);
-                return message.reply("⚠️ No pude expulsar a ese usuario. Puede que tenga configuraciones de privacidad o hubo un error de conexión.");
-            }
-        }
-        break;
-
-	
 //------------------------------------------------ADMINCHAR (PODER ABSOLUTO)--------------------------------------------------------
         case 'adminchar':
-        case 'creador':
+        case 'pjadmin':
         case 'godmode':
         case 'modoadmin': {
             const adminNumber = "232246195839008@lid"; 
@@ -2365,149 +2296,141 @@ client.on('message_create', async (message) => {
                 return message.reply("❌ ERROR: Acceso denegado. No eres el Creador.");
             }
 
-            // Verificar si ya tienes al Admin Char en tu harem (user ya cargado de Mongo)
             const yaLoTiene = user.harem.find(p => p.nombre === "EL ADMIN");
             if (yaLoTiene) return message.reply("⚡ Ya posees el poder absoluto en tu colección.");
 
             const adminChar = {
                 nombre: "EL ADMIN",
                 fuente: "SISTEMA",
-                valor: 999999999999, // Un valor masivo pero manejable por JS
+                valor: 999999999999,
                 imagen: "https://i.pinimg.com/736x/22/1a/da/221ada2b52d13dcc65999b2cda540aae.jpg", 
-                genero: "Desconocido",
-                level: 1,
+                genero: "Divino",
+                level: 100,
                 exp: 0,
                 stamina: 1000,
                 lastUpdate: Date.now()
             };
 
             try {
-                // Intentamos descargar la imagen para el mensaje épico
                 const response = await fetch(adminChar.imagen);
-                if (!response.ok) throw new Error("Error al descargar");
-                
                 const arrayBuffer = await response.arrayBuffer();
                 const buffer = Buffer.from(arrayBuffer);
                 const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'admin.jpg');
 
-                // Añadimos al harem y guardamos en MongoDB
                 user.harem.push(adminChar);
                 await user.save();
 
-                return client.sendMessage(message.from, media, { 
-                    caption: "⚡ *EL PODER ABSOLUTO HA SIDO RECLAMADO* ⚡\n\nBienvenido, Creador. Tu presencia ha sido registrada." 
+                await client.sendMessage(message.from, media, { 
+                    caption: "⚡ *EL PODER ABSOLUTO HA SIDO RECLAMADO* ⚡\n\nBienvenido, Creador." 
                 });
-
             } catch (error) {
-                console.log('Error en adminchar:', error.message);
-                
-                // Si la imagen falla, el personaje se entrega igual
                 user.harem.push(adminChar);
                 await user.save();
-                
-                return message.reply("⚡ Personaje reclamado, pero la imagen falló en la descarga. Ya está en tu harem.");
+                await message.reply("⚡ Personaje reclamado, pero la imagen falló. Revisa con ?charinfo.");
             }
+            break;
         }
-        break;
 
-//------------------------------------------------S (STICKER)--------------------------------------------------------
+        //------------------------------------------------KICK (EXPULSAR)--------------------------------------------------------
+        case 'kick':
+        case 'sacar':
+        case 'expulsar':
+        case 'ban': {
+            const chat = await message.getChat();
+            if (!chat.isGroup) return message.reply("❌ Solo en grupos.");
+
+            const botId = client.info.wid._serialized;
+            const senderParticipant = chat.participants.find(p => p.id._serialized === userId);
+            const botParticipant = chat.participants.find(p => p.id._serialized === botId);
+
+            if (!senderParticipant?.isAdmin && !senderParticipant?.isSuperAdmin) return message.reply("❌ Solo admins.");
+            if (!botParticipant?.isAdmin && !botParticipant?.isSuperAdmin) return message.reply("⚠️ No soy admin.");
+
+            let objetivoId = targetId;
+            if (!objetivoId) return message.reply("❌ Menciona a alguien.");
+
+            const target = chat.participants.find(p => p.id._serialized === objetivoId);
+            if (!target) return message.reply("❌ No está en el grupo.");
+            if (target.id._serialized === botId) return message.reply("❌ No puedo auto-expulsarme.");
+            if (target.isAdmin || target.isSuperAdmin) return message.reply("❌ No puedo sacar a otro admin.");
+
+            try {
+                const contacto = await client.getContactById(target.id._serialized);
+                const nombre = contacto.pushname || contacto.name || contacto.number;
+                await chat.removeParticipants([target.id._serialized]);
+                await client.sendMessage(message.from, `🚀 *JUSTICIA APLICADA*\n\n*${nombre}* expulsado.`);
+            } catch (err) {
+                message.reply("⚠️ Error al expulsar.");
+            }
+            break;
+        }
+
+        //------------------------------------------------S (STICKERS)--------------------------------------------------------
         case 's':
         case 'sticker': {
             let mediaMsg;
-
-            // Revisar si es respuesta o mensaje con media
             if (message.hasQuotedMsg) {
                 const quoted = await message.getQuotedMessage();
-                if (!quoted.hasMedia) return message.reply("❌ Responde a una imagen, gif o video.");
-                mediaMsg = quoted;
+                if (quoted.hasMedia) mediaMsg = quoted;
             } else if (message.hasMedia) {
                 mediaMsg = message;
-            } else {
-                return message.reply(`Envía o responde a una imagen/video con *${prefix}s*`);
             }
+
+            if (!mediaMsg) return message.reply("❌ Responde a una imagen/video.");
 
             try {
                 const media = await mediaMsg.downloadMedia();
-
-                // Validar video/gif (Máx 10s y 8MB)
-                if (media.mimetype.includes("video") || media.mimetype.includes("gif")) {
-                    if (mediaMsg._data.seconds && mediaMsg._data.seconds > 10) {
-                        return message.reply("⚠️ El video debe durar máximo 10 segundos.");
-                    }
-                    if (media.filesize && media.filesize > 8 * 1024 * 1024) {
-                        return message.reply("⚠️ El archivo es demasiado pesado.");
-                    }
-                }
-
                 await client.sendMessage(message.from, media, {
                     sendMediaAsSticker: true,
                     stickerAuthor: "YakBot",
                     stickerName: "YakBot tm"
                 });
-
             } catch (err) {
-                console.error("Error Sticker:", err);
-                message.reply("❌ Error al crear el sticker.");
+                message.reply("❌ Error al crear sticker.");
             }
+            break;
         }
-        break;
 
-// ==========================================
-    // REACCIONES ANIME (MP4 CONVERTIDO - MODO GIF)
-    // ==========================================
-//------------------------------------------------REACCIONES ANIME--------------------------------------------------------
+        //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
         case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
         case 'preg': case 'laugh': case 'dance': case 'scared': case 'eat': 
         case 'sleep': case 'cafe': case 'hug': case 'punch': case 'kill': 
         case 'run': case 'kiss': {
-            
-            // 1. Lógica de Logros en MongoDB
             user.reacciones = (user.reacciones || 0) + 1;
-            const metas = { "react_40": 40, "react_100": 100, "react_200": 200, "react_500": 500 };
-            
-            for (let slug in metas) {
-                if (user.reacciones === metas[slug]) {
-                    if (typeof darLogro === 'function') darLogro(user, slug);
-                }
-            }
             await user.save();
 
-            // 2. Nombres para las frases
             const authorContact = await message.getContact();
             const authorName = authorContact.pushname || 'Usuario';
             let nombreMencionado = "";
-
             if (targetId) {
                 const contactMencionado = await client.getContactById(targetId);
                 nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
             }
 
             const frases = {
-                cry: { solo: `*${authorName}* se puso a llorar... `, con: `*${authorName}* está llorando por culpa de ${nombreMencionado}` },
-                sad: { solo: `*${authorName}* está triste...`, con: `*${authorName}* se siente triste por ${nombreMencionado}` },
-                happy: { solo: `*${authorName}* está muy feliz!`, con: `*${authorName}* sonríe junto a ${nombreMencionado}` },
-                angry: { solo: `*${authorName}* está de mal humor`, con: `*${authorName}* está enojado por culpa de ${nombreMencionado}` },
-                laugh: { solo: `*${authorName}* se está riendo a carcajadas`, con: `*${authorName}* se ríe con ${nombreMencionado}` },
-                dance: { solo: `*${authorName}* se sacó los pasos prohibidos`, con: `*${authorName}* está bailando con ${nombreMencionado}` },
-                scared: { solo: `*${authorName}* tiene mucho miedo 😱`, con: `*${authorName}* se asustó con ${nombreMencionado} 😱` },
-                eat: { solo: `*${authorName}* está comiendo algo delicioso`, con: `*${authorName}* come junto a ${nombreMencionado}` },
-                sleep: { solo: `*${authorName}* se quedó dormido... 💤`, con: `*${authorName}* duerme junto a ${nombreMencionado} 💤` },
-                cafe: { solo: `*${authorName}* toma café caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
-                hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
-                kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` },
-                punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
-                run: { solo: `*${authorName}* salió corriendo... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
-                kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató sin piedad a ${nombreMencionado}` },
-                pat: { solo: `*${authorName}* se da palmadas en la cabeza`, con: `*${authorName}* le da palmadas en la cabeza a ${nombreMencionado}` },
-                preg: { solo: `*${authorName}* se embarazó solito...`, con: `*${authorName}* embarazó a ${nombreMencionado} y ahora deben pensar en nombres` }
+                cry: { solo: `*${authorName}* llora...`, con: `*${authorName}* llora por ${nombreMencionado}` },
+                sad: { solo: `*${authorName}* está triste...`, con: `*${authorName}* está triste por ${nombreMencionado}` },
+                happy: { solo: `*${authorName}* es feliz!`, con: `*${authorName}* es feliz con ${nombreMencionado}` },
+                angry: { solo: `*${authorName}* se enojó`, con: `*${authorName}* se enojó con ${nombreMencionado}` },
+                laugh: { solo: `*${authorName}* se ríe`, con: `*${authorName}* se ríe con ${nombreMencionado}` },
+                dance: { solo: `*${authorName}* baila`, con: `*${authorName}* baila con ${nombreMencionado}` },
+                scared: { solo: `*${authorName}* tiene miedo`, con: `*${authorName}* se asustó de ${nombreMencionado}` },
+                eat: { solo: `*${authorName}* come`, con: `*${authorName}* come con ${nombreMencionado}` },
+                sleep: { solo: `*${authorName}* duerme`, con: `*${authorName}* duerme con ${nombreMencionado}` },
+                cafe: { solo: `*${authorName}* toma café`, con: `*${authorName}* toma café con ${nombreMencionado}` },
+                hug: { solo: `*${authorName}* abraza el aire`, con: `*${authorName}* abraza a ${nombreMencionado}` },
+                kiss: { solo: `*${authorName}* tira un beso`, con: `*${authorName}* besa a ${nombreMencionado}` },
+                punch: { solo: `*${authorName}* golpea el aire`, con: `*${authorName}* golpeó a ${nombreMencionado}` },
+                run: { solo: `*${authorName}* corre`, con: `*${authorName}* huye de ${nombreMencionado}` },
+                kill: { solo: `*${authorName}* murió`, con: `*${authorName}* mató a ${nombreMencionado}` },
+                pat: { solo: `*${authorName}* se acaricia`, con: `*${authorName}* acaricia a ${nombreMencionado}` },
+                preg: { solo: `*${authorName}* está embarazado`, con: `*${authorName}* embarazó a ${nombreMencionado}` }
             };
 
             const textoFinal = targetId ? frases[comando].con : frases[comando].solo;
-
-            // 3. Procesamiento FFMPEG
-            const rawGifPath = animeGifs[comando][Math.floor(Math.random() * animeGifs[comando].length)];
-            const gifPath = path.join(__dirname, rawGifPath);
-            const outputPath = `./temp_${Date.now()}.mp4`; 
+            const randomGif = animeGifs[comando][Math.floor(Math.random() * animeGifs[comando].length)];
+            const gifPath = path.join(__dirname, randomGif);
+            const outputPath = `./temp_${Date.now()}.mp4`;
 
             ffmpeg(gifPath)
                 .setFfmpegPath(ffmpegPath)
@@ -2516,51 +2439,51 @@ client.on('message_create', async (message) => {
                 .on('end', async () => {
                     try {
                         const media = MessageMedia.fromFilePath(outputPath);
-                        await client.sendMessage(message.from, media, {
-                            caption: textoFinal,
-                            sendVideoAsGif: true,
-                            mentions: targetId ? [targetId] : []
-                        });
+                        await client.sendMessage(message.from, media, { caption: textoFinal, sendVideoAsGif: true, mentions: targetId ? [targetId] : [] });
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-                    } catch (e) { console.log("Error enviando reacción:", e); }
+                    } catch (e) {}
                 })
-                .on('error', (err) => {
-                    console.log("Error FFMPEG:", err);
-                    message.reply("❌ Error al procesar la animación.");
-                })
+                .on('error', () => message.reply("❌ Error en GIF."))
                 .save(outputPath);
+            break;
         }
-        break;
-			
-//------------------------------------------------DEFAULT (COMANDO NO ENCONTRADO)-------------------------------------------
+
 default: {
-            // Si el mensaje empieza con el prefijo pero no cayó en ningún 'case' anterior
             if (message.body.startsWith(prefix)) {
+                // Todos tus alias registrados para evitar mensajes de "no existe"
                 const misComandos = [
-                    'duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'delchar', 
-                    'fixlevels', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 
-                    'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 
-                    'pokevo', 'accept', 'pick', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 
-                    'addmoney', 'charshop', 'bchar', 'givechar', 'wtired', 'stamina', 'adminchar'
+                    'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
+                    'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
+                    'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
+                    'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
+                    'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
+                    'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
+                    'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
+                    'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
+                    'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
+                    'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
+                    'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
+                    'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
+                    'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
+                    'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
+                    'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
+                    'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
+                    'expulsar', 'ban', 's', 'sticker'
                 ];
-                
-                // Si no está en la lista de comandos ni en la de reacciones
-                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
-                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+				const listaReacciones = [
+                    'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
+                    'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
+                ];
+				
+				if (!misComandos.includes(comando) && !Object.keys(frases || {}).includes(comando)) {
+                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.`);
                 }
             }
             break;
         }
-    } // CIERRE DEL SWITCH (comando)
+    } // Cierre Switch
+}); // Cierre client.on
 
-}); // CIERRE FINAL DE client.on('message_create')
-
-// --------- INICIALIZAR EL CLIENTE ---------
 client.initialize();
-
-// Monitor de vida del bot
-setInterval(() => {
-    console.log("⌬ YakBot sigue activo:", new Date().toLocaleTimeString());
-}, 60000);
-
-})().catch(err => console.error("❌ Error crítico en el arranque:", err));
+setInterval(() => console.log("⌬ YakBot vivo:", new Date().toLocaleTimeString()), 60000);
+})().catch(err => console.error("❌ Error crítico:", err));
