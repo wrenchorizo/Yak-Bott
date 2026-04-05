@@ -2465,9 +2465,8 @@ case 'tr': {
 		}
             break;
 
-default: {
+        default: {
             if (message.body.startsWith(prefix)) {
-                // Todos tus alias registrados para evitar mensajes de "no existe"
                 const misComandos = [
                     'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
                     'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
@@ -2487,27 +2486,33 @@ default: {
                     'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
                     'expulsar', 'ban', 's', 'sticker'
                 ];
-				const listaReacciones = [
+                const listaReacciones = [
                     'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
                     'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
                 ];
-				
-				if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                
+                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                     message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
                 }
             }
             break;
-} // <--- Cierra el último CASE o el DEFAULT del switch
-    } // <--- Cierra el SWITCH (comando)
-}); // <--- Cierra el client.on('message_create')
+        } // 1. Cierra el default
+    } // 2. Cierra el switch
+}); // 3. Cierra el client.on('message_create')
 
-// Fuera del handler de mensajes
+// ==========================================
+// ESTA LLAVE CIERRA LA CONEXIÓN A MONGO (El .then)
+// =--- NO lleva paréntesis extra al final ---=
+}).catch(err => console.error("❌ Error de conexión Mongoose:", err));
+
+// Inicialización y monitor fuera de los handlers
 client.initialize();
 
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
 
-// ESTE ES EL CIERRE QUE MATA EL ERROR DEL ASYNC INICIAL
-})().catch(err => console.error("❌ Error crítico en el arranque:", err));
+// ==========================================
+// ESTE CIERRA EL (async () => { DEL PRINCIPIO
+// =--- AQUÍ SÍ SE EJECUTA CON () ---=
 })().catch(err => console.error("❌ Error crítico en el arranque:", err));
