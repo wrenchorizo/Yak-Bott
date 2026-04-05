@@ -75,6 +75,109 @@ const CharShop = mongoose.model('CharShop', charShopSchema);
 // ==========================================
 const MONGO_URI = process.env.MONGO_URL;
 
+const animeGifs = {
+    cry: [
+        './gifs/cry1.gif',
+        './gifs/cry2.gif',
+        './gifs/cry3.gif',
+        './gifs/cry4.gif',
+        './gifs/cry5.gif'
+    ],
+    happy: [
+        './gifs/happy1.gif',
+        './gifs/happy2.gif',
+        './gifs/happy3.gif'
+    ],
+    angry: [
+        './gifs/angry1.gif',
+        './gifs/angry2.gif',
+        './gifs/angry3.gif'
+    ],
+    laugh: [
+        './gifs/laugh1.gif',
+        './gifs/laugh2.gif',
+        './gifs/laugh3.gif'
+    ],
+    hug: [
+        './gifs/hug1.gif',
+        './gifs/hug2.gif',
+        './gifs/hug3.gif'
+    ],
+    dance: [
+        './gifs/dance1.gif',
+        './gifs/dance2.gif',
+        './gifs/dance3.gif'
+    ],
+        cafe: [
+        './gifs/cafe1.gif',
+        './gifs/cafe2.gif',
+        './gifs/cafe3.gif'
+    ],
+    kiss: [
+        './gifs/kiss1.gif',
+        './gifs/kiss2.gif',
+        './gifs/kiss3.gif',
+        './gifs/kiss4.gif'
+    ],
+    sad: [
+        './gifs/sad1.gif',
+        './gifs/sad2.gif',
+        './gifs/sad3.gif',
+        './gifs/sad4.gif'
+    ],
+    eat: [
+        './gifs/eat1.gif',
+        './gifs/eat2.gif',
+        './gifs/eat3.gif',
+        './gifs/eat4.gif'
+    ],
+    sleep: [
+        './gifs/sleep1.gif',
+        './gifs/sleep2.gif',
+        './gifs/sleep3.gif',
+        './gifs/sleep4.gif'
+    ],
+    scared: [
+        './gifs/scared1.gif',
+        './gifs/scared2.gif',
+        './gifs/scared3.gif',
+        './gifs/scared4.gif'
+    ],
+	punch: [
+        './gifs/punch1.gif',
+        './gifs/punch2.gif',
+        './gifs/punch3.gif',
+        './gifs/punch4.gif'
+    ],
+	run: [
+        './gifs/run1.gif',
+        './gifs/run2.gif',
+        './gifs/run3.gif',
+        './gifs/run4.gif'
+    ],
+	kill: [
+        './gifs/kill1.gif',
+        './gifs/kill2.gif',
+        './gifs/kill3.gif',
+        './gifs/kill4.gif'
+    ],
+	preg: [
+        './gifs/Preg1.gif',
+        './gifs/Preg2.gif',
+        './gifs/Preg3.gif',
+        './gifs/Preg4.gif',
+		'./gifs/Preg5.gif',
+		'./gifs/Preg6.gif'
+    ],
+	pat: [
+        './gifs/Pat1.gif',
+        './gifs/Pat2.gif',
+        './gifs/Pat3.gif',
+        './gifs/Pat4.gif',
+		'./gifs/Pat5.gif'
+    ]
+};
+
 const logrosInfo = {
     cmd_500: "Veterano de Comandos (500 usos)",
     cmd_1000: "Adicto al Bot (1,000 usos)",
@@ -157,7 +260,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 // ==========================================
 // 5. INICIO DE EJECUCIÓN
 // ==========================================
-(async () => {
+(async () => { // <--- Inicio del bloque asíncrono
 
 // Cliente
 // ==========================================
@@ -169,7 +272,7 @@ mongoose.connect(MONGO_URI || process.env.MONGO_URL).then(async () => {
     
     const store = new MongoStore({ mongoose: mongoose });
 
-    client = new Client({
+    const client = new Client({ // Cambiado a const para consistencia
         authStrategy: new RemoteAuth({
             store: store,
             backupSyncIntervalMs: 300000 
@@ -187,15 +290,11 @@ mongoose.connect(MONGO_URI || process.env.MONGO_URL).then(async () => {
         }
     });
 
-    // --- EVENTO QR (TERMINAL + LINK EXTERNO) ---
     client.on('qr', (qr) => {
         console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-        // Genera el QR en consola por si acaso
         qrcode.generate(qr, { small: true });
-        
-        // Genera el link para abrir en el navegador (Mucho más fiable)
         const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-        console.log(`🔗 ESCANEA AQUÍ SI EL DE ARRIBA SE VE MAL:\n${qrLink}`);
+        console.log(`🔗 ESCANEA AQUÍ:\n${qrLink}`);
     });
 
     client.on('ready', () => {
@@ -209,6 +308,9 @@ mongoose.connect(MONGO_URI || process.env.MONGO_URL).then(async () => {
         console.log('💾 Sesión guardada en MongoDB correctamente');
     });
 
+    // Importante: Inicializar el cliente
+    client.initialize();
+
 	
 // ---------------- VARIABLES GLOBALES & MODELOS ----------------
 // ==========================================
@@ -218,20 +320,14 @@ mongoose.connect(MONGO_URI || process.env.MONGO_URL).then(async () => {
 // Base de datos estática de personajes
 const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
 
-
-async function obtenerHarem(userId, grupoId) {
-    const idUnico = `${userId}_${grupoId}`;
-    let h = await Harem.findOne({ idUnico });
-    if (!h) {
-        h = new Harem({ 
-            idUnico, 
-            userId, 
-            grupoId, 
-            personajes: [] 
-        });
+    async function obtenerHarem(userId, grupoId) {
+        const idUnico = `${userId}_${grupoId}`;
+        let h = await Harem.findOne({ idUnico });
+        if (!h) {
+            h = new Harem({ idUnico, userId, grupoId, personajes: [] });
+        }
+        return h;
     }
-    return h;
-}
 
 async function actualizarCharShop(grupoId, forzar = false) {
     const ahora = Date.now();
@@ -323,17 +419,15 @@ function personajeRandom(listaPersonajes) {
 // ==========================================
 
 client.on('message_create', async (message) => {
-    // 1. Filtros básicos
-    if (message.fromMe) return;
-    
-    const prefix = '?'; 
-    if (!message.body.startsWith(prefix)) return;
+        if (message.fromMe) return;
+        
+        const prefix = '?'; 
+        if (!message.body.startsWith(prefix)) return;
 
-    // 2. Definiciones de variables de mando
-    const args = message.body.slice(prefix.length).trim().split(/\s+/);
-    const comando = args.shift().toLowerCase();
-    const userId = message.author || message._data.participant || message.from;
-    const grupoId = message.from;
+        const args = message.body.slice(prefix.length).trim().split(/\s+/);
+        const comando = args.shift().toLowerCase();
+        const userId = message.author || message._data.participant || message.from;
+        const grupoId = message.from;
     const pushname = message._data.notifyName || "Usuario";
 
     // 3. Detección de Target (Menciones o Respuestas)
@@ -2367,8 +2461,8 @@ case 'tr': {
                 })
                 .on('error', () => message.reply("❌ Error en GIF."))
                 .save(outputPath);
+		}
             break;
-        }
 
 default: {
             if (message.body.startsWith(prefix)) {
@@ -2402,17 +2496,16 @@ default: {
                 }
             }
             break;
-        }
-    } // CIERRE DEL SWITCH (comando)
-}); // CIERRE FINAL DE client.on('message_create')
+} // <--- Cierra el último CASE o el DEFAULT del switch
+    } // <--- Cierra el SWITCH (comando)
+}); // <--- Cierra el client.on('message_create')
 
-// --------- INICIALIZAR EL CLIENTE ---------
+// Fuera del handler de mensajes
 client.initialize();
 
-// Monitor de vida del bot
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
 
-// Cierre de la función autoejecutable principal
+// ESTE ES EL CIERRE QUE MATA EL ERROR DEL ASYNC INICIAL
 })().catch(err => console.error("❌ Error crítico en el arranque:", err));
