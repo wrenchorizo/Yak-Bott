@@ -2475,15 +2475,22 @@ default: {
                     'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
                 ];
 				
-				if (!misComandos.includes(comando) && !Object.keys(frases || {}).includes(comando)) {
-                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.`);
+				if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
                 }
             }
             break;
         }
-    } // Cierre Switch
-}); // Cierre client.on
+    } // CIERRE DEL SWITCH (comando)
+}); // CIERRE FINAL DE client.on('message_create')
 
+// --------- INICIALIZAR EL CLIENTE ---------
 client.initialize();
-setInterval(() => console.log("⌬ YakBot vivo:", new Date().toLocaleTimeString()), 60000);
-})().catch(err => console.error("❌ Error crítico:", err));
+
+// Monitor de vida del bot
+setInterval(() => {
+    console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
+}, 60000);
+
+// Cierre de la función autoejecutable principal
+})().catch(err => console.error("❌ Error crítico en el arranque:", err));
