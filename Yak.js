@@ -69,7 +69,8 @@ const CharShop = mongoose.model('CharShop', charShopSchema);
 // ==========================================
 // 3. VARIABLES GLOBALES Y DATOS ESTATICOS
 // ==========================================
-const MONGO_URI = process.env.MONGO_URL;
+const MONGO_URI = process.env.MONGODB_URL; 
+
 let client; // DECLARACIÓN GLOBAL PARA EVITAR REFERENCEERROR
 
 const animeGifs = {
