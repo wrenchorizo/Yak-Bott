@@ -260,7 +260,8 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 // ==========================================
 // 5. INICIO DE EJECUCIÓN
 // ==========================================
-(async () => { // <--- Inicio del bloque asíncrono
+
+(async () => {
 
 // Cliente
 // ==========================================
@@ -2508,4 +2509,5 @@ setInterval(() => {
 }, 60000);
 
 // ESTE ES EL CIERRE QUE MATA EL ERROR DEL ASYNC INICIAL
+})().catch(err => console.error("❌ Error crítico en el arranque:", err));
 })().catch(err => console.error("❌ Error crítico en el arranque:", err));
