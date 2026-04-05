@@ -165,9 +165,9 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
 (async () => {
     try {
+        // Usamos MONGODB_URL que es la que tienes en tus variables
         if (!MONGO_URI) {
-            console.error("❌ ERROR: La variable MONGODB_URL no está en Railway.");
-            console.log("Ve a 'Variables' en Railway y revisa que el nombre sea exacto.");
+            console.error("❌ ERROR: La variable MONGODB_URL no está definida.");
             return;
         }
 
@@ -187,10 +187,10 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
                     '--no-sandbox', 
                     '--disable-setuid-sandbox', 
                     '--disable-dev-shm-usage', 
-                    '--no-zygote', 
-                    '--single-process'
+                    '--no-zygote'
                 ],
-                executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+                // Como usas 'chromium' en NIXPACKS_PKGS, esta es la ruta correcta en Railway
+                executablePath: '/usr/bin/chromium' 
             }
         });
 
@@ -2321,26 +2321,26 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-                                  break;
-        } 
-    } // CIERRA EL SWITCH
-}); // CIERRA EL client.on('message_create')
+            break;
+        } // Cierra el switch(comando)
+    } // Cierra el if(message.body...)
+}); // Cierra el client.on('message_create')
 
 // ==========================================
-// 11. CIERRE DE SEGURIDAD Y MONITOR
+// 11. INICIALIZACIÓN Y CIERRE
 // ==========================================
 
-        // Arrancamos el bot oficialmente
+        // Arrancamos el cliente dentro del bloque try
         await client.initialize();
         console.log("🚀 YakBot inicializado con éxito.");
 
     } catch (err) {
-        // Captura el error de IP de MongoDB o cualquier ReferenceError
+        // Este catch es vital para que Railway no se quede en bucle de error
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // CIERRA EL (async () => { INICIAL
+})(); // Cierra la función asíncrona inicial
 
-// Monitor de actividad (fuera del bloque para que no dependa de la conexión)
+// Monitor de actividad (visible en Deploy Logs)
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
