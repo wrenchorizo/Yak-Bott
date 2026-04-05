@@ -69,9 +69,9 @@ const CharShop = mongoose.model('CharShop', charShopSchema);
 // ==========================================
 // 3. VARIABLES GLOBALES Y DATOS ESTATICOS
 // ==========================================
+let client;
 const MONGO_URI = process.env.MONGODB_URL; 
 
-let client; // DECLARACIÓN GLOBAL PARA EVITAR REFERENCEERROR
 
 const animeGifs = {
     cry: ['./gifs/cry1.gif', './gifs/cry2.gif', './gifs/cry3.gif', './gifs/cry4.gif', './gifs/cry5.gif'],
@@ -166,7 +166,8 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 (async () => {
     try {
         if (!MONGO_URI) {
-            console.error("❌ ERROR: La variable MONGO_URL no está definida.");
+            console.error("❌ ERROR: La variable MONGODB_URL no está en Railway.");
+            console.log("Ve a 'Variables' en Railway y revisa que el nombre sea exacto.");
             return;
         }
 
@@ -175,7 +176,6 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Definimos el cliente (asegúrate de que 'let client' esté declarado arriba del todo)
         client = new Client({
             authStrategy: new RemoteAuth({
                 store: store,
@@ -2321,24 +2321,22 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break;
-        } 
+                        break;
+        } // Cierra el default
     } // Cierra el switch(comando)
 }); // Cierra el client.on('message_create')
 
 // ==========================================
-// MONITOR Y FINAL DEL BLOQUE ASÍNCRONO
+// 11. FINALIZACIÓN Y MONITOREO
 // ==========================================
 
-        // Ya no usamos .then().catch() aquí porque estamos dentro de un bloque try/catch async
-        console.log("🚀 Todos los manejadores cargados correctamente.");
-
     } catch (err) {
+        // Este bloque captura cualquier error de arranque y evita el SyntaxError
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierra el (async () => { inicial
+})(); // Cierra la función (async () => { del principio del archivo
 
-// El intervalo se queda afuera para que siempre corra
+// Monitor de actividad en consola (fuera del bloque asíncrono)
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
