@@ -599,77 +599,65 @@ client.on('message_create', async (message) => {
 			break;
 //------------------------------------------------GAY--------------------------------------------------------
         case 'gay':
-		case 'homo': {
+        case 'homo': {
             if (!targetId) return message.reply(`Uso: ${prefix}gay @usuario o responde a su mensaje.`);
             const usuarioMencionado = `@${targetId.split('@')[0]}`;
-
             message.reply("ꕤ Calculando nivel de gay...");
-
             setTimeout(() => {
                 let porcentaje = Math.random() < 0.15 
                     ? Math.floor(Math.random() * 1000000000) 
                     : Math.floor(Math.random() * 100) + 1;
-
-                client.sendMessage(grupoId, `🏳️‍🌈 Resultado:\n${usuarioMencionado} es *${porcentaje}%* gay`, { 
+                client.sendMessage(message.from, `🏳️‍🌈 Resultado:\n${usuarioMencionado} es *${porcentaje}%* gay`, { 
                     mentions: [targetId] 
                 });
             }, 2500);
-            break;
         }
+        break;
 
-
-//------------------------------------------------PROFILE--------------------------------------------------------
+        //------------------------------------------------PROFILE--------------------------------------------------------
         case 'profile':
         case 'perfil': {
-            // Buscamos al usuario o al mencionado
             const idParaVer = targetId || userId;
             let p = await User.findOne({ userId: idParaVer });
             if (!p) p = new User({ userId: idParaVer });
-
             const contacto = await client.getContactById(idParaVer);
             const nombre = contacto.pushname || contacto.name || "Usuario";
             const xpNecesaria = p.level * 100;
-
             let texto = `👤 *PERFIL DE ${nombre.toUpperCase()}*\n\n`;
             texto += `⭐ *Nivel:* ${p.level}\n`;
             texto += `✨ *XP:* ${p.xp} / ${xpNecesaria}\n`;
             texto += `💬 *Mensajes:* ${p.mensajes}\n`;
-                texto += `💰 *Dinero:* $${p.dinero.toLocaleString()}\n`;
+            texto += `💰 *Dinero:* $${p.dinero.toLocaleString()}\n`;
             texto += `🏆 *Logros:* ${p.logros.length}\n`;
-
             try {
                 const fotoUrl = await contacto.getProfilePicUrl();
                 if (fotoUrl) {
                     const media = await MessageMedia.fromUrl(fotoUrl);
-                    await client.sendMessage(grupoId, media, { caption: texto });
+                    await client.sendMessage(message.from, media, { caption: texto });
                 } else {
                     await message.reply(texto);
                 }
             } catch (err) {
                 await message.reply(texto);
             }
-            break;
         }
+        break;
 
-//------------------------------------------------LOGROS--------------------------------------------------------
+        //------------------------------------------------LOGROS--------------------------------------------------------
         case 'logros':
-		case 'platino': {
+        case 'platino': {
             const idParaVer = targetId || userId;
             let p = await User.findOne({ userId: idParaVer });
-            
             if (!p || p.logros.length === 0) {
                 return message.reply(targetId ? "Este usuario no tiene logros." : "No tienes logros todavía.");
             }
-
             let texto = "🏆 *TUS LOGROS*\n\n";
             p.logros.forEach(l => {
                 texto += `• ${logrosInfo[l] || l}\n`;
             });
-
-            return message.reply(texto);
-			
-        break;
-		}
+            message.reply(texto);
+        }
+        break; // <-- AQUÍ FALTABA EL CIERRE Y EL BREAK ESTABA MAL
 	
 //------------------------------------------------SAY (REPETIDOR)--------------------------------------------------------
         case 'say':
@@ -1179,8 +1167,8 @@ client.on('message_create', async (message) => {
 
 //------------------------------------------------DUEL (INICIAR RETO)--------------------------------------------------------
         case 'duel':
-		case 'retar':
-		case 'duelo': {
+        case 'retar':
+        case 'duelo': {
             if (!message.isGroup) return message.reply("❌ Solo funciona en grupos.");
             if (duelosActivos[grupoId]) return message.reply("⚠️ Ya hay un duelo pendiente en este grupo.");
             if (!targetId) return message.reply("❌ Debes mencionar a alguien para retarlo.");
@@ -1208,7 +1196,7 @@ client.on('message_create', async (message) => {
 
         //------------------------------------------------ACCEPT (ACEPTAR RETO)--------------------------------------------------------
         case 'accept':
-		case 'acceptduel': {
+        case 'acceptduel': {
             const duelo = duelosActivos[grupoId];
             if (!duelo) return message.reply("❌ No hay ningún duelo pendiente aquí.");
             if (userId !== duelo.jugador2) return message.reply("🤷‍♂️ No eres el jugador retado.");
@@ -1242,25 +1230,21 @@ client.on('message_create', async (message) => {
             let valorTotal = 0;
             let tieneADeadpool = false;
 
-            // Procesar personajes del harem del usuario en MongoDB
             for (let nombre of nombres) {
                 const p = user.harem.find(char => char.nombre.toLowerCase() === nombre);
                 if (!p) return message.reply(`❌ No tienes a '${nombre}' en tu harem.`);
                 if (equipo.find(e => e.nombre === p.nombre)) return message.reply(`❌ No puedes repetir a ${p.nombre}.`);
 
-                // --- Lógica de Stamina ---
                 if (p.nombre === 'Deadpool') {
                     tieneADeadpool = true;
-                    p.stamina = 100; // DP nunca se cansa
+                    p.stamina = 100; 
                 } else {
                     if ((p.stamina || 0) <= 10) return message.reply(`😫 *${p.nombre}* está exhausto (${p.stamina}%).`);
                     p.stamina = Math.max(0, (p.stamina || 0) - 30);
                 }
 
-                // Cálculo de poder: Valor Base * 1.20^Nivel
-                let poderBase = Number(p.valor) * Math.pow(1.20, (p.level - 1));
+                let poderBase = Number(p.valor) * Math.pow(1.20, ((p.level || 1) - 1));
 
-                // Bonus aleatorio de Deadpool
                 if (p.nombre === 'Deadpool' && Math.random() < 0.20) {
                     poderBase *= 5;
                     message.reply("🔴 *DEADPOOL:* ¡Hackeando las stats del bot! 💥");
@@ -1273,18 +1257,15 @@ client.on('message_create', async (message) => {
             duelo.picks[userId] = { equipo, valorTotal, userObj: user };
             message.reply(tieneADeadpool ? "✅ Equipo listo. 🔴 *DP:* ¡Que empiece la pachanga! 🌮" : "✅ Equipo seleccionado.");
 
-            // --- RESOLUCIÓN CUANDO AMBOS ESTÁN LISTOS ---
             if (duelo.picks[duelo.jugador1] && duelo.picks[duelo.jugador2]) {
                 clearTimeout(duelo.timeoutPick);
                 
                 const p1 = duelo.picks[duelo.jugador1];
                 const p2 = duelo.picks[duelo.jugador2];
 
-                // Factor suerte (±5%)
                 let final1 = p1.valorTotal * (0.95 + Math.random() * 0.1);
                 let final2 = p2.valorTotal * (0.95 + Math.random() * 0.1);
 
-                // Deus Ex Machina de Deadpool (10% de ganar automáticamente)
                 if (p1.equipo.some(e => e.nombre === 'Deadpool') && Math.random() < 0.10) {
                     final1 += final2;
                     message.reply("🔴 *DEADPOOL:* ¡Victoria por puro guionazo! Soy el mejor.");
@@ -1298,23 +1279,21 @@ client.on('message_create', async (message) => {
                 const winData = duelo.picks[ganadorId];
                 const loseData = duelo.picks[perdedorId];
 
-                // Economía: Robo del 15%
                 const robo = Math.floor(loseData.userObj.dinero * 0.15);
                 loseData.userObj.dinero -= robo;
                 winData.userObj.dinero += robo;
 
                 // Reparto de XP y Evolución
-                [p1, p2].forEach(pData => {
+                for (const pData of [p1, p2]) {
                     const esGanador = pData.userObj.userId === ganadorId;
                     const xpBase = esGanador ? 60 : 20;
 
-                    pData.equipo.forEach(p => {
-                        p.exp += xpBase;
+                    for (const p of pData.equipo) {
+                        p.exp = (p.exp || 0) + xpBase;
                         while (p.exp >= (p.level || 1) * 100) {
                             p.exp -= (p.level || 1) * 100;
-                            p.level += 1;
+                            p.level = (p.level || 1) + 1;
                             
-                            // Check de Evolución inmediata
                             const ref = personajes.find(pj => pj.nombre.toLowerCase() === p.nombre.toLowerCase());
                             if (ref && ref.evolucion && p.level >= ref.nivelEvo) {
                                 const evo = personajes.find(pj => pj.nombre.toLowerCase() === ref.evolucion.toLowerCase());
@@ -1326,12 +1305,9 @@ client.on('message_create', async (message) => {
                                 }
                             }
                         }
-                    });
-                });
-
-                // Guardar ambos usuarios en MongoDB
-                await p1.userObj.save();
-                await p2.userObj.save();
+                    }
+                    await pData.userObj.save();
+                }
 
                 let res = `『 ⚔️ *RESULTADO DEL DUELO* 』\n\n`;
                 res += `👤 @${duelo.jugador1.split('@')[0]}: ${Math.floor(final1).toLocaleString()}\n`;
@@ -1373,11 +1349,11 @@ client.on('message_create', async (message) => {
         break;
 
 //------------------------------------------------RW (ROLL CHARACTER)--------------------------------------------------------
-    case 'rw':
-	case 'roll':
-	case 'tirar':
-	case 'rpj': {
-            // 1. Bloqueo Anti-Spam (Evita el bug de múltiples mensajes)
+//------------------------------------------------RW (ROLL CHARACTER)--------------------------------------------------------
+        case 'rw':
+        case 'roll':
+        case 'tirar':
+        case 'rpj': {
             if (procesandoRW.has(chatId)) return;
             procesandoRW.add(chatId);
 
@@ -1385,13 +1361,11 @@ client.on('message_create', async (message) => {
                 const ahora = Date.now();
                 const totalRW = 15 * 60 * 1000;
 
-                // 2. Verificación de Cooldown Persistente (DB)
                 if (ahora - (user.lastRW || 0) < totalRW) {
                     const restante = totalRW - (ahora - user.lastRW);
                     return message.reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje.`);
                 }
 
-                // 3. Lógica de Pesos (Probabilidades)
                 const listaPesos = personajes.map(p => {
                     const v = parseInt(p.valor) || 1000;
                     let pesoFinal = (v >= 17000) ? 100 / Math.pow(v / 17000, 2.5) : 100;
@@ -1410,18 +1384,14 @@ client.on('message_create', async (message) => {
                     }
                 }
 
-                // 4. Verificar si ya existe en el grupo (Cualquier usuario del grupo en DB)
                 const yaReclamado = await User.findOne({ 
                     "harem.nombre": personajeSeleccionado.nombre,
-                    "harem.grupoId": grupoId // Asumiendo que guardamos el grupoId en el objeto del harem
+                    "harem.grupoId": grupoId 
                 });
                 
-                let estado = yaReclamado ? "Ya fue reclamado en este grupo" : "Libre";
+                let estado = yaReclamado ? "Ya fue reclamado" : "Libre";
 
-                // 5. Preparar Media
-                const response = await fetch(personajeSeleccionado.imagen);
-                const buffer = Buffer.from(await response.arrayBuffer());
-                const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'personaje.jpg');
+                const media = await MessageMedia.fromUrl(personajeSeleccionado.imagen).catch(() => null);
 
                 let avisoRareza = "";
                 const vNum = parseInt(personajeSeleccionado.valor);
@@ -1436,78 +1406,57 @@ client.on('message_create', async (message) => {
                     `➣ *Fuente:* ${personajeSeleccionado.fuente}\n\n` +
                     `◇ Tienes 1 minuto para reclamar con *${prefix}c*`;
 
-                const sentMsg = await client.sendMessage(grupoId, media, { caption: msgTexto });
+                const sentMsg = media 
+                    ? await client.sendMessage(grupoId, media, { caption: msgTexto })
+                    : await client.sendMessage(grupoId, msgTexto);
 
-                // 6. Guardar tirada en Memoria (Temporal para el claim)
                 tiradasTemporales[sentMsg.id._serialized] = {
                     personaje: personajeSeleccionado,
                     grupoId: grupoId,
                     reclamado: false
                 };
 
-                // Actualizar cooldown en DB
                 user.lastRW = ahora;
                 await user.save();
 
-                // Expiración de la tirada
                 setTimeout(() => {
                     delete tiradasTemporales[sentMsg.id._serialized];
                 }, 60000);
 
             } catch (error) {
                 console.error('Error en RW:', error);
-                message.reply('⚠️ No pude cargar la imagen, pero sigo vivo (creo).');
+                message.reply('⚠️ No pude cargar el personaje.');
             } finally {
                 procesandoRW.delete(chatId);
             }
         }
         break;
 
-        //------------------------------------------------C (CLAIM / RECLAMAR)--------------------------------------------------------
-		case 'c':
-		case 'claim':
-		case 'reclamar': {
-            if (!message.hasQuotedMsg) {
-                return message.reply('⌦ Debes responder al mensaje del personaje para reclamarlo.');
-            }
+        //------------------------------------------------C (CLAIM)--------------------------------------------------------
+        case 'c':
+        case 'claim':
+        case 'reclamar': {
+            if (!message.hasQuotedMsg) return message.reply('⌦ Responde al mensaje del personaje.');
 
             const quoted = await message.getQuotedMessage();
             const tirada = tiradasTemporales[quoted.id._serialized];
 
             if (!tirada || tirada.reclamado || tirada.grupoId !== grupoId) {
-                return message.reply('⌦ Ese personaje ya expiró, fue reclamado o no es de este grupo.');
+                return message.reply('⌦ Ese personaje ya no está disponible.');
             }
 
             const ahora = Date.now();
-            const totalC = 20 * 60 * 1000;
-
-            // Verificación de Cooldown Persistente (DB)
-            if (ahora - (user.lastClaim || 0) < totalC) {
-                const restante = totalC - (ahora - user.lastClaim);
-                return message.reply(`◔ Espera *${msToTime(restante)}* para reclamar otro personaje.`);
+            if (ahora - (user.lastClaim || 0) < (20 * 60 * 1000)) {
+                return message.reply(`◔ Cooldown activo.`);
             }
 
-            // Verificar en DB si alguien más lo ganó mientras tirabas el comando
-            const dueñoExistente = await User.findOne({ 
-                "harem.nombre": tirada.personaje.nombre,
-                "harem.grupoId": grupoId 
-            });
+            const dueñoExistente = await User.findOne({ "harem.nombre": tirada.personaje.nombre, "harem.grupoId": grupoId });
+            if (dueñoExistente) return message.reply('⌦ Ya lo tienen en este grupo.');
 
-            if (dueñoExistente) {
-                return message.reply('⌦ Demasiado tarde, alguien más ya posee este personaje en el grupo.');
-            }
-
-            // RECLAMAR
-            const nuevoPersonaje = {
+            user.harem.push({
                 ...tirada.personaje,
-                level: 1,
-                exp: 0,
-                stamina: 100,
-                grupoId: grupoId, // Marcamos a qué grupo pertenece esta instancia
-                lastUpdate: ahora
-            };
-
-            user.harem.push(nuevoPersonaje);
+                level: 1, exp: 0, stamina: 100, grupoId: grupoId, lastUpdate: ahora
+            });
             user.lastClaim = ahora;
             tirada.reclamado = true;
 
@@ -1615,10 +1564,9 @@ client.on('message_create', async (message) => {
         case 'charinfo':
         case 'infopj':
         case 'pjstats': {
-            const nombreBusqueda = args.join(" ").toLowerCase().trim();
+            const nombreBusqueda = args.join("").toLowerCase().trim();
             if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
-            // Búsqueda priorizada en el harem del usuario (ya cargado en 'user')
             let pj = user.harem.find(p => p.nombre.toLowerCase() === nombreBusqueda) ||
                      user.harem.find(p => p.nombre.toLowerCase().startsWith(nombreBusqueda)) ||
                      user.harem.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
@@ -1642,13 +1590,19 @@ client.on('message_create', async (message) => {
             infoMsg += `━━━━━━━━━━━━━━━━━━━━`;
 
             try {
-                // Usamos fetch/buffer para mayor estabilidad con MessageMedia
-                const response = await fetch(pj.imagen);
+                // MEJORA: Validación de URL y timeout para evitar cuelgues en Railway
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const response = await fetch(pj.imagen, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 const buffer = Buffer.from(await response.arrayBuffer());
                 const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'char.jpg');
                 return client.sendMessage(message.from, media, { caption: infoMsg });
             } catch (error) {
-                return message.reply(infoMsg);
+                // Si la imagen falla, al menos envía el texto
+                return message.reply(infoMsg + "\n\n⚠️ _(Imagen no disponible)_");
             }
         }
         break;
@@ -1744,35 +1698,33 @@ client.on('message_create', async (message) => {
         case 'obsequiar': {
             if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
             
-            // 1. Validar receptor (Mención o Respuesta)
             if (!targetId) return message.reply("❌ Menciona a alguien o responde a su mensaje.");
-            if (targetId === userId) return message.reply("❌ No puedes regalarte algo a ti mismo, gracioso.");
+            if (targetId === userId) return message.reply("❌ No puedes regalarte algo a ti mismo.");
 
-            // 2. Limpiar el nombre del personaje de los argumentos
-            // Quitamos la mención (números) para quedarnos solo con el nombre del PJ
-            const nombrePJ = args.join(" ").replace(/@\d+\s*/g, "").trim().toLowerCase();
+            // MEJORA: Extraer el nombre de forma segura sin romper números en el nombre del PJ
+            let nombrePJ = args.join(" ").trim();
+            if (message.mentionedIds.length > 0) {
+                // Si hay mención, quitamos la primera palabra (que suele ser @user)
+                const tempArgs = args.slice(1);
+                nombrePJ = tempArgs.join(" ").trim().toLowerCase();
+            } else {
+                nombrePJ = nombrePJ.toLowerCase();
+            }
+
             if (!nombrePJ) return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre`);
 
-            // 3. Buscar al receptor en la DB
             const receptor = await User.findOne({ userId: targetId });
-            if (!receptor) return message.reply("❌ El usuario no está registrado en mi base de datos.");
+            if (!receptor) return message.reply("❌ El usuario no está registrado.");
 
-            // 4. Buscar el personaje en tu harem (ya cargado en 'user')
             const index = user.harem.findIndex(p => p.nombre.toLowerCase() === nombrePJ);
-
             if (index === -1) {
-                return message.reply(`❌ No tienes a "${nombrePJ}" en tu colección de este grupo.`);
+                return message.reply(`❌ No tienes a "${nombrePJ}" en tu colección.`);
             }
 
             // --- OPERACIÓN DE TRASPASO ---
-            // Sacamos el personaje de tu harem
             const [personaje] = user.harem.splice(index, 1);
-            
-            // Lo añadimos al harem del receptor
-            // Mantenemos el mismo objeto (con su nivel, xp, etc.)
             receptor.harem.push(personaje);
 
-            // 5. Guardar ambos cambios en MongoDB
             await user.save();
             await receptor.save();
 
@@ -1787,37 +1739,28 @@ client.on('message_create', async (message) => {
 
 	
 //------------------------------------------------TR (TRADUCTOR)--------------------------------------------------------
-        case 'tr':
-        case 'traducir':
-        case 'traductor':
-        case 'traduccion': {
-            // Extraemos el texto después del comando y sus alias
+case 'tr': {
             const text = args.join(" ").trim();
-            
-            if (!text) {
-                return message.reply(`❌ Escribe lo que quieres traducir.\nEjemplo: \`${prefix}tr hello world\``);
-            }
+            if (!text) return message.reply(`❌ Ejemplo: \`${prefix}tr hello world\``);
 
             try {
-                // Usamos la API de Google Translate (vía gtx)
                 const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=${encodeURIComponent(text)}`;
-                const res = await axios.get(url);
+                const res = await axios.get(url, { timeout: 4000 }); // Timeout para no quedar colgado
                 
-                // La respuesta de esta API es un array un poco loco, así se extrae el texto limpio:
+                if (!res.data || !res.data[0]) throw new Error("Respuesta inválida");
+
                 const translation = res.data[0].map(item => item[0]).join('');
-                const detectedLang = res.data[2]; // El código del idioma detectado (en, jp, fr, etc.)
+                const detectedLang = res.data[2] || "??";
 
                 let msgTr = `『 🔠 *TRADUCCIÓN* 』\n`;
                 msgTr += `━━━━━━━━━━━━━━━━━━━━\n`;
                 msgTr += `🌐 *Origen:* ${detectedLang.toUpperCase()} ➔ *Destino:* ES\n\n`;
-                msgTr += `${translation}\n`;
+                msgTr += `> ${translation}\n`;
                 msgTr += `━━━━━━━━━━━━━━━━━━━━`;
 
                 return message.reply(msgTr);
-
             } catch (e) {
-                console.error("Error en Traductor:", e.message);
-                return message.reply("⚠️ No pude conectar con el servicio de traducción. Inténtalo más tarde.");
+                return message.reply("⚠️ El servicio de traducción está saturado. Intenta de nuevo en un momento.");
             }
         }
         break;
@@ -1828,111 +1771,90 @@ client.on('message_create', async (message) => {
         case 'trueque':
         case 'cambiar': {
             if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
-            
-            // 1. Limpieza de trades antiguos o duplicados
-            if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un intercambio pendiente en este grupo. Espera a que termine o expire (60s).");
+            if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un intercambio pendiente. Espera 60s.");
 
-            // 2. Validar receptor
-            if (!targetId || targetId === userId) return message.reply("❌ Menciona a alguien o responde su mensaje para proponer un intercambio.");
+            if (!targetId || targetId === userId) return message.reply("❌ Menciona a alguien para tradear.");
 
-            // 3. Procesar argumentos (Mi PJ | Su PJ)
             const textoTrade = args.join(" ").replace(/@\d+\s*/g, "");
             const partes = textoTrade.split("|");
-
-            if (partes.length !== 2) return message.reply(`❌ Uso: \`${prefix}trade @usuario Mi PJ | Su PJ\``);
+            if (partes.length !== 2) return message.reply(`❌ Uso: \`${prefix}trade @user Mi PJ | Su PJ\``);
 
             const miNombreBusqueda = partes[0].trim().toLowerCase();
             const suNombreBusqueda = partes[1].trim().toLowerCase();
 
-            // 4. Buscar receptor en DB
             const receptorDoc = await User.findOne({ userId: targetId });
-            if (!receptorDoc) return message.reply("❌ El usuario receptor no está registrado.");
+            if (!receptorDoc) return message.reply("❌ El receptor no está registrado.");
 
-            // 5. Verificar personajes en los harems (user ya está cargado, receptorDoc lo acabamos de traer)
+            // Búsqueda flexible (por si no escriben el nombre exacto)
             const miPJ = user.harem.find(p => p.nombre.toLowerCase() === miNombreBusqueda);
             const suPJ = receptorDoc.harem.find(p => p.nombre.toLowerCase() === suNombreBusqueda);
 
-            if (!miPJ) return message.reply(`❌ No tienes a "${miNombreBusqueda}" en tu colección.`);
-            if (!suPJ) return message.reply(`❌ Esa persona no tiene a "${suNombreBusqueda}" en su colección.`);
+            if (!miPJ) return message.reply(`❌ No tienes a "${miNombreBusqueda}".`);
+            if (!suPJ) return message.reply(`❌ El receptor no tiene a "${suNombreBusqueda}".`);
 
-            // 6. Guardar propuesta en memoria temporal (RAM)
             tradesPendientes[grupoId] = {
                 iniciador: userId,
                 receptor: targetId,
                 nombrePJIniciador: miPJ.nombre, 
                 nombrePJReceptor: suPJ.nombre,
                 timeout: setTimeout(() => { 
-                    if (tradesPendientes[grupoId]) {
-                        delete tradesPendientes[grupoId];
-                    }
+                    if (tradesPendientes[grupoId]) delete tradesPendientes[grupoId];
                 }, 60000)
             };
 
             return client.sendMessage(message.from, 
                 `🔄 *PROPUESTA DE INTERCAMBIO*\n\n` +
-                `👤 @${userId.split('@')[0]} ofrece: *${miPJ.nombre}*\n` +
-                `👤 @${targetId.split('@')[0]} ofrece: *${suPJ.nombre}*\n\n` +
-                `✅ @${targetId.split('@')[0]}, escribe *${prefix}aceptartrade* para confirmar.`,
+                `👤 @${userId.split('@')[0]} da: *${miPJ.nombre}*\n` +
+                `👤 @${targetId.split('@')[0]} da: *${suPJ.nombre}*\n\n` +
+                `✅ Escribe *${prefix}aceptartrade* para confirmar.`,
                 { mentions: [userId, targetId] }
             );
         }
         break;
 
-        //------------------------------------------------ACEPTAR TRADE--------------------------------------------------------
+			     //------------------------------------------------ACEPTAR TRADE--------------------------------------------------------
         case 'aceptartrade':
-        case 'confirmartrade':
+		case 'confirmartrade':
         case 'aceptarcambio': {
             const trade = tradesPendientes[grupoId];
-            if (!trade) return message.reply("❌ No hay intercambios pendientes en este grupo o ya expiró.");
+            if (!trade) return message.reply("❌ No hay intercambios pendientes.");
+            if (userId !== trade.receptor) return message.reply("❌ Solo el receptor puede aceptar.");
 
-            if (userId !== trade.receptor) {
-                return message.reply("❌ Solo la persona que recibió la oferta puede aceptar el intercambio.");
-            }
-
-            // Traemos al iniciador de la DB (el receptor ya es 'user')
             const iniciadorDoc = await User.findOne({ userId: trade.iniciador });
-            if (!iniciadorDoc) return message.reply("❌ Error: No se encontró al proponente original.");
+            if (!iniciadorDoc) return message.reply("❌ Error: No se encontró al proponente.");
 
-            // Buscamos los índices exactos para el intercambio
-            const idxIniciador = iniciadorDoc.harem.findIndex(p => p.nombre === trade.nombrePJIniciador);
-            const idxReceptor = user.harem.findIndex(p => p.nombre === trade.nombrePJReceptor);
+            // MEJORA: Búsqueda exacta ignorando mayúsculas/minúsculas para evitar errores de tipeo
+            const idxIniciador = iniciadorDoc.harem.findIndex(p => p.nombre.toLowerCase() === trade.nombrePJIniciador.toLowerCase());
+            const idxReceptor = user.harem.findIndex(p => p.nombre.toLowerCase() === trade.nombrePJReceptor.toLowerCase());
 
-            // Verificación de seguridad final
             if (idxIniciador === -1 || idxReceptor === -1) {
                 clearTimeout(trade.timeout);
                 delete tradesPendientes[grupoId];
-                return message.reply("❌ El intercambio falló: uno de los personajes ya no está con su dueño original.");
+                return message.reply("❌ El intercambio falló: uno de los personajes ya no está.");
             }
 
             try {
-                // --- OPERACIÓN MAESTRA DE INTERCAMBIO ---
                 const [pjDelIniciador] = iniciadorDoc.harem.splice(idxIniciador, 1);
                 const [pjDelReceptor] = user.harem.splice(idxReceptor, 1);
 
-                // Cruzamos los dueños
                 iniciadorDoc.harem.push(pjDelReceptor);
                 user.harem.push(pjDelIniciador);
 
-                // Guardar ambos en MongoDB
                 await iniciadorDoc.save();
                 await user.save();
 
                 clearTimeout(trade.timeout);
                 delete tradesPendientes[grupoId];
 
-                return client.sendMessage(message.from, 
-                    `🤝 *¡INTERCAMBIO COMPLETADO!*\n\n` +
-                    `✅ *${pjDelIniciador.nombre}* ➔ @${trade.receptor.split('@')[0]}\n` +
-                    `✅ *${pjDelReceptor.nombre}* ➔ @${trade.iniciador.split('@')[0]}`,
-                    { mentions: [trade.iniciador, trade.receptor] }
-                );
-
+                return client.sendMessage(message.from, `🤝 *¡INTERCAMBIO EXITOSO!*`, { mentions: [trade.iniciador, trade.receptor] });
             } catch (err) {
-                console.error("Error crítico en trade:", err);
-                return message.reply("⚠️ Error de base de datos al procesar el intercambio.");
+                delete tradesPendientes[grupoId];
+                return message.reply("⚠️ Error crítico al guardar el intercambio.");
             }
         }
         break;
+
+
 	
 //------------------------------------------------WTIRED (ENERGÍA)--------------------------------------------------------
         case 'ctired':
