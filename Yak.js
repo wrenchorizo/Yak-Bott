@@ -330,7 +330,7 @@ client.on('message_create', async (message) => {
     if (!message.body.startsWith(prefix)) return;
 
     // 2. Definiciones de variables de mando
-    const args = message.body.slice(prefix.length).trim().split(/ +/);
+    const args = message.body.slice(prefix.length).trim().split(/\s+/);
     const comando = args.shift().toLowerCase();
     const userId = message.author || message._data.participant || message.from;
     const grupoId = message.from;
@@ -1934,695 +1934,633 @@ client.on('message_create', async (message) => {
         }
         break;
 	
-// ============ COMANDO ?wtired ================
-if (message.body.startsWith(prefix + 'wtired')) {
-    if (!haremPorGrupo[grupoId] || !haremPorGrupo[grupoId][userId] || haremPorGrupo[grupoId][userId].length === 0) {
-        return message.reply('❒ Tu harem está vacío.');
-    }
-
-    // 1. Extraer página
-    const args = message.body.slice((prefix + 'wtired').length).trim().split(/\s+/);
-    let pagina = parseInt(args[0]) || 1;
-    const personajesPorPagina = 20;
-
-    // 2. Actualizar stamina de todos y clonar
-    let listaStats = haremPorGrupo[grupoId][userId].map(p => {
-        return actualizarStamina(p); 
-    });
-
-    // 3. Ordenar (opcional: aquí los ordeno por los más cansados primero)
-    listaStats.sort((a, b) => (a.stamina || 0) - (b.stamina || 0));
-
-    // 4. Cálculos de página
-    const totalPaginas = Math.ceil(listaStats.length / personajesPorPagina);
-    if (pagina < 1) pagina = 1;
-    if (pagina > totalPaginas) pagina = totalPaginas;
-
-    const inicio = (pagina - 1) * personajesPorPagina;
-    const fin = inicio + personajesPorPagina;
-    const personajesPagina = listaStats.slice(inicio, fin);
-
-    // 5. Construir mensaje con estilo minimalista
-    let respuesta = `༺ ESTADO DE ENERGÍA ༻\n`;
-    respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-    respuesta += `          ᴘᴀ́ɢɪɴᴀ ${pagina} ᴅᴇ ${totalPaginas}\n\n`;
-
-    personajesPagina.forEach((p, index) => {
-        let numGlobal = (inicio + index + 1).toString().padStart(2, '0');
-        
-        // Indicador visual sin emojis (usando caracteres de barra)
-        let barra = p.stamina <= 10 ? 'ᛃ [!!!!!!!!!]' : (p.stamina < 50 ? 'ᛃ [#####----]' : 'ᛃ [+++++++++]');
-
-        respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre}\n`;
-        respuesta += `    ╰┈─ ➤ ⚡ ${p.stamina}% ${barra}\n\n`;
-    });
-
-    respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-    respuesta += `⌬ Total: ${listaStats.length} ⌁ Usa ?wtired [n]`;
-
-    return message.reply(respuesta);
-}
-
-//============= COMANDO ?smob (VERSIÓN FINAL COMPLETA) ===============
-if (comando === 'smob') {
-    const ahora = Date.now();
-    const tiempoEspera = 15 * 60 * 1000; // 15 minutos entre búsquedas
-    const grupoId = message.from;
-    const userId = message.author || message.from;
-
-    // --- SISTEMA DE COOLDOWN ---
-    if (!cooldownsBuscarmob[grupoId]) cooldownsBuscarmob[grupoId] = {};
-    if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
-        const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
-        return message.reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min** para buscar otro mob.`);
-    }
-
-    const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
-    const hData = cargarHarem();
-    const misPersonajes = hData[grupoId]?.[userId] || [];
-    
-    // --- LÓGICA DE PODER CONTROLADA ---
-    let poderBase = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
-    let bonoNivel = 0;
-
-    if (misPersonajes.length > 0) {
-        // Promedio de los 3 mejores (solo si no son nivel bugueado)
-        const mejores = misPersonajes
-            .sort((a, b) => (b.level || 1) - (a.level || 1))
-            .slice(0, 3);
-        
-        const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
-        
-        // Cada nivel promedio añade 1,500 de poder (Lineal, no exponencial)
-        bonoNivel = nivelPromedio * 1500;
-    }
-
-    let poderMob = Math.floor(poderBase + bonoNivel);
-
-    // 🔥 ESCUDO ANTI-INFINITO (MÁXIMO 500k)
-    if (poderMob > 500000 || !isFinite(poderMob)) {
-        poderMob = 500000; 
-    }
-
-    // Guardar mob en memoria del grupo
-    mobActual[grupoId] = {
-        nombre: mobTemplate.nombre,
-        poderTotal: poderMob,
-        vencido: false,
-        creadoEn: ahora // Para que expire en 7 mins
-    };
-
-    cooldownsBuscarmob[grupoId][userId] = ahora;
-
-    message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n>Tienes **7 minutos** para pelear antes de que escape.`);
-}
-
-	
-//============= COMANDO ?fight (CORREGIDO) ===============
-if (comando === 'fight') {
-    const grupoId = message.from;
-    const userId = message.author || message.from;
-
-    if (!mobActual[grupoId] || mobActual[grupoId].vencido) {
-        return message.reply("❌ No hay mobs en esta zona. Usa *?smob* para buscar uno.");
-    }
-
-    const ahora = Date.now();
-    if (ahora - mobActual[grupoId].creadoEn > 7 * 60 * 1000) {
-        delete mobActual[grupoId];
-        return message.reply("⏰ El mob se ha escapado...");
-    }
-
-    const nombresPjs = message.body.slice(prefix.length + 5).split(',').map(n => n.trim().toLowerCase());
-    if (nombresPjs.length === 0 || !nombresPjs[0]) return message.reply("❌ Uso: *?fight pj1, pj2...*");
-
-    // Usamos directamente haremPorGrupo que ya está en la memoria RAM
-const userHarem = haremPorGrupo[grupoId]?.[userId] || [];
-
-    let equipo = [];
-
-    for (let nombrePj of nombresPjs) {
-        let pj = userHarem.find(p => p.nombre.toLowerCase() === nombrePj);
-        if (pj) {
-            actualizarStamina(pj);
-            if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}%).`);
-            if (!equipo.find(e => e.nombre === pj.nombre)) equipo.push(pj);
-        }
-    }
-
-    if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
-
-    const mob = mobActual[grupoId];
-
-    // CÁLCULO DE PODER REAL (Usa tus valores de harem con niveles)
-    let poderTuEquipo = equipo.reduce((sum, p) => {
-        const nivel = Number(p.level) || 1;
-        const valorBase = Number(p.valor) || 0;
-        return sum + (valorBase * Math.pow(1.20, nivel - 1));
-    }, 0);
-
-    poderTuEquipo *= (0.95 + Math.random() * 0.15);
-
-    message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
-
-    setTimeout(() => {
-		// --- DENTRO DE LA VICTORIA ---
-if (poderTuEquipo >= mob.poderTotal) {
-    const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
-    const xpGanada = Math.floor(mob.poderTotal / 200); 
-
-    // USA LA RAM (Instantáneo)
-    asegurarUsuario(carteras, userId);
-    carteras[userId].dinero = (Number(carteras[userId].dinero) || 0) + gananciaDinero;
-    
-    // SOLO AVISA AL RELOJ
-    economiaSucia = true; 
-
-    let avisosNivel = "";
-    for (let p of equipo) { // Usamos for para manejar mejor la evolución
-        p.exp = (Number(p.exp) || 0) + xpGanada;
-        p.stamina = Math.max(0, p.stamina - 15);
-
-        let nivelesSubidos = 0;
-        while (p.exp >= (Number(p.level) || 1) * 100) {
-            p.exp -= (Number(p.level) || 1) * 100;
-            p.level = (Number(p.level) || 1) + 1;
-            nivelesSubidos++;
-        }
-
-        if (nivelesSubidos > 0) {
-            avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
-
-            // ✅ NUEVA LÓGICA DE EVOLUCIÓN
-            if (p.nivelEvo && p.level >= p.nivelEvo) {
-                const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
-                if (datosEvo) {
-                    const nombreViejo = p.nombre;
-                    p.nombre = datosEvo.nombre;
-                    p.imagen = datosEvo.imagen;
-                    p.valor = datosEvo.valor;
-                    p.evolucion = datosEvo.evolucion || null;
-                    p.nivelEvo = datosEvo.nivelEvo || null;
-                    avisosNivel += `\n✨ *${nombreViejo}* evolucionó a *${p.nombre}*!`;
-                }
+//------------------------------------------------WTIRED (ENERGÍA)--------------------------------------------------------
+        case 'ctired':
+        case 'cansados':
+        case 'cstamina': {
+            // 1. Verificar si el usuario tiene personajes (user ya cargado de Mongo)
+            if (!user.harem || user.harem.length === 0) {
+                return message.reply('❒ Tu harem está vacío.');
             }
-        }
-    }
 
-    // SOLO AVISA AL RELOJ
-    haremSucio = true; 
-    mobActual[grupoId].vencido = true;
-        
-         message.reply(`✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
-        } else {
-            message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
-        }
-    }, 2000);
-}
+            // 2. Manejo de páginas (args[0] ya viene limpio del switch)
+            let pagina = parseInt(args[0]) || 1;
+            const personajesPorPagina = 20;
 
-	
-
-// --------- COMANDO ADMIN: INVOCAR DEADPOOL ---------
-    if (comando === 'spawndeadpool') {
-        const miIDPropio = '232246195839008@lid'; 
-        
-        if (userId !== miIDPropio) {
-            return message.reply("🔴 *DEADPOOL:* EY! deja ahí! JAMÁS ME ATRAPARÁS, YO SOY EL JESÚS DE MARVEL!.");
-        }
-
-        const mencionado = message.mentionedIds[0] || (message.body.split(' ')[1] ? message.body.split(' ')[1] + '@c.us' : null);
-        
-        if (!mencionado) {
-            return message.reply("🔴 *DEADPOOL:* Ahhhh, el admin abusando de sus poderes mimimimimi.");
-        }
-
-        // Limpiar multiverso
-        for (let g in haremPorGrupo) {
-            for (let u in haremPorGrupo[g]) {
-                haremPorGrupo[g][u] = haremPorGrupo[g][u].filter(p => p.nombre !== 'Deadpool');
-            }
-        }
-
-        if (!haremPorGrupo[grupoId]) haremPorGrupo[grupoId] = {};
-        if (!haremPorGrupo[grupoId][mencionado]) haremPorGrupo[grupoId][mencionado] = [];
-
-        // Tus diálogos integrados
-        const frasesDeadpool = [
-            "¡Hola! El harem anterior olía a calzones usados, así que me mudé aquí. ¿Qué hay de comer?",
-            "Ahora soy un inmigrante ilegal en tu harem, por lo menos hasta que el fokin BOT se crashee... otra vez!",
-            "¿Vieron eso? Acabo de saltar de un usuario a otro ignorando por completo todas las reglas del código del YakBot. ¡Soy genial!",
-            "Hey, HEY! Tú... el de la pantalla. Sí sí, acabo de entrar en tu harem. No te acostumbres, me aburro rápido, como una mujer siendole fiel a un hombre.",
-            "El programador intentó ponerme un precio, pero soy invaluable (y muy sexy en mis mallas)."
-        ];
-        
-        const fraseElegida = frasesDeadpool[Math.floor(Math.random() * frasesDeadpool.length)];
-
-        const deadpoolObj = {
-            nombre: "Deadpool",
-            fuente: "Marvel",
-            valor: 696969,
-            imagen: "https://i.pinimg.com/736x/dd/91/76/dd9176fa6d3699a754a8ae5c3d518b32.jpg",
-            level: 102,
-            stamina: 100,
-            exp: 0
-        };
-
-        haremPorGrupo[grupoId][mencionado].push(deadpoolObj);
-        guardarHarem(haremPorGrupo);
-
-        const targetClean = mencionado.split('@')[0];
-        return client.sendMessage(message.from, `🔴 *DEADPOOL:* ${fraseElegida}\n\n_¡Deadpool ha invadido el harem de @${targetClean}!_`, { mentions: [mencionado] });
-    }
-
-	// ============= RESETEAR NIVELES (LÍMITE 1,000) =============
-if (comando === 'fixlevels') {
-    const adminID = '232246195839008@lid'; 
-    if (userId !== adminID) return;
-
-    const hData = cargarHarem();
-    let cont = 0;
-
-    for (let g in hData) {
-        for (let u in hData[g]) {
-            hData[g][u].forEach(p => {
-                let lvl = Number(p.level);
-                // Si el nivel es mayor a 1,000 o es Infinito/NaN
-                if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
-                    p.level = 1;
-                    p.exp = 0;
-                    cont++;
+            // 3. Actualizar stamina de todos antes de mostrar
+            // Nota: Aquí llamamos a tu función de actualización que calcula la regeneración por tiempo
+            user.harem.forEach(p => {
+                if (typeof actualizarStamina === 'function') {
+                    actualizarStamina(p); 
                 }
             });
-        }
-    }
 
-    guardarHarem(hData);
-    message.reply(`✨ *PURIFICACIÓN COMPLETADA* ✨\n\nSe han reseteado **${cont}** personajes que superaban el nivel 1,000.\n\n*(Tu Admin Char y personajes legales no han sido afectados)*.`);
-}
+            // Clonamos para ordenar sin afectar el orden real del harem en la DB
+            let listaStats = [...user.harem];
 
-// --- COMANDO PARA DAR DINERO (SOLO ADMIN) ---
-if (message.body.startsWith(prefix + 'addmoney')) {
-    const adminID = '232246195839008@lid'; 
-    if (userId !== adminID) return message.reply("⚠️ No tienes permiso.");
+            // 4. Ordenar: los más cansados primero (menor stamina arriba)
+            listaStats.sort((a, b) => (a.stamina || 0) - (b.stamina || 0));
 
-    const parts = message.body.split(/\s+/); 
-    let cantidad = parseInt(parts[1]); 
+            // 5. Cálculos de página
+            const totalPaginas = Math.ceil(listaStats.length / personajesPorPagina);
+            if (pagina < 1) pagina = 1;
+            if (pagina > totalPaginas) pagina = totalPaginas;
 
-    if (isNaN(cantidad)) return message.reply("❌ Uso: `?addmoney [cantidad] [@usuario]`");
+            const inicio = (pagina - 1) * personajesPorPagina;
+            const personajesPagina = listaStats.slice(inicio, inicio + personajesPorPagina);
 
-    // --- LÓGICA DE DESTINATARIO ---
-    let targetId = userId; // Por defecto, tú mismo
+            // 6. Construir mensaje con tu estilo minimalista
+            let respuesta = `༺ ESTADO DE ENERGÍA ༻\n`;
+            respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
+            respuesta += `          ᴘᴀ́ɢɪɴᴀ ${pagina} ᴅᴇ ${totalPaginas}\n\n`;
 
-    // Si hay una mención en el mensaje, usamos el ID del mencionado
-    if (message.mentionedIds && message.mentionedIds.length > 0) {
-        targetId = message.mentionedIds[0];
-    }
-    // 1. Usamos la variable GLOBAL 'carteras'
-    asegurarUsuario(carteras, targetId); 
-    // 2. Sumamos directamente en la RAM
-    carteras[targetId].dinero = (Number(carteras[targetId].dinero) || 0) + cantidad;
-    // 3. Avisamos al reloj de guardado
-    economiaSucia = true;
-    // 4. Preparamos el mensaje según a quién se lo diste
-    const totalActual = carteras[targetId].dinero;
-    const nombreDestino = targetId === userId ? "tu cuenta" : `@${targetId.split('@')[0]}`;
-    const menciones = targetId === userId ? [] : [targetId];
+            personajesPagina.forEach((p, index) => {
+                let numGlobal = (inicio + index + 1).toString().padStart(2, '0');
+                
+                // Tu lógica de barras visuales
+                let barra = p.stamina <= 10 ? 'ᛃ [!!!!!!!!!]' : (p.stamina < 50 ? 'ᛃ [#####----]' : 'ᛃ [+++++++++]');
 
-    if (typeof darLogro === 'function' && darLogro(perfiles, targetId, "admin_money")) {
-        perfilesSucios = true;
-        client.sendMessage(message.from, `🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a ${nombreDestino}.\n✨ Saldo: *$${totalActual.toLocaleString()}*`, { mentions: menciones });
-    } else {
-        client.sendMessage(message.from, `✅ Dinero enviado.\n💰 Cantidad: *$${cantidad.toLocaleString()}*\n👤 Destino: ${nombreDestino}\n✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`, { mentions: menciones });
-    }
-}
-
-// ============= COMANDO ADMIN: DELCHAR (SOLO NÚMEROS) =============
-if (comando === 'delchar') {
-    // 1. SEGURIDAD: Solo el Admin puede usar esto
-    const adminID = '232246195839008@lid'; // Tu ID de Admin
-    if (userId !== adminID) return message.reply("⚠️ No tienes permisos para borrar personajes.");
-
-    // 2. IDENTIFICAR VÍCTIMA (Mención o Respuesta)
-    if (!targetId) return message.reply("❌ Uso: `?delchar [Nombre] @usuario` o responde a su mensaje.");
-
-    // 3. LIMPIAR NOMBRE DEL PERSONAJE
-    const nombrePJ = args.join(" ").replace(/@\d+\s*/g, "").trim().toLowerCase();
-    if (!nombrePJ) return message.reply("❌ Debes especificar el nombre del personaje.");
-
-    const victimaId = targetId;
-
-    // 4. VALIDACIONES EN RAM
-    if (!haremPorGrupo[grupoId]?.[victimaId] || haremPorGrupo[grupoId][victimaId].length === 0) {
-        return message.reply("❌ Esa persona no tiene personajes en su harem.");
-    }
-
-    const haremVictima = haremPorGrupo[grupoId][victimaId];
-    
-    // Buscamos ignorando mayúsculas/minúsculas
-    const index = haremVictima.findIndex(p => p.nombre.toLowerCase() === nombrePJ);
-
-    if (index === -1) {
-        return message.reply(`❌ No se encontró a "${nombrePJ}" en el harem de ese usuario.`);
-    }
-
-    // 5. EJECUCIÓN (BORRADO EN RAM)
-    const [eliminado] = haremVictima.splice(index, 1);
-
-    // ACTIVAR BANDERA PARA EL RELOJ DE GUARDADO
-    haremSucio = true;
-
-    return client.sendMessage(
-        message.from,
-        `🗑️ *PERSONAJE ELIMINADO*\n\nEl personaje *${eliminado.nombre}* ha sido borrado para siempre del harem de @${victimaId.split('@')[0]}.`,
-        { mentions: [victimaId] }
-    );
-}
-	
-// --------- COMANDO ?kick ---------
-if (comando === 'kick') {
-
-    const chat = await message.getChat();
-
-    if (!chat.isGroup) {
-        return message.reply("Este comando solo funciona en grupos.");
-    }
-
-    const sender = await message.getContact();
-    const botId = client.info.wid._serialized;
-
-    const senderParticipant = chat.participants.find(p =>
-        p.id._serialized === sender.id._serialized
-    );
-
-    const botParticipant = chat.participants.find(p =>
-        p.id._serialized === botId
-    );
-
-    // verificar admin
-    if (!senderParticipant?.isAdmin && !senderParticipant?.isSuperAdmin) {
-        return message.reply("❌ Solo los administradores pueden usar este comando.");
-    }
-
-    // verificar bot admin
-    if (!botParticipant?.isAdmin && !botParticipant?.isSuperAdmin) {
-        return message.reply("Necesito ser admin para expulsar a un miembro del grupo");
-    }
-
-    let objetivo;
-
-    // ✅ menciones reales
-    const mentions = await message.getMentions();
-
-    if (mentions.length > 0) {
-        objetivo = mentions[0].id._serialized;
-    }
-
-    // ✅ responder mensaje
-    else if (message.hasQuotedMsg) {
-
-    const quoted = await message.getQuotedMessage();
-    const contact = await quoted.getContact();
-
-    objetivo = contact.id._serialized;
-
-	}
-
-    if (!objetivo) {
-        return message.reply("Debes mencionar al usuario o responder a su mensaje.");
-    }
-
-    // buscar participante
-    const target = chat.participants.find(p =>
-        p.id._serialized === objetivo
-    );
-
-    if (!target) {
-        return message.reply("❌ No encontré a ese usuario en el grupo.");
-    }
-
-    // evitar expulsar bot
-    if (target.id._serialized === botId) {
-        return message.reply("❌ No puedo expulsarme a mí mismo.");
-    }
-
-    // evitar expulsar admins
-    if (target.isAdmin || target.isSuperAdmin) {
-        return message.reply("❌ No puedes expulsar a otro administrador.");
-    }
-
-    try {
-
-        const contacto = await client.getContactById(target.id._serialized);
-        const nombre = contacto.pushname || contacto.name || contacto.number;
-
-        await chat.removeParticipants([target.id._serialized]);
-
-        await chat.sendMessage(`"${nombre}" ha sido expulsado del grupo`);
-
-    } catch (err) {
-
-        console.log("Error kick:", err);
-        message.reply("No pude expulsar a ese usuario.");
-    }
-}
-
-	
-// --------- ?adminchar (SOLO ADMIN) ---------
-
-if (comando === 'adminchar') {
-    const adminNumber = "232246195839008@lid"; 
-
-    if (userId !== adminNumber) {
-        return message.reply("❌ ERROR: Acceso denegado.");
-    }
-
-    if (!haremPorGrupo[grupoId]) haremPorGrupo[grupoId] = {};
-    if (!haremPorGrupo[grupoId][userId]) haremPorGrupo[grupoId][userId] = [];
-
-    const yaLoTiene = haremPorGrupo[grupoId][userId].find(p => p.nombre === "♛ PERSONAJE DEL ADMIN ♛");
-    if (yaLoTiene) return message.reply("Ya posees el poder absoluto.");
-
-    const adminChar = {
-        nombre: "EL ADMIN",
-        fuente: "SISTEMA",
-        valor: 9999999999999999999999999999,
-        imagen: "https://i.pinimg.com/736x/22/1a/da/221ada2b52d13dcc65999b2cda540aae.jpg", 
-        genero: "Divino",
-        level: 100,
-        exp: 0,
-        stamina: 1000,
-        lastUpdate: Date.now()
-    };
-
-    try {
-        // Intentamos descargar la imagen para confirmar que funciona antes de guardarlo
-        const response = await fetch(adminChar.imagen);
-        if (!response.ok) throw new Error("Error al descargar");
-        
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'admin.jpg');
-
-        haremPorGrupo[grupoId][userId].push(adminChar);
-        guardarHarem(haremPorGrupo);
-
-        await message.reply(media, undefined, { 
-            caption: "⚡ *EL PODER ABSOLUTO HA SIDO RECLAMADO* ⚡\n\nBienvenido, Creador." 
-        });
-
-    } catch (error) {
-        console.log('Error en adminchar:', error.message);
-        // Si la imagen falla, igual te damos el personaje pero con un aviso
-        haremPorGrupo[grupoId][userId].push(adminChar);
-        guardarHarem(haremPorGrupo);
-        return message.reply("⚡ Personaje reclamado, pero la imagen falló. Puedes ver sus stats con ?charinfo.");
-    }
-}
-
-// --------- ?s (sticker imagen / gif / video) ---------
-
-if (message.body === '?s' || 
-   (message.hasMedia && message.caption === '?s')) {
-
-    let mediaMsg;
-
-    if (message.hasQuotedMsg) {
-        const quoted = await message.getQuotedMessage();
-        if (!quoted.hasMedia) {
-            return message.reply("Responde a una imagen, gif o video.");
-        }
-        mediaMsg = quoted;
-    }
-    else if (message.hasMedia) {
-        mediaMsg = message;
-    }
-    else {
-        return message.reply("Envía o responde a una imagen, gif o video con ?s");
-    }
-
-    try {
-        const media = await mediaMsg.downloadMedia();
-
-        // 🔥 Detectar tipo
-        if (media.mimetype.includes("image")) {
-
-            // Sticker normal
-            await message.reply(media, undefined, {
-                sendMediaAsSticker: true,
-                stickerAuthor: "YakBot",
-                stickerName: "YakBot tm"
+                respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre}\n`;
+                respuesta += `    ╰┈─ ➤ ⚡ ${p.stamina}% ${barra}\n\n`;
             });
 
-        } else if (media.mimetype.includes("video") || media.mimetype.includes("gif")) {
+            respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
+            respuesta += `⌬ Total: ${listaStats.length} ⌁ Usa ${prefix}wtired [n]`;
 
-            // Verificar duración si es video
-if (mediaMsg._data.seconds && mediaMsg._data.seconds > 10) {
-    return message.reply("El video debe durar máximo 10 segundos.");
-}
+            // Guardamos los cambios de stamina en Mongo por si acaso
+            await user.save();
 
-if (media.filesize && media.filesize > 8 * 1024 * 1024) {
-    return message.reply("El archivo es demasiado pesado.");
-}
-
-            await message.reply(media, undefined, {
-                sendMediaAsSticker: true,
-                stickerAuthor: "YakBot",
-                stickerName: "YakBot tm"
-            });
-
-        } else {
-            return message.reply("Formato no soportado.");
+            return message.reply(respuesta);
         }
+        break;
 
-    } catch (err) {
-        console.log(err);
-        message.reply("Error al crear el sticker.");
-    }
-}
+//------------------------------------------------SMOB (BUSCAR MONSTRUO)--------------------------------------------------------
+        case 'smob':
+        case 'searchmob':
+        case 'buscarmob':
+        case 'mob': {
+            const ahora = Date.now();
+            const tiempoEspera = 15 * 60 * 1000; // 15 minutos
+
+            // --- SISTEMA DE COOLDOWN (En memoria del bot) ---
+            if (!cooldownsBuscarmob[grupoId]) cooldownsBuscarmob[grupoId] = {};
+            if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
+                const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
+                return message.reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min** para buscar otro mob.`);
+            }
+
+            // Seleccionar mob de tu data de monstruos
+            const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
+            
+            // --- LÓGICA DE PODER CONTROLADA ---
+            let poderBase = Math.floor(Math.random() * (30000 - 10000 + 1)) + 10000;
+            let bonoNivel = 0;
+
+            if (user.harem && user.harem.length > 0) {
+                // Promedio de los 3 mejores niveles
+                const mejores = [...user.harem]
+                    .sort((a, b) => (b.level || 1) - (a.level || 1))
+                    .slice(0, 3);
+                
+                const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
+                bonoNivel = nivelPromedio * 1500;
+            }
+
+            let poderMob = Math.floor(poderBase + bonoNivel);
+
+            // 🔥 ESCUDO ANTI-INFINITO (MÁXIMO 500k)
+            if (poderMob > 500000 || !isFinite(poderMob)) {
+                poderMob = 500000; 
+            }
+
+            // Guardar mob en memoria del grupo (RAM temporal)
+            mobActual[grupoId] = {
+                nombre: mobTemplate.nombre,
+                poderTotal: poderMob,
+                vencido: false,
+                creadoEn: ahora
+            };
+
+            cooldownsBuscarmob[grupoId][userId] = ahora;
+
+            return message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n> Tienes **7 minutos** para pelear antes de que escape.`);
+        }
+        break;
+
+        //------------------------------------------------FIGHT (PELEAR)--------------------------------------------------------
+        case 'fight':
+        case 'fmob':
+        case 'atacar':
+        case 'farmear': {
+            if (!mobActual[grupoId] || mobActual[grupoId].vencido) {
+                return message.reply("❌ No hay mobs en esta zona. Usa *?smob* para buscar uno.");
+            }
+
+            const ahora = Date.now();
+            if (ahora - mobActual[grupoId].creadoEn > 7 * 60 * 1000) {
+                delete mobActual[grupoId];
+                return message.reply("⏰ El mob se ha escapado...");
+            }
+
+            // Obtener nombres de personajes de los argumentos (ej: goku, luffy)
+            const nombresPjs = args.join(" ").split(',').map(n => n.trim().toLowerCase());
+            if (nombresPjs.length === 0 || !nombresPjs[0]) return message.reply("❌ Uso: *?fight pj1, pj2...*");
+
+            let equipo = [];
+            for (let nombrePj of nombresPjs) {
+                let pj = user.harem.find(p => p.nombre.toLowerCase() === nombrePj);
+                if (pj) {
+                    // Actualizar stamina antes de la pelea
+                    if (typeof actualizarStamina === 'function') actualizarStamina(pj);
+                    
+                    if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}%).`);
+                    if (!equipo.find(e => e.nombre === pj.nombre)) equipo.push(pj);
+                }
+            }
+
+            if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
+
+            const mob = mobActual[grupoId];
+
+            // CÁLCULO DE PODER DEL EQUIPO
+            let poderTuEquipo = equipo.reduce((sum, p) => {
+                const nivel = Number(p.level) || 1;
+                const valorBase = Number(p.valor) || 0;
+                return sum + (valorBase * Math.pow(1.20, nivel - 1));
+            }, 0);
+
+            // Factor de suerte (95% a 110%)
+            poderTuEquipo *= (0.95 + Math.random() * 0.15);
+
+            message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
+
+            setTimeout(async () => {
+                if (poderTuEquipo >= mob.poderTotal) {
+                    const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
+                    const xpGanada = Math.floor(mob.poderTotal / 200); 
+
+                    user.dinero = (Number(user.dinero) || 0) + gananciaDinero;
+                    let avisosNivel = "";
+
+                    for (let p of equipo) {
+                        p.exp = (Number(p.exp) || 0) + xpGanada;
+                        p.stamina = Math.max(0, p.stamina - 15);
+
+                        let subio = false;
+                        while (p.exp >= (Number(p.level) || 1) * 100) {
+                            p.exp -= (Number(p.level) || 1) * 100;
+                            p.level = (Number(p.level) || 1) + 1;
+                            subio = true;
+                        }
+
+                        if (subio) {
+                            avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
+
+                            // ✅ LÓGICA DE EVOLUCIÓN INTEGRADA
+                            if (p.nivelEvo && p.level >= p.nivelEvo && p.evolucion) {
+                                const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
+                                if (datosEvo) {
+                                    const nombreViejo = p.nombre;
+                                    p.nombre = datosEvo.nombre;
+                                    p.imagen = datosEvo.imagen;
+                                    p.valor = datosEvo.valor;
+                                    p.evolucion = datosEvo.evolucion || null;
+                                    p.nivelEvo = datosEvo.nivelEvo || null;
+                                    avisosNivel += `\n✨ *${nombreViejo}* evolucionó a *${p.nombre}*!`;
+                                }
+                            }
+                        }
+                    }
+
+                    mobActual[grupoId].vencido = true;
+                    await user.save(); // GUARDADO ÚNICO EN MONGO
+                    
+                    return client.sendMessage(message.from, `✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
+                } else {
+                    // Si pierden, también consumen un poco de stamina por el esfuerzo
+                    for (let p of equipo) {
+                        p.stamina = Math.max(0, p.stamina - 5);
+                    }
+                    await user.save();
+                    return message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
+                }
+            }, 2000);
+        }
+        break;
+	
+
+//------------------------------------------------FIXLEVELS (PURIFICACIÓN ADMIN)--------------------------------------------------------
+        case 'fixlevels':
+        case 'limpiarniveles':
+        case 'resetlevels': {
+            const adminID = '232246195839008@lid'; 
+            if (userId !== adminID) return; // Silencio total si no eres tú
+
+            try {
+                // Buscamos a TODOS los usuarios que tengan algún personaje con nivel > 1000 o infinito
+                const usuariosAfectados = await User.find({ 
+                    "harem.level": { $gt: 1000 } 
+                });
+
+                let cont = 0;
+
+                for (let uDoc of usuariosAfectados) {
+                    let huboCambio = false;
+                    uDoc.harem.forEach(p => {
+                        let lvl = Number(p.level);
+                        // Si el nivel es mayor a 1,000, Infinito o NaN
+                        if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
+                            p.level = 1;
+                            p.exp = 0;
+                            cont++;
+                            huboCambio = true;
+                        }
+                    });
+
+                    if (huboCambio) {
+                        await uDoc.save();
+                    }
+                }
+
+                return message.reply(`✨ *PURIFICACIÓN COMPLETADA* ✨\n\nSe han reseteado **${cont}** personajes que superaban el nivel 1,000 en toda la base de datos.\n\n*(Tu Admin Char y personajes legales no han sido afectados)*.`);
+            } catch (err) {
+                console.error("Error en fixlevels:", err);
+                return message.reply("⚠️ Error en la purificación de niveles.");
+            }
+        }
+        break;
+
+        //------------------------------------------------ADDMONEY (DINERO INFINITO)--------------------------------------------------------
+        case 'addmoney':
+        case 'admdinero':
+        case 'createmoney':
+        case 'spawnmoney': {
+            const adminID = '232246195839008@lid'; 
+            if (userId !== adminID) return message.reply("⚠️ No tienes permiso.");
+
+            // args[0] es la cantidad, args[1] sería la mención si existe
+            let cantidad = parseInt(args[0]); 
+            if (isNaN(cantidad)) return message.reply(`❌ Uso: \`${prefix}addmoney [cantidad] [@usuario]\``);
+
+            // Lógica de destino: si hay mención o respuesta, usamos ese ID, si no, el tuyo
+            let destinoId = targetId || userId;
+
+            try {
+                // Buscamos al usuario destino en Mongo
+                const receptor = (destinoId === userId) ? user : await User.findOne({ userId: destinoId });
+
+                if (!receptor) return message.reply("❌ El usuario no está registrado.");
+
+                receptor.dinero = (Number(receptor.dinero) || 0) + cantidad;
+                await receptor.save();
+
+                const totalActual = receptor.dinero;
+                const nombreDestino = destinoId === userId ? "tu cuenta" : `@${destinoId.split('@')[0]}`;
+                const menciones = destinoId === userId ? [] : [destinoId];
+
+                // Lógica de Logro (Si tienes la función darLogro activa)
+                if (typeof darLogro === 'function' && darLogro(receptor, "admin_money")) {
+                    return client.sendMessage(message.from, 
+                        `🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a ${nombreDestino}.\n✨ Saldo: *$${totalActual.toLocaleString()}*`, 
+                        { mentions: menciones }
+                    );
+                } else {
+                    return client.sendMessage(message.from, 
+                        `✅ *DINERO ENVIADO*\n💰 Cantidad: *$${cantidad.toLocaleString()}*\n👤 Destino: ${nombreDestino}\n✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`, 
+                        { mentions: menciones }
+                    );
+                }
+            } catch (err) {
+                console.error("Error en addmoney:", err);
+                return message.reply("⚠️ Error al modificar la economía.");
+            }
+        }
+        break;
+
+//------------------------------------------------DELCHAR (BORRADO ADMIN)--------------------------------------------------------
+        case 'delchar':
+        case 'borrarpj':
+        case 'removerchar':
+        case 'quitarpj': {
+            const adminID = '232246195839008@lid'; 
+            if (userId !== adminID) return message.reply("⚠️ No tienes permisos para borrar personajes.");
+
+            // 1. Identificar a la "víctima" (Mención o Respuesta) usando el targetId universal
+            if (!targetId) return message.reply(`❌ Uso: \`${prefix}delchar [Nombre] @usuario\` o responde a su mensaje.`);
+
+            // 2. Limpiar el nombre del personaje de los argumentos
+            const nombrePJ = args.join(" ").replace(/@\d+\s*/g, "").trim().toLowerCase();
+            if (!nombrePJ) return message.reply("❌ Debes especificar el nombre del personaje.");
+
+            try {
+                // 3. Buscar a la víctima en MongoDB
+                const victimaDoc = await User.findOne({ userId: targetId });
+                if (!victimaDoc || !victimaDoc.harem || victimaDoc.harem.length === 0) {
+                    return message.reply("❌ Esa persona no tiene personajes en su colección.");
+                }
+
+                // 4. Buscar el personaje en su harem
+                const index = victimaDoc.harem.findIndex(p => p.nombre.toLowerCase() === nombrePJ);
+
+                if (index === -1) {
+                    return message.reply(`❌ No se encontró a "${nombrePJ}" en el harem de ese usuario.`);
+                }
+
+                // 5. Ejecución del borrado
+                const [eliminado] = victimaDoc.harem.splice(index, 1);
+
+                // 6. Guardar cambios en MongoDB
+                await victimaDoc.save();
+
+                return client.sendMessage(
+                    message.from,
+                    `🗑️ *PERSONAJE ELIMINADO*\n\nEl personaje *${eliminado.nombre}* ha sido borrado para siempre del harem de @${targetId.split('@')[0]}.`,
+                    { mentions: [targetId] }
+                );
+
+            } catch (err) {
+                console.error("Error en delchar:", err);
+                return message.reply("⚠️ Error de base de datos al intentar borrar el personaje.");
+            }
+        }
+        break;
+	
+//------------------------------------------------KICK (EXPULSAR)--------------------------------------------------------
+        case 'kick':
+        case 'sacar':
+		case 'baniar':
+        case 'expulsar':
+        case 'ban': {
+            const chat = await message.getChat();
+
+            if (!chat.isGroup) {
+                return message.reply("❌ Este comando solo funciona en grupos.");
+            }
+
+            const botId = client.info.wid._serialized;
+
+            // 1. Obtener participantes clave (Remitente, Bot y Objetivo)
+            const senderParticipant = chat.participants.find(p => p.id._serialized === userId);
+            const botParticipant = chat.participants.find(p => p.id._serialized === botId);
+
+            // 2. Verificar permisos del que envía el comando
+            if (!senderParticipant?.isAdmin && !senderParticipant?.isSuperAdmin) {
+                return message.reply("❌ Solo los administradores pueden usar este comando.");
+            }
+
+            // 3. Verificar si el Bot es admin para poder ejecutar la acción
+            if (!botParticipant?.isAdmin && !botParticipant?.isSuperAdmin) {
+                return message.reply("⚠️ Necesito ser administrador del grupo para expulsar a alguien.");
+            }
+
+            // 4. Identificar al objetivo (usando tu lógica de mención o respuesta)
+            let objetivoId = targetId; // Ya lo tenemos de la configuración previa del switch
+
+            if (!objetivoId) {
+                return message.reply("❌ Debes mencionar al usuario o responder a su mensaje.");
+            }
+
+            // 5. Buscar al objetivo dentro de la lista del chat
+            const target = chat.participants.find(p => p.id._serialized === objetivoId);
+
+            if (!target) {
+                return message.reply("❌ No encontré a ese usuario en el grupo.");
+            }
+
+            // 6. Protecciones de seguridad
+            if (target.id._serialized === botId) {
+                return message.reply("❌ No puedo expulsarme a mí mismo, ¡sería un suicidio!");
+            }
+
+            if (target.isAdmin || target.isSuperAdmin) {
+                return message.reply("❌ No puedes expulsar a otro administrador del grupo.");
+            }
+
+            // 7. Ejecución de la expulsión
+            try {
+                const contacto = await client.getContactById(target.id._serialized);
+                const nombre = contacto.pushname || contacto.name || contacto.number;
+
+                // Acción de remover del grupo
+                await chat.removeParticipants([target.id._serialized]);
+
+                return client.sendMessage(message.from, `🚀 *JUSTICIA APLICADA*\n\nEl usuario *${nombre}* ha sido expulsado del grupo.`);
+
+            } catch (err) {
+                console.error("Error en Kick:", err);
+                return message.reply("⚠️ No pude expulsar a ese usuario. Puede que tenga configuraciones de privacidad o hubo un error de conexión.");
+            }
+        }
+        break;
+
+	
+//------------------------------------------------ADMINCHAR (PODER ABSOLUTO)--------------------------------------------------------
+        case 'adminchar':
+        case 'creador':
+        case 'godmode':
+        case 'modoadmin': {
+            const adminNumber = "232246195839008@lid"; 
+
+            if (userId !== adminNumber) {
+                return message.reply("❌ ERROR: Acceso denegado. No eres el Creador.");
+            }
+
+            // Verificar si ya tienes al Admin Char en tu harem (user ya cargado de Mongo)
+            const yaLoTiene = user.harem.find(p => p.nombre === "EL ADMIN");
+            if (yaLoTiene) return message.reply("⚡ Ya posees el poder absoluto en tu colección.");
+
+            const adminChar = {
+                nombre: "EL ADMIN",
+                fuente: "SISTEMA",
+                valor: 999999999999, // Un valor masivo pero manejable por JS
+                imagen: "https://i.pinimg.com/736x/22/1a/da/221ada2b52d13dcc65999b2cda540aae.jpg", 
+                genero: "Desconocido",
+                level: 1,
+                exp: 0,
+                stamina: 1000,
+                lastUpdate: Date.now()
+            };
+
+            try {
+                // Intentamos descargar la imagen para el mensaje épico
+                const response = await fetch(adminChar.imagen);
+                if (!response.ok) throw new Error("Error al descargar");
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'admin.jpg');
+
+                // Añadimos al harem y guardamos en MongoDB
+                user.harem.push(adminChar);
+                await user.save();
+
+                return client.sendMessage(message.from, media, { 
+                    caption: "⚡ *EL PODER ABSOLUTO HA SIDO RECLAMADO* ⚡\n\nBienvenido, Creador. Tu presencia ha sido registrada." 
+                });
+
+            } catch (error) {
+                console.log('Error en adminchar:', error.message);
+                
+                // Si la imagen falla, el personaje se entrega igual
+                user.harem.push(adminChar);
+                await user.save();
+                
+                return message.reply("⚡ Personaje reclamado, pero la imagen falló en la descarga. Ya está en tu harem.");
+            }
+        }
+        break;
+
+//------------------------------------------------S (STICKER)--------------------------------------------------------
+        case 's':
+        case 'sticker': {
+            let mediaMsg;
+
+            // Revisar si es respuesta o mensaje con media
+            if (message.hasQuotedMsg) {
+                const quoted = await message.getQuotedMessage();
+                if (!quoted.hasMedia) return message.reply("❌ Responde a una imagen, gif o video.");
+                mediaMsg = quoted;
+            } else if (message.hasMedia) {
+                mediaMsg = message;
+            } else {
+                return message.reply(`Envía o responde a una imagen/video con *${prefix}s*`);
+            }
+
+            try {
+                const media = await mediaMsg.downloadMedia();
+
+                // Validar video/gif (Máx 10s y 8MB)
+                if (media.mimetype.includes("video") || media.mimetype.includes("gif")) {
+                    if (mediaMsg._data.seconds && mediaMsg._data.seconds > 10) {
+                        return message.reply("⚠️ El video debe durar máximo 10 segundos.");
+                    }
+                    if (media.filesize && media.filesize > 8 * 1024 * 1024) {
+                        return message.reply("⚠️ El archivo es demasiado pesado.");
+                    }
+                }
+
+                await client.sendMessage(message.from, media, {
+                    sendMediaAsSticker: true,
+                    stickerAuthor: "YakBot",
+                    stickerName: "YakBot tm"
+                });
+
+            } catch (err) {
+                console.error("Error Sticker:", err);
+                message.reply("❌ Error al crear el sticker.");
+            }
+        }
+        break;
 
 // ==========================================
     // REACCIONES ANIME (MP4 CONVERTIDO - MODO GIF)
     // ==========================================
-const listaReacciones = ['cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'];
-const comandoLimpio = comando.split(/\s+/)[0];
+//------------------------------------------------REACCIONES ANIME--------------------------------------------------------
+        case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
+        case 'preg': case 'laugh': case 'dance': case 'scared': case 'eat': 
+        case 'sleep': case 'cafe': case 'hug': case 'punch': case 'kill': 
+        case 'run': case 'kiss': {
+            
+            // 1. Lógica de Logros en MongoDB
+            user.reacciones = (user.reacciones || 0) + 1;
+            const metas = { "react_40": 40, "react_100": 100, "react_200": 200, "react_500": 500 };
+            
+            for (let slug in metas) {
+                if (user.reacciones === metas[slug]) {
+                    if (typeof darLogro === 'function') darLogro(user, slug);
+                }
+            }
+            await user.save();
 
-if (listaReacciones.includes(comandoLimpio)) {
-    
-    // 1. Lógica de Logros y RAM
-    perfiles[userId].reacciones = (perfiles[userId].reacciones || 0) + 1;
-    perfilesSucios = true; // Usamos el reloj en lugar de guardarPerfiles()
+            // 2. Nombres para las frases
+            const authorContact = await message.getContact();
+            const authorName = authorContact.pushname || 'Usuario';
+            let nombreMencionado = "";
 
-    const metas = { "react_40": 40, "react_100": 100, "react_200": 200, "react_500": 500 };
-    for (let slug in metas) {
-        if (perfiles[userId].reacciones >= metas[slug]) {
-            if (darLogro(perfiles, userId, slug)) {
-                message.reply(`🏆 Logro desbloqueado: Hacer ${metas[slug]} reacciones de anime`);
+            if (targetId) {
+                const contactMencionado = await client.getContactById(targetId);
+                nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
+            }
+
+            const frases = {
+                cry: { solo: `*${authorName}* se puso a llorar... `, con: `*${authorName}* está llorando por culpa de ${nombreMencionado}` },
+                sad: { solo: `*${authorName}* está triste...`, con: `*${authorName}* se siente triste por ${nombreMencionado}` },
+                happy: { solo: `*${authorName}* está muy feliz!`, con: `*${authorName}* sonríe junto a ${nombreMencionado}` },
+                angry: { solo: `*${authorName}* está de mal humor`, con: `*${authorName}* está enojado por culpa de ${nombreMencionado}` },
+                laugh: { solo: `*${authorName}* se está riendo a carcajadas`, con: `*${authorName}* se ríe con ${nombreMencionado}` },
+                dance: { solo: `*${authorName}* se sacó los pasos prohibidos`, con: `*${authorName}* está bailando con ${nombreMencionado}` },
+                scared: { solo: `*${authorName}* tiene mucho miedo 😱`, con: `*${authorName}* se asustó con ${nombreMencionado} 😱` },
+                eat: { solo: `*${authorName}* está comiendo algo delicioso`, con: `*${authorName}* come junto a ${nombreMencionado}` },
+                sleep: { solo: `*${authorName}* se quedó dormido... 💤`, con: `*${authorName}* duerme junto a ${nombreMencionado} 💤` },
+                cafe: { solo: `*${authorName}* toma café caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
+                hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
+                kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` },
+                punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
+                run: { solo: `*${authorName}* salió corriendo... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
+                kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató sin piedad a ${nombreMencionado}` },
+                pat: { solo: `*${authorName}* se da palmadas en la cabeza`, con: `*${authorName}* le da palmadas en la cabeza a ${nombreMencionado}` },
+                preg: { solo: `*${authorName}* se embarazó solito...`, con: `*${authorName}* embarazó a ${nombreMencionado} y ahora deben pensar en nombres` }
+            };
+
+            const textoFinal = targetId ? frases[comando].con : frases[comando].solo;
+
+            // 3. Procesamiento FFMPEG
+            const rawGifPath = animeGifs[comando][Math.floor(Math.random() * animeGifs[comando].length)];
+            const gifPath = path.join(__dirname, rawGifPath);
+            const outputPath = `./temp_${Date.now()}.mp4`; 
+
+            ffmpeg(gifPath)
+                .setFfmpegPath(ffmpegPath)
+                .outputOptions(['-pix_fmt yuv420p', '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'])
+                .toFormat('mp4')
+                .on('end', async () => {
+                    try {
+                        const media = MessageMedia.fromFilePath(outputPath);
+                        await client.sendMessage(message.from, media, {
+                            caption: textoFinal,
+                            sendVideoAsGif: true,
+                            mentions: targetId ? [targetId] : []
+                        });
+                        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+                    } catch (e) { console.log("Error enviando reacción:", e); }
+                })
+                .on('error', (err) => {
+                    console.log("Error FFMPEG:", err);
+                    message.reply("❌ Error al procesar la animación.");
+                })
+                .save(outputPath);
+        }
+        break;
+			
+//------------------------------------------------DEFAULT (COMANDO NO ENCONTRADO)-------------------------------------------
+        default: {
+            // Si el mensaje empieza con el prefijo pero no cayó en ningún 'case' anterior
+            if (message.body.startsWith(prefix)) {
+                const misComandos = [
+                    'duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'delchar', 
+                    'fixlevels', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 
+                    'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 
+                    'pokevo', 'accept', 'pick', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 
+                    'addmoney', 'charshop', 'bchar', 'givechar', 'wtired', 'stamina', 'adminchar'
+                ];
+                
+                // Si no está en la lista de comandos ni en la de reacciones
+                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                    return message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+                }
             }
         }
-    }
+        break;
+    } // CIERRE DEL SWITCH (comando)
 
-    // 2. Preparación de nombres y menciones (USANDO targetId que definimos arriba)
-    const authorContact = await message.getContact();
-    const authorName = authorContact.pushname || 'Usuario';
-    
-    let nombreMencionado = "";
-    if (targetId) {
-        const contactMencionado = await client.getContactById(targetId);
-        // Si es mencionado, sacamos su nombre para la frase
-        nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
-    }
+}); // CIERRE FINAL DE client.on('message_create')
 
-    const frases = {
-        cry: { solo: `*${authorName}* se puso a llorar... `, con: `*${authorName}* está llorando por culpa de ${nombreMencionado}` },
-        sad: { solo: `*${authorName}* está triste...`, con: `*${authorName}* se siente triste por ${nombreMencionado}` },
-        happy: { solo: `*${authorName}* está muy feliz!`, con: `*${authorName}* sonríe junto a ${nombreMencionado}` },
-        angry: { solo: `*${authorName}* está de mal humor`, con: `*${authorName}* está enojado por culpa de ${nombreMencionado}` },
-        laugh: { solo: `*${authorName}* se está riendo a carcajadas`, con: `*${authorName}* se ríe con ${nombreMencionado}` },
-        dance: { solo: `*${authorName}* se sacó los pasos prohibídos`, con: `*${authorName}* está bailando con ${nombreMencionado}` },
-        scared: { solo: `*${authorName}* tiene mucho miedo 😱`, con: `*${authorName}* se asustó con ${nombreMencionado} 😱` },
-        eat: { solo: `*${authorName}* está comiendo algo delicioso`, con: `*${authorName}* come junto a ${nombreMencionado} algo muy delicioso` },
-        sleep: { solo: `*${authorName}* se quedó dormido... 💤`, con: `*${authorName}* duerme junto a ${nombreMencionado} 💤` },
-        cafe: { solo: `*${authorName}* toma cafe caliente`, con: `*${authorName}* está tomando café con ${nombreMencionado}` },
-        hug: { solo: `*${authorName}* dio un abrazo al aire... 🤗`, con: `*${authorName}* le dio un gran abrazo a ${nombreMencionado} 🤗` },
-        kiss: { solo: `*${authorName}* lanzó un beso al aire... 💋`, con: `*${authorName}* le dio un beso a ${nombreMencionado} 💋` },
-        punch: { solo: `*${authorName}* soltó un golpe al aire `, con: `*${authorName}* golpeó con todas sus fuerzas a ${nombreMencionado}` },
-        run: { solo: `*${authorName}* salió corriendo lejos de aquí... `, con: `*${authorName}* está huyendo de ${nombreMencionado}` },
-        kill: { solo: `*${authorName}* se mató a sí mismo... `, con: `*${authorName}* mató sin piedad a ${nombreMencionado}` },
-        pat: { solo: `*${authorName}* se da palmadas en la cabeza a sí mismo`, con: `*${authorName}* le da palmadas en la cabeza a ${nombreMencionado} con cariño` },
-        preg: { solo: `*${authorName}* se embarazó solito... misterioso... `, con: `*${authorName}* embarazó a ${nombreMencionado} y ahora deben pensar en nombres` }
-    };
-
-    // Elegimos la frase según si existe un objetivo (por mención o respuesta)
-    let textoFinal = targetId ? frases[comandoLimpio].con : frases[comandoLimpio].solo;
-
-    // 3. Selección de GIF y proceso FFMPEG
-    const rawGifPath = animeGifs[comandoLimpio][Math.floor(Math.random() * animeGifs[comandoLimpio].length)];
-    const gifPath = path.join(__dirname, rawGifPath);
-    const outputPath = `./temp_${Date.now()}.mp4`; 
-
-    ffmpeg(gifPath)
-        .setFfmpegPath(ffmpegPath)
-        .outputOptions(['-pix_fmt yuv420p', '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'])
-        .toFormat('mp4')
-        .on('end', async () => {
-            try {
-                const media = MessageMedia.fromFilePath(outputPath);
-                await client.sendMessage(message.from, media, {
-                    caption: textoFinal,
-                    sendVideoAsGif: true,
-                    mentions: targetId ? [targetId] : [] // Menciona al objetivo real
-                });
-                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-            } catch (e) { console.log("Error enviando reacción:", e); }
-        })
-        .on('error', (err) => {
-            console.log("Error FFMPEG:", err);
-            message.reply("❌ Error al procesar el GIF.");
-        })
-        .save(outputPath);
-
-    return;
-}
-
-// --- DETECTOR DE COMANDO INEXISTENTE ---
-    if (message.body.startsWith(prefix)) {
-        const comandoBase = comando.split(/\s+/)[0];
-        const misComandos = ['duel', 'rw', 'harem', 'wimage', 'aceptartrade', 'shop', 'gay', 'kick', 'delcahr', 'fixlevels', 'bal', 'baltop', 'buy', 'crime', 'daily', 'c', 'help', 'menu', 'cal', 'ping', 'charinfo', 'charlist', 'profile', 'logros', 'pay', 'cooldowns', 'w', 'pokevo', 'accept', 'pick', 's', 'say', 'tr', 'dice', 'smob', 'fight', 'reload', 'addmoney', 'charshop', 'bchar', 'givechar'];
-        
-        if (!misComandos.includes(comandoBase) && !listaReacciones.includes(comandoBase)) {
-            return message.reply(`⌦ El comando *${prefix}${comandoBase}* no existe.\n Usa *${prefix}help* para ver la lista de comandos`);
-        }
-    }
-
-}); // CIERRE FINAL DE message_create (client.on)
-
-// --------- INICIALIZAR ---------
+// --------- INICIALIZAR EL CLIENTE ---------
 client.initialize();
 
+// Monitor de vida del bot
 setInterval(() => {
-    console.log("YakBot sigue vivo:", new Date().toLocaleTimeString());
+    console.log("⌬ YakBot sigue activo:", new Date().toLocaleTimeString());
 }, 60000);
 
-})().catch(err => console.error("❌ Error crítico al iniciar:", err));
-// FIN DEL ARCHIVO
-
-// Reloj de guardado inteligente (Cada 5 minutos)
-setInterval(() => {
-    if (perfilesSucios) {
-        fs.writeFileSync('./data/perfiles.json', JSON.stringify(perfiles, null, 2));
-        perfilesSucios = false;
-        console.log("💾 Perfiles guardados.");
-    }
-    if (haremSucio) {
-        fs.writeFileSync('./data/harem.json', JSON.stringify(haremPorGrupo, null, 2));
-        haremSucio = false;
-        console.log("💾 Harem guardado.");
-    }
-    if (economiaSucia) { // <--- AÑADE ESTO
-        fs.writeFileSync('./data/economia.json', JSON.stringify(carteras, null, 2));
-        economiaSucia = false;
-        console.log("💾 Economía guardada.");
-    }
-}, 300000);
-
-
-
+})().catch(err => console.error("❌ Error crítico en el arranque:", err));
