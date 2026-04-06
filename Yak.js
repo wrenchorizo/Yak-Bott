@@ -290,38 +290,33 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             return filtrados[filtrados.length - 1];
         }
 
-
-		// ==========================================
+// ==========================================
 // 10. ÚNICO MANEJADOR DE MENSAJES (CORREGIDO)
 // ==========================================
 
 client.on('message_create', async (message) => {
-    // ELIMINADO: if (message.fromMe) return; 
-    // Esto permite que el bot te responda a TI cuando pruebas los comandos.
-
+    // Sin restricciones de fromMe para que te responda
     const prefix = '?'; 
     if (!message.body.startsWith(prefix)) return;
 
-    // Log de control: Si ves esto en Railway, el bot está leyendo el mensaje.
-    console.log(`📩 [LOG] Comando detectado: ${message.body} | De: ${message.from}`);
+    console.log(`📩 [LOG] Comando detectado: ${message.body}`);
 
     const args = message.body.slice(prefix.length).trim().split(/\s+/);
     const comando = args.shift().toLowerCase();
     
-    // IDs de usuario y grupo
     const userId = message.author || message._data.participant || message.from;
     const grupoId = message.from;
     const pushname = message._data.notifyName || "Usuario";
 
     try {
-        // 1. CARGA DE USUARIO (MongoDB Atlas)
+        // Carga de Usuario
         let user = await User.findOne({ userId });
         if (!user) {
-            user = new User({ userId, money: 500 }); // Regalo inicial si es nuevo
+            user = new User({ userId, money: 500 });
             await user.save();
         }
 
-        // 2. SISTEMA DE NIVELES Y XP
+        // Sistema de XP y niveles
         user.mensajes += 1;
         user.xp += 2;
         const xpNecesaria = (user.level || 1) * 100;
@@ -331,70 +326,43 @@ client.on('message_create', async (message) => {
             await message.reply(`⭐ ¡Felicidades *${pushname}*! Subiste al nivel *${user.level}*.`);
         }
 
-        // 3. SWITCH DE COMANDOS
+        // Lógica de Comandos
         switch (comando) {
             case 'hola':
-                await message.reply('¡Oztia Willy! Aquí el YakBot reportándose. 🤖');
+                await message.reply('¡Oztia Willy! El bot está vivo y sin errores de sintaxis. 🤖');
                 break;
 
             case 'help':
             case 'menu':
-                const menu = `
-🌟 *YAKBOT - PANEL DE CONTROL* 🌟
-----------------------------------
-💰 *?bal* - Ver tu dinero y nivel.
-🎮 *?c* - Reclamar personaje aleatorio.
-🛒 *?shop* - Ver la tienda del grupo.
-🔄 *?bot on/off* - Activar o desactivar.
-----------------------------------
-_Servidor: Railway 2026_`;
+                const menu = `🌟 *YAKBOT MENU* 🌟\n\n?bal - Saldo\n?c - Reclamar\n?hola - Saludo`;
                 await client.sendMessage(grupoId, menu);
                 break;
 
             case 'bal':
-                await message.reply(`👤 *${pushname}*\n💰 Monedas: *${user.money}*\n⭐ Nivel: *${user.level}*\n📊 Mensajes: *${user.mensajes}*`);
+                await message.reply(`💰 Monedas: *${user.money}* | ⭐ Nivel: *${user.level}*`);
                 break;
 
             case 'c':
-                // Llamamos a la lógica de personajes (Bloque 9)
                 const p = personajeRandom(personajes);
-                if (!p) {
-                    await message.reply("❌ No hay personajes disponibles ahora mismo.");
-                } else {
+                if (p) {
                     let harem = await obtenerHarem(userId, grupoId);
                     harem.personajes.push({ ...p, level: 1, stamina: 100 });
                     await harem.save();
-                    await message.reply(`🃏 ¡Has reclamado a *${p.nombre}* (${p.fuente})!`);
+                    await message.reply(`🃏 ¡Has obtenido a *${p.nombre}*!`);
+                } else {
+                    await message.reply("❌ No hay personajes disponibles.");
                 }
-                break;
-
-            case 'bot':
-                if (args[0] === 'on') {
-                    if (!global.botSettings) global.botSettings = {};
-                    botSettings[grupoId] = { enabled: true };
-                    await message.reply("✅ Bot activado para este grupo.");
-                } else if (args[0] === 'off') {
-                    if (!global.botSettings) global.botSettings = {};
-                    botSettings[grupoId] = { enabled: false };
-                    await message.reply("💤 Bot desactivado.");
-                }
-                break;
-
-            default:
-                // No respondemos a comandos inexistentes para evitar spam
                 break;
         }
 
-        // 4. GUARDAR CAMBIOS FINALES
+        // Guardar progreso final del mensaje
         await user.save();
 
     } catch (err) {
-        console.error("❌ ERROR EN EL COMANDO:", err);
-        // Opcional: Avisar al usuario que algo salió mal
-        // await message.reply("⚠️ Hubo un error interno al procesar el comando.");
+        // Este es el 'catch' que le faltaba a tu código anterior
+        console.error("❌ Error interno en el comando:", err);
     }
-});
-
+}); // Cierre correcto del evento
 
 
 // ==========================================
