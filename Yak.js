@@ -291,65 +291,37 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         }
 
 // ==========================================
-// 10. MANEJADOR DE MENSAJES (ESTRUCTURA IF/ELSE)
+// 10. MANEJADOR DE MENSAJES (UNIFICADO)
 // ==========================================
 
-client.on('message_create', async (msg) => {
-    // 1. Validaciones iniciales
+client.on('message_create', async (message) => {
     const prefix = '?';
-    if (!msg.body.startsWith(prefix)) return;
+    if (!message.body.startsWith(prefix)) return;
 
-    // Log para ver en Railway que el bot lee el comando
-    console.log(`📩 [COMANDO]: ${msg.body}`);
+    console.log(`📩 [COMANDO]: ${message.body}`);
 
     try {
-        const args = msg.body.slice(prefix.length).trim().split(/\s+/);
+        const args = message.body.slice(prefix.length).trim().split(/\s+/);
         const comando = args.shift().toLowerCase();
-        const userId = msg.author || msg._data.participant || msg.from;
-        const grupoId = msg.from;
-        const pushname = msg._data.notifyName || "Usuario";
+        const userId = message.author || message._data.participant || message.from;
+        const grupoId = message.from;
+        const pushname = message._data.notifyName || "Usuario";
 
-        // 2. Carga de datos de MongoDB Atlas
+        // Lógica de menciones para ?gay, ?pay, etc.
+        let targetId = null;
+        if (message.hasQuotedMsg) {
+            const quoted = await message.getQuotedMessage();
+            targetId = quoted.author || quoted.from;
+        } else if (message.mentionedIds && message.mentionedIds.length > 0) {
+            targetId = message.mentionedIds[0];
+        }
+
+        // Carga de datos de MongoDB
         let user = await User.findOne({ userId });
         if (!user) {
-            user = new User({ userId, money: 500, level: 1, mensajes: 0 });
+            user = new User({ userId, dinero: 500, level: 1, mensajes: 0 });
             await user.save();
         }
-
-        // 3. Lógica de Comandos Reformulada
-        if (comando === 'hola') {
-            await msg.reply(`¡Hola ${pushname}! El sistema de taxis ha sido renovado. 🚕✨`);
-        } 
-        else if (comando === 'help' || comando === 'menu') {
-            const txt = `🌟 *YAKBOT PANEL* 🌟\n\n?hola - Saludo\n?bal - Ver saldo\n?c - Reclamar personaje`;
-            await client.sendMessage(grupoId, txt);
-        } 
-        else if (comando === 'bal') {
-            await msg.reply(`💰 *${pushname}*, tu saldo es de *${user.money || 0}* monedas.`);
-        } 
-        else if (comando === 'c') {
-            const p = personajeRandom(personajes);
-            if (p) {
-                let harem = await obtenerHarem(userId, grupoId);
-                harem.personajes.push({ ...p, level: 1, stamina: 100 });
-                await harem.save();
-                await msg.reply(`🃏 ¡Atrapaste a *${p.nombre}*!`);
-            } else {
-                await msg.reply("❌ No hay personajes disponibles.");
-            }
-        }
-
-        // 4. Actualizar estadísticas finales
-        user.mensajes += 1;
-        await user.save();
-
-    } catch (e) {
-        // Cierre de seguridad obligatorio
-        console.error("❌ Error en comando:", e);
-    }
-}); 
-		
-
 
 
 // ==========================================
@@ -2300,23 +2272,30 @@ case 'tr': {
             }
             break;
         } // Cierra el switch(comando)
-    } // Cierra el if(message.body...)
-}); // Cierra el evento client.on('message_create')
+// --- AQUÍ TERMINAN TUS COMANDOS ---
+
+        // 4. Actualizar estadísticas finales
+        user.mensajes += 1;
+        await user.save();
+
+    } catch (e) {
+        console.error("❌ Error en comando:", e);
+    }
+}); // Cierre del evento message_create
 
 // ==========================================
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
-        // Arrancamos el cliente (Táctica Nuclear: usa su propio navegador)
         await client.initialize();
         console.log("🚀 Puppeteer inicializado correctamente.");
 
     } catch (err) {
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierre de la función async principal
+})(); // Cierre de la función async principal del Bloque 5
 
-// Monitor de actividad para que Railway no suspenda el bot
+// Monitor de actividad para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
