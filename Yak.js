@@ -291,68 +291,65 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         }
 
 // ==========================================
-// 10. ÚNICO MANEJADOR DE MENSAJES (CORREGIDO)
+// 10. MANEJADOR DE MENSAJES (ESTRUCTURA IF/ELSE)
 // ==========================================
 
-client.on('message_create', async (message) => {
-    // 1. Filtro de prefijo (sin censura de fromMe para pruebas)
-    const prefix = '?'; 
-    if (!message.body.startsWith(prefix)) return;
+client.on('message_create', async (msg) => {
+    // 1. Validaciones iniciales
+    const prefix = '?';
+    if (!msg.body.startsWith(prefix)) return;
 
-    console.log(`📩 [DEBUG] Procesando: ${message.body}`);
+    // Log para ver en Railway que el bot lee el comando
+    console.log(`📩 [COMANDO]: ${msg.body}`);
 
     try {
-        const args = message.body.slice(prefix.length).trim().split(/\s+/);
+        const args = msg.body.slice(prefix.length).trim().split(/\s+/);
         const comando = args.shift().toLowerCase();
-        const userId = message.author || message._data.participant || message.from;
-        const grupoId = message.from;
-        const pushname = message._data.notifyName || "Usuario";
+        const userId = msg.author || msg._data.participant || msg.from;
+        const grupoId = msg.from;
+        const pushname = msg._data.notifyName || "Usuario";
 
-        // Carga de Usuario
+        // 2. Carga de datos de MongoDB Atlas
         let user = await User.findOne({ userId });
         if (!user) {
-            user = new User({ userId, money: 500, level: 1, xp: 0, mensajes: 0 });
+            user = new User({ userId, money: 500, level: 1, mensajes: 0 });
             await user.save();
         }
 
-        // Switch de Comandos
-        switch (comando) {
-            case 'hola':
-                await message.reply(`¡Hola ${pushname}! YakBot está activo y con todos los taxis en regla. 🚕💨`);
-                break;
-
-            case 'help':
-            case 'menu':
-                const menu = `🌟 *YAKBOT PANEL* 🌟\n\n?hola - Saludo\n?bal - Ver saldo\n?c - Reclamar personaje`;
-                await client.sendMessage(grupoId, menu);
-                break;
-
-            case 'bal':
-                await message.reply(`💰 *${pushname}*, tienes *${user.money || 0}* monedas.`);
-                break;
-
-            case 'c':
-                const p = personajeRandom(personajes);
-                if (p) {
-                    let harem = await obtenerHarem(userId, grupoId);
-                    harem.personajes.push({ ...p, level: 1, stamina: 100 });
-                    await harem.save();
-                    await message.reply(`🃏 ¡Atrapaste a *${p.nombre}*!`);
-                } else {
-                    await message.reply("❌ Sin personajes disponibles.");
-                }
-                break;
+        // 3. Lógica de Comandos Reformulada
+        if (comando === 'hola') {
+            await msg.reply(`¡Hola ${pushname}! El sistema de taxis ha sido renovado. 🚕✨`);
+        } 
+        else if (comando === 'help' || comando === 'menu') {
+            const txt = `🌟 *YAKBOT PANEL* 🌟\n\n?hola - Saludo\n?bal - Ver saldo\n?c - Reclamar personaje`;
+            await client.sendMessage(grupoId, txt);
+        } 
+        else if (comando === 'bal') {
+            await msg.reply(`💰 *${pushname}*, tu saldo es de *${user.money || 0}* monedas.`);
+        } 
+        else if (comando === 'c') {
+            const p = personajeRandom(personajes);
+            if (p) {
+                let harem = await obtenerHarem(userId, grupoId);
+                harem.personajes.push({ ...p, level: 1, stamina: 100 });
+                await harem.save();
+                await msg.reply(`🃏 ¡Atrapaste a *${p.nombre}*!`);
+            } else {
+                await msg.reply("❌ No hay personajes disponibles.");
+            }
         }
 
-        // Guardar estadísticas
+        // 4. Actualizar estadísticas finales
         user.mensajes += 1;
         await user.save();
 
-    } catch (err) {
-        // AQUÍ ESTÁ EL CATCH QUE FALTABA
-        console.error("❌ Error interno en comando:", err);
+    } catch (e) {
+        // Cierre de seguridad obligatorio
+        console.error("❌ Error en comando:", e);
     }
-}); // <--- Esta llave cierra el client.on
+}); 
+		
+
 
 
 // ==========================================
