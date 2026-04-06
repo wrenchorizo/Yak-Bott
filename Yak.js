@@ -290,84 +290,110 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             return filtrados[filtrados.length - 1];
         }
 
-        // ==========================================
-        // 10. ÚNICO MANEJADOR DE MENSAJES (FUSIONADO)
-        // ==========================================
 
-        client.on('message_create', async (message) => {
-            if (message.fromMe) return;
-            
-            const prefix = '?'; 
-            if (!message.body.startsWith(prefix)) return;
+		// ==========================================
+// 10. ÚNICO MANEJADOR DE MENSAJES (CORREGIDO)
+// ==========================================
 
-            const args = message.body.slice(prefix.length).trim().split(/\s+/);
-            const comando = args.shift().toLowerCase();
-            const userId = message.author || message._data.participant || message.from;
-            const grupoId = message.from;
-            const pushname = message._data.notifyName || "Usuario";
+client.on('message_create', async (message) => {
+    // ELIMINADO: if (message.fromMe) return; 
+    // Esto permite que el bot te responda a TI cuando pruebas los comandos.
 
-            // Detección de Target
-            let targetId = null;
-            if (message.mentionedIds && message.mentionedIds.length > 0) {
-                targetId = message.mentionedIds[0];
-            } else if (message.hasQuotedMsg) {
-                const quotedMsg = await message.getQuotedMessage();
-                targetId = quotedMsg.author || quotedMsg.from;
-            }
+    const prefix = '?'; 
+    if (!message.body.startsWith(prefix)) return;
 
-            // Filtro de Bot encendido/apagado
-            if (message.isGroup) {
-                if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
-                if (!botSettings[grupoId].enabled && comando !== 'bot') return;
-            }
+    // Log de control: Si ves esto en Railway, el bot está leyendo el mensaje.
+    console.log(`📩 [LOG] Comando detectado: ${message.body} | De: ${message.from}`);
 
-            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+    const args = message.body.slice(prefix.length).trim().split(/\s+/);
+    const comando = args.shift().toLowerCase();
+    
+    // IDs de usuario y grupo
+    const userId = message.author || message._data.participant || message.from;
+    const grupoId = message.from;
+    const pushname = message._data.notifyName || "Usuario";
 
-            // Carga de Usuario
-            let user = await User.findOne({ userId });
-            if (!user) {
-                user = new User({ userId });
-                await user.save();
-            }
-
-            // Stats y Niveles
-            user.mensajes += 1;
-            user.xp += 2;
-            const xpNecesaria = user.level * 100;
-            if (user.xp >= xpNecesaria) {
-                user.xp -= xpNecesaria;
-                user.level += 1;
-                message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
-            }
-
-            // Logros
-            const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
-            if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
-                user.logros.push(hitosComandos[user.comandos]);
-                message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
-            }
-
-            // Deadpool Errante
-            if (Math.random() < 0.05) { 
-                let haremsGrupo = await Harem.find({ grupoId, "personajes.0": { $exists: true } });
-                if (haremsGrupo.length > 1) {
-                    await Harem.updateMany({ grupoId }, { $pull: { personajes: { nombre: 'Deadpool' } } });
-                    let nuevoDueño = haremsGrupo[Math.floor(Math.random() * haremsGrupo.length)];
-                    const deadpoolObj = {
-                        nombre: "Deadpool", fuente: "Marvel", valor: 696969, 
-                        imagen: "https://i.pinimg.com/736x/dd/91/76/dd9176fa6d3699a754a8ae5c3d518b32.jpg",
-                        level: 102, stamina: 100, lastUpdate: Date.now()
-                    };
-                    nuevoDueño.personajes.push(deadpoolObj);
-                    await nuevoDueño.save();
-                    const numeroLimpio = nuevoDueño.userId.split('@')[0];
-                    await client.sendMessage(grupoId, `🔴 *DEADPOOL:* ¡Me mudé de harem!\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {
-                        mentions: [nuevoDueño.userId]
-                    });
-                }
-            }
-
+    try {
+        // 1. CARGA DE USUARIO (MongoDB Atlas)
+        let user = await User.findOne({ userId });
+        if (!user) {
+            user = new User({ userId, money: 500 }); // Regalo inicial si es nuevo
             await user.save();
+        }
+
+        // 2. SISTEMA DE NIVELES Y XP
+        user.mensajes += 1;
+        user.xp += 2;
+        const xpNecesaria = (user.level || 1) * 100;
+        if (user.xp >= xpNecesaria) {
+            user.xp -= xpNecesaria;
+            user.level += 1;
+            await message.reply(`⭐ ¡Felicidades *${pushname}*! Subiste al nivel *${user.level}*.`);
+        }
+
+        // 3. SWITCH DE COMANDOS
+        switch (comando) {
+            case 'hola':
+                await message.reply('¡Oztia Willy! Aquí el YakBot reportándose. 🤖');
+                break;
+
+            case 'help':
+            case 'menu':
+                const menu = `
+🌟 *YAKBOT - PANEL DE CONTROL* 🌟
+----------------------------------
+💰 *?bal* - Ver tu dinero y nivel.
+🎮 *?c* - Reclamar personaje aleatorio.
+🛒 *?shop* - Ver la tienda del grupo.
+🔄 *?bot on/off* - Activar o desactivar.
+----------------------------------
+_Servidor: Railway 2026_`;
+                await client.sendMessage(grupoId, menu);
+                break;
+
+            case 'bal':
+                await message.reply(`👤 *${pushname}*\n💰 Monedas: *${user.money}*\n⭐ Nivel: *${user.level}*\n📊 Mensajes: *${user.mensajes}*`);
+                break;
+
+            case 'c':
+                // Llamamos a la lógica de personajes (Bloque 9)
+                const p = personajeRandom(personajes);
+                if (!p) {
+                    await message.reply("❌ No hay personajes disponibles ahora mismo.");
+                } else {
+                    let harem = await obtenerHarem(userId, grupoId);
+                    harem.personajes.push({ ...p, level: 1, stamina: 100 });
+                    await harem.save();
+                    await message.reply(`🃏 ¡Has reclamado a *${p.nombre}* (${p.fuente})!`);
+                }
+                break;
+
+            case 'bot':
+                if (args[0] === 'on') {
+                    if (!global.botSettings) global.botSettings = {};
+                    botSettings[grupoId] = { enabled: true };
+                    await message.reply("✅ Bot activado para este grupo.");
+                } else if (args[0] === 'off') {
+                    if (!global.botSettings) global.botSettings = {};
+                    botSettings[grupoId] = { enabled: false };
+                    await message.reply("💤 Bot desactivado.");
+                }
+                break;
+
+            default:
+                // No respondemos a comandos inexistentes para evitar spam
+                break;
+        }
+
+        // 4. GUARDAR CAMBIOS FINALES
+        await user.save();
+
+    } catch (err) {
+        console.error("❌ ERROR EN EL COMANDO:", err);
+        // Opcional: Avisar al usuario que algo salió mal
+        // await message.reply("⚠️ Hubo un error interno al procesar el comando.");
+    }
+});
 
 
 
