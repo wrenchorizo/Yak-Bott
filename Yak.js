@@ -165,8 +165,9 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
 (async () => {
     try {
+        // Validamos la variable configurada en Railway
         if (!process.env.MONGODB_URL) {
-            console.error("❌ ERROR: La variable MONGODB_URL no está definida.");
+            console.error("❌ ERROR: La variable MONGODB_URL no está definida en Railway.");
             return;
         }
 
@@ -176,7 +177,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // BUSCADOR DE RUTAS PARA RAILWAY
+        // Buscador de rutas dinámico para entornos Railway/Nixpacks
         const posiblesRutas = [
             '/usr/bin/google-chrome',
             '/usr/bin/chromium',
@@ -206,12 +207,14 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         });
 
         // ==========================================
-        // 6. EVENTOS DEL CLIENTE
+        // 6. EVENTOS DEL CLIENTE (QR Y READY)
         // ==========================================
         
         client.on('qr', (qr) => {
             console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
             qrcode.generate(qr, { small: true });
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+            console.log(`🔗 ESCANEA EL QR AQUÍ:\n${qrLink}`);
         });
 
         client.on('ready', () => {
@@ -220,6 +223,10 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         client.on('remote_session_saved', () => {
             console.log('💾 Sesión remota guardada correctamente en Atlas');
+        });
+
+        client.on('auth_failure', (msg) => {
+            console.error('❌ Fallo de autenticación:', msg);
         });
 
         // ==========================================
@@ -2323,25 +2330,26 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-	    break;
+	            break;
         } // Cierra el switch(comando)
-    } // Cierra el if(message.body...)
-}); // Cierra el evento message_create
+    } // Cierra el if(message.body.startsWith...)
+}); // Cierra el client.on('message_create')
 
 // ==========================================
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
+        // Arrancamos el cliente oficialmente
         await client.initialize();
         console.log("🚀 Proceso de inicialización terminado.");
 
     } catch (err) {
-        // Evita que el bot crashee sin avisar
+        // Captura errores críticos para evitar bucles de reinicio
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierra la función asíncrona inicial
+})(); // Cierra la función asíncrona inicial (async () => {
 
-// Monitor de logs para evitar suspensión
+// Monitor de actividad para los logs de Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
