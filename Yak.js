@@ -295,51 +295,40 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 // ==========================================
 
 client.on('message_create', async (message) => {
-    // Sin restricciones de fromMe para que te responda
+    // 1. Filtro de prefijo (sin censura de fromMe para pruebas)
     const prefix = '?'; 
     if (!message.body.startsWith(prefix)) return;
 
-    console.log(`📩 [LOG] Comando detectado: ${message.body}`);
-
-    const args = message.body.slice(prefix.length).trim().split(/\s+/);
-    const comando = args.shift().toLowerCase();
-    
-    const userId = message.author || message._data.participant || message.from;
-    const grupoId = message.from;
-    const pushname = message._data.notifyName || "Usuario";
+    console.log(`📩 [DEBUG] Procesando: ${message.body}`);
 
     try {
+        const args = message.body.slice(prefix.length).trim().split(/\s+/);
+        const comando = args.shift().toLowerCase();
+        const userId = message.author || message._data.participant || message.from;
+        const grupoId = message.from;
+        const pushname = message._data.notifyName || "Usuario";
+
         // Carga de Usuario
         let user = await User.findOne({ userId });
         if (!user) {
-            user = new User({ userId, money: 500 });
+            user = new User({ userId, money: 500, level: 1, xp: 0, mensajes: 0 });
             await user.save();
         }
 
-        // Sistema de XP y niveles
-        user.mensajes += 1;
-        user.xp += 2;
-        const xpNecesaria = (user.level || 1) * 100;
-        if (user.xp >= xpNecesaria) {
-            user.xp -= xpNecesaria;
-            user.level += 1;
-            await message.reply(`⭐ ¡Felicidades *${pushname}*! Subiste al nivel *${user.level}*.`);
-        }
-
-        // Lógica de Comandos
+        // Switch de Comandos
         switch (comando) {
             case 'hola':
-                await message.reply('¡Oztia Willy! El bot está vivo y sin errores de sintaxis. 🤖');
+                await message.reply(`¡Hola ${pushname}! YakBot está activo y con todos los taxis en regla. 🚕💨`);
                 break;
 
             case 'help':
             case 'menu':
-                const menu = `🌟 *YAKBOT MENU* 🌟\n\n?bal - Saldo\n?c - Reclamar\n?hola - Saludo`;
+                const menu = `🌟 *YAKBOT PANEL* 🌟\n\n?hola - Saludo\n?bal - Ver saldo\n?c - Reclamar personaje`;
                 await client.sendMessage(grupoId, menu);
                 break;
 
             case 'bal':
-                await message.reply(`💰 Monedas: *${user.money}* | ⭐ Nivel: *${user.level}*`);
+                await message.reply(`💰 *${pushname}*, tienes *${user.money || 0}* monedas.`);
                 break;
 
             case 'c':
@@ -348,21 +337,22 @@ client.on('message_create', async (message) => {
                     let harem = await obtenerHarem(userId, grupoId);
                     harem.personajes.push({ ...p, level: 1, stamina: 100 });
                     await harem.save();
-                    await message.reply(`🃏 ¡Has obtenido a *${p.nombre}*!`);
+                    await message.reply(`🃏 ¡Atrapaste a *${p.nombre}*!`);
                 } else {
-                    await message.reply("❌ No hay personajes disponibles.");
+                    await message.reply("❌ Sin personajes disponibles.");
                 }
                 break;
         }
 
-        // Guardar progreso final del mensaje
+        // Guardar estadísticas
+        user.mensajes += 1;
         await user.save();
 
     } catch (err) {
-        // Este es el 'catch' que le faltaba a tu código anterior
-        console.error("❌ Error interno en el comando:", err);
+        // AQUÍ ESTÁ EL CATCH QUE FALTABA
+        console.error("❌ Error interno en comando:", err);
     }
-}); // Cierre correcto del evento
+}); // <--- Esta llave cierra el client.on
 
 
 // ==========================================
