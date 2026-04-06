@@ -165,7 +165,6 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
 (async () => {
     try {
-        // Validamos la variable que tienes en Railway
         if (!MONGO_URI) {
             console.error("❌ ERROR: La variable MONGODB_URL no está definida en Railway.");
             return;
@@ -177,9 +176,16 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Lógica para encontrar el navegador en Railway
-        const paths = ['/usr/bin/google-chrome', '/usr/bin/chromium'];
-        const executablePath = paths.find(p => fs.existsSync(p)) || '/usr/bin/google-chrome';
+        // Buscador dinámico de rutas para Railway 2026
+        const posiblesRutas = [
+            '/usr/bin/google-chrome',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
+            '/app/.nix-profile/bin/google-chrome'
+        ];
+        const executablePath = posiblesRutas.find(ruta => fs.existsSync(ruta)) || '/usr/bin/google-chrome';
+
+        console.log(`🌐 Navegador detectado en: ${executablePath}`);
 
         client = new Client({
             authStrategy: new RemoteAuth({
@@ -199,22 +205,26 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         });
 
         // ==========================================
-        // 6. EVENTOS DEL CLIENTE
+        // 6. EVENTOS DEL CLIENTE (QR Y READY)
         // ==========================================
         
         client.on('qr', (qr) => {
-            console.log('⚡ NUEVO CÓDIGO QR:');
+            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
             qrcode.generate(qr, { small: true });
             const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-            console.log(`🔗 ESCANEA AQUÍ:\n${qrLink}`);
+            console.log(`🔗 ESCANEA EL QR AQUÍ:\n${qrLink}`);
         });
 
         client.on('ready', () => {
-            console.log('✅ YakBot listo y conectado');
+            console.log('✅ YakBot está en línea y funcionando');
         });
 
         client.on('remote_session_saved', () => {
-            console.log('💾 Sesión guardada en Atlas');
+            console.log('💾 Sesión remota guardada correctamente en Atlas');
+        });
+
+        client.on('auth_failure', (msg) => {
+            console.error('❌ Fallo de autenticación:', msg);
         });
 
         // ==========================================
@@ -2318,26 +2328,26 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break;
+	            break;
         } // Cierra el switch(comando)
-    } // Cierra el if(message.body...)
+    } // Cierra el if(message.body.startsWith...)
 }); // Cierra el client.on('message_create')
 
 // ==========================================
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
-        // Arrancamos el cliente oficialmente
+        // Arrancamos el cliente dentro del flujo principal
         await client.initialize();
-        console.log("🚀 YakBot inicializado con éxito.");
+        console.log("🚀 Proceso de inicialización terminado.");
 
     } catch (err) {
-        // Captura errores de red de Atlas o de Puppeteer
+        // Captura errores de sintaxis o conexión
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierre de la función autoejecutable inicial
+})(); // Cierra la función asíncrona inicial (async () => {
 
-// Monitor de logs para Railway
+// Monitor de actividad para los logs de Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
