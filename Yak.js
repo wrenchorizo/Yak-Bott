@@ -194,24 +194,27 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
                 // Eliminamos executablePath para evitar el error de "not found"
             }
         });
-
         // ==========================================
         // 6. EVENTOS DEL CLIENTE
         // ==========================================
         
         client.on('qr', (qr) => {
             console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+            // Muestra el QR en la consola de Railway
             qrcode.generate(qr, { small: true });
+            
+            // Genera un link clickeable por si el QR de consola falla
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+            console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
         });
 
         client.on('ready', () => {
-            console.log('✅ YakBot está ONLINE y funcionando');
+            console.log('✅ YakBot ONLINE y operando correctamente');
         });
 
         client.on('remote_session_saved', () => {
-            console.log('💾 Sesión guardada en MongoDB Atlas');
+            console.log('💾 Sesión remota guardada en MongoDB Atlas');
         });
-
 
         // ==========================================
         // 7. LÓGICA DE PERSONAJES Y TIENDA
@@ -2314,7 +2317,7 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-                        break;
+            break;
         } // Cierra el switch(comando)
     } // Cierra el if(message.body...)
 }); // Cierra el evento client.on('message_create')
@@ -2323,17 +2326,16 @@ case 'tr': {
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
-        // Arrancamos el cliente
+        // Arrancamos el cliente (Táctica Nuclear: usa su propio navegador)
         await client.initialize();
         console.log("🚀 Puppeteer inicializado correctamente.");
 
     } catch (err) {
-        // Captura el error si el navegador no se descargó bien
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierre de la función async inicial
+})(); // Cierre de la función async principal
 
-// Monitor de actividad para los logs de Railway
+// Monitor de actividad para que Railway no suspenda el bot
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
