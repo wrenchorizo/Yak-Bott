@@ -2271,38 +2271,39 @@ default: {
                 }
                 break;
             }
-        } // Cierre del switch
+// 1. Cerramos el switch de comandos
+        } 
 
-        // Actualización de estadísticas fuera del switch
+        // 2. Acciones post-comando (fuera del switch, dentro del try)
         user.mensajes += 1;
         await user.save();
 
     } catch (e) {
-        console.error("❌ Error en comando:", e);
+        console.error("❌ Error en el manejador de mensajes:", e);
     }
-}); // Cierre del client.on
+}); // 3. Cerramos el evento client.on('message_create')
 
 // ==========================================
-// 11. INICIALIZACIÓN FINAL
+// 11. INICIALIZACIÓN FINAL Y CIERRE GLOBAL
 // ==========================================
 
-// Cerramos el bloque de la sección 5 que quedó abierto arriba
+// Este catch cierra el bloque try de la Sección 5 que estaba abierto al inicio
     } catch (err) {
-        console.error("❌ Error en la configuración inicial:", err);
+        console.error("❌ Error en la configuración inicial/MongoDB:", err);
     }
-})();
+})(); // 4. Cerramos la función autoejecutable principal
 
-// Función para arrancar el cliente
+// Función independiente para arrancar el cliente
 (async () => {
     try {
         await client.initialize();
         console.log("🚀 Puppeteer inicializado correctamente.");
     } catch (err) {
-        console.error("❌ Error crítico en el arranque:", err);
+        console.error("❌ Error crítico al inicializar Puppeteer:", err);
     }
 })();
 
-// Monitor de actividad para Railway
+// Keep-alive para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
