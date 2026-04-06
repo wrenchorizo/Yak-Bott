@@ -167,7 +167,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
     try {
         const MONGO_URI = process.env.MONGODB_URL;
         if (!MONGO_URI) {
-            console.error("❌ ERROR: Falta la variable MONGODB_URL en Railway.");
+            console.error("❌ ERROR: La variable MONGODB_URL no está definida en Railway.");
             return;
         }
 
@@ -177,18 +177,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Buscador de rutas ultra-preciso para Railway/Nixpacks
-        const rutas = [
-            '/usr/bin/google-chrome',
-            '/usr/bin/chromium',
-            '/app/.nix-profile/bin/google-chrome',
-            '/usr/bin/google-chrome-stable'
-        ];
-        
-        // Solo elegimos una ruta si el archivo REALMENTE existe en el disco de Railway
-        const executablePath = rutas.find(ruta => fs.existsSync(ruta)) || '/usr/bin/google-chrome';
-        console.log(`🌐 Navegador detectado en: ${executablePath}`);
-
+        // Configuración sin ruta fija para usar el navegador descargado por Puppeteer
         client = new Client({
             authStrategy: new RemoteAuth({
                 store: store,
@@ -200,10 +189,9 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
                     '--no-sandbox', 
                     '--disable-setuid-sandbox', 
                     '--disable-dev-shm-usage', 
-                    '--no-zygote',
-                    '--single-process'
-                ],
-                executablePath: executablePath 
+                    '--no-zygote'
+                ]
+                // Eliminamos executablePath para evitar el error de "not found"
             }
         });
 
@@ -214,17 +202,16 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         client.on('qr', (qr) => {
             console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
             qrcode.generate(qr, { small: true });
-            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-            console.log(`🔗 ESCANEA AQUÍ SI NO VES EL QR:\n${qrLink}`);
         });
 
         client.on('ready', () => {
-            console.log('✅ YakBot ONLINE y operando');
+            console.log('✅ YakBot está ONLINE y funcionando');
         });
 
         client.on('remote_session_saved', () => {
             console.log('💾 Sesión guardada en MongoDB Atlas');
         });
+
 
         // ==========================================
         // 7. LÓGICA DE PERSONAJES Y TIENDA
@@ -2327,7 +2314,7 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break;
+                        break;
         } // Cierra el switch(comando)
     } // Cierra el if(message.body...)
 }); // Cierra el evento client.on('message_create')
@@ -2336,17 +2323,17 @@ case 'tr': {
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
-    // Arrancamos el proceso de WhatsApp
-    await client.initialize();
-    console.log("🚀 Inicialización de Puppeteer completada.");
+        // Arrancamos el cliente
+        await client.initialize();
+        console.log("🚀 Puppeteer inicializado correctamente.");
 
     } catch (err) {
-        // Captura errores de "Browser not found" o de red de Mongo
+        // Captura el error si el navegador no se descargó bien
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierre de la función async principal
+})(); // Cierre de la función async inicial
 
-// Monitor de actividad (Vital para que Railway no suspenda el bot)
+// Monitor de actividad para los logs de Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
