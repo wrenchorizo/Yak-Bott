@@ -204,6 +204,10 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             qrcode.generate(qr, { small: true });
         });
 
+		const qrLink = 'https://api.qrserver.com/v1/create -qr-code/?size=300x300&data= ${encodeURIComponent(qr)}`;
+
+console.log( LINK DE RESPALDO: \n${qrLink}`); });
+
         client.on('ready', () => {
             console.log('✅ YakBot está ONLINE y funcionando');
         });
@@ -288,86 +292,67 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         }
 
         // ==========================================
-        // 10. ÚNICO MANEJADOR DE MENSAJES (FUSIONADO)
+        // 10. ÚNICO MANEJADOR DE MENSAJES (ESTRUCTURA FIJA)
         // ==========================================
 
         client.on('message_create', async (message) => {
             if (message.fromMe) return;
             
             const prefix = '?'; 
+            // 1. Verificamos prefijo (SIN abrir llave si es un return directo)
             if (!message.body.startsWith(prefix)) return;
 
-            const args = message.body.slice(prefix.length).trim().split(/\s+/);
-            const comando = args.shift().toLowerCase();
-            const userId = message.author || message._data.participant || message.from;
-            const grupoId = message.from;
-            const pushname = message._data.notifyName || "Usuario";
+            try {
+                const args = message.body.slice(prefix.length).trim().split(/\s+/);
+                const comando = args.shift().toLowerCase();
+                const userId = message.author || message._data.participant || message.from;
+                const grupoId = message.from;
+                const pushname = message._data.notifyName || "Usuario";
 
-            // Detección de Target
-            let targetId = null;
-            if (message.mentionedIds && message.mentionedIds.length > 0) {
-                targetId = message.mentionedIds[0];
-            } else if (message.hasQuotedMsg) {
-                const quotedMsg = await message.getQuotedMessage();
-                targetId = quotedMsg.author || quotedMsg.from;
-            }
-
-            // Filtro de Bot encendido/apagado
-            if (message.isGroup) {
-                if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
-                if (!botSettings[grupoId].enabled && comando !== 'bot') return;
-            }
-
-            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-            // Carga de Usuario
-            let user = await User.findOne({ userId });
-            if (!user) {
-                user = new User({ userId });
-                await user.save();
-            }
-
-            // Stats y Niveles
-            user.mensajes += 1;
-            user.xp += 2;
-            const xpNecesaria = user.level * 100;
-            if (user.xp >= xpNecesaria) {
-                user.xp -= xpNecesaria;
-                user.level += 1;
-                message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
-            }
-
-            // Logros
-            const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
-            if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
-                user.logros.push(hitosComandos[user.comandos]);
-                message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
-            }
-
-            // Deadpool Errante
-            if (Math.random() < 0.05) { 
-                let haremsGrupo = await Harem.find({ grupoId, "personajes.0": { $exists: true } });
-                if (haremsGrupo.length > 1) {
-                    await Harem.updateMany({ grupoId }, { $pull: { personajes: { nombre: 'Deadpool' } } });
-                    let nuevoDueño = haremsGrupo[Math.floor(Math.random() * haremsGrupo.length)];
-                    const deadpoolObj = {
-                        nombre: "Deadpool", fuente: "Marvel", valor: 696969, 
-                        imagen: "https://i.pinimg.com/736x/dd/91/76/dd9176fa6d3699a754a8ae5c3d518b32.jpg",
-                        level: 102, stamina: 100, lastUpdate: Date.now()
-                    };
-                    nuevoDueño.personajes.push(deadpoolObj);
-                    await nuevoDueño.save();
-                    const numeroLimpio = nuevoDueño.userId.split('@')[0];
-                    await client.sendMessage(grupoId, `🔴 *DEADPOOL:* ¡Me mudé de harem!\n\n_¡Deadpool ha saltado al harem de @${numeroLimpio}!_`, {
-                        mentions: [nuevoDueño.userId]
-                    });
+                // Detección de Target
+                let targetId = null;
+                if (message.mentionedIds && message.mentionedIds.length > 0) {
+                    targetId = message.mentionedIds[0];
+                } else if (message.hasQuotedMsg) {
+                    const quotedMsg = await message.getQuotedMessage();
+                    targetId = quotedMsg.author || quotedMsg.from;
                 }
-            }
 
-            await user.save();
+                // Filtro de Bot encendido/apagado
+                if (message.isGroup) {
+                    if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
+                    if (!botSettings[grupoId].enabled && comando !== 'bot') return;
+                }
 
+                const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
+                // Carga de Usuario
+                let user = await User.findOne({ userId });
+                if (!user) {
+                    user = new User({ userId });
+                    await user.save();
+                }
 
+                // Stats y Niveles
+                user.mensajes += 1;
+                user.xp += 2;
+                const xpNecesaria = user.level * 100;
+                if (user.xp >= xpNecesaria) {
+                    user.xp -= xpNecesaria;
+                    user.level += 1;
+                    message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
+                }
+
+                // Logros y Deadpool (Tu lógica actual)
+                const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
+                if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
+                    user.logros.push(hitosComandos[user.comandos]);
+                    message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
+                }
+
+                await user.save();
+				
+		
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
 // ==========================================
@@ -2315,25 +2300,28 @@ case 'tr': {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
                         break;
-        } // Cierra el switch(comando)
-    } // Cierra el if(message.body...)
-}); // Cierra el evento client.on('message_create')
+                    }
+                } // FIN DEL SWITCH
 
-// ==========================================
-// 11. INICIALIZACIÓN FINAL
-// ==========================================
+            } catch (e) {
+                console.error("❌ Error en el comando:", e);
+            }
+        }); // FIN DEL EVENTO message_create
 
-        // Arrancamos el cliente
+        // ==========================================
+        // 11. INICIALIZACIÓN FINAL
+        // ==========================================
+
+        console.log("🚀 Inicializando Puppeteer...");
         await client.initialize();
-        console.log("🚀 Puppeteer inicializado correctamente.");
+        console.log("✅ YakBot ONLINE");
 
     } catch (err) {
-        // Captura el error si el navegador no se descargó bien
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierre de la función async inicial
+})(); // FIN DE LA FUNCIÓN PRINCIPAL
 
-// Monitor de actividad para los logs de Railway
+// Monitor para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
