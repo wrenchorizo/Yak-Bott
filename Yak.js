@@ -167,7 +167,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
     try {
         const MONGO_URI = process.env.MONGODB_URL;
         if (!MONGO_URI) {
-            console.error("❌ ERROR: La variable MONGODB_URL no está definida en Railway.");
+            console.error("❌ ERROR: La variable MONGODB_URL no está definida.");
             return;
         }
 
@@ -177,7 +177,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Configuración sin ruta fija para usar el navegador descargado por Puppeteer
+        // Definimos el cliente AQUÍ para que sea global en este bloque
         client = new Client({
             authStrategy: new RemoteAuth({
                 store: store,
@@ -185,16 +185,10 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             }),
             puppeteer: {
                 headless: true,
-                args: [
-                    '--no-sandbox', 
-                    '--disable-setuid-sandbox', 
-                    '--disable-dev-shm-usage', 
-                    '--no-zygote'
-                ]
-                // Eliminamos executablePath para evitar el error de "not found"
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
             }
         });
-        // ==========================================
+		// ==========================================
         // 6. EVENTOS DEL CLIENTE
         // ==========================================
         
