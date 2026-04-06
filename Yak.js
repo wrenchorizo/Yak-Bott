@@ -165,28 +165,28 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
 (async () => {
     try {
-        // Validamos la variable configurada en Railway
-        if (!process.env.MONGODB_URL) {
-            console.error("❌ ERROR: La variable MONGODB_URL no está definida en Railway.");
+        const MONGO_URI = process.env.MONGODB_URL;
+        if (!MONGO_URI) {
+            console.error("❌ ERROR: Falta la variable MONGODB_URL en Railway.");
             return;
         }
 
         console.log('⏳ Conectando a MongoDB Atlas...');
-        await mongoose.connect(process.env.MONGODB_URL);
+        await mongoose.connect(MONGO_URI);
         console.log('✅ Conectado a MongoDB Atlas');
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Buscador de rutas dinámico para entornos Railway/Nixpacks
-        const posiblesRutas = [
+        // Buscador de rutas ultra-preciso para Railway/Nixpacks
+        const rutas = [
             '/usr/bin/google-chrome',
             '/usr/bin/chromium',
-            '/usr/bin/chromium-browser',
             '/app/.nix-profile/bin/google-chrome',
-            '/app/.nix-profile/bin/chromium'
+            '/usr/bin/google-chrome-stable'
         ];
         
-        const executablePath = posiblesRutas.find(ruta => fs.existsSync(ruta)) || '/usr/bin/google-chrome';
+        // Solo elegimos una ruta si el archivo REALMENTE existe en el disco de Railway
+        const executablePath = rutas.find(ruta => fs.existsSync(ruta)) || '/usr/bin/google-chrome';
         console.log(`🌐 Navegador detectado en: ${executablePath}`);
 
         client = new Client({
@@ -200,33 +200,30 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
                     '--no-sandbox', 
                     '--disable-setuid-sandbox', 
                     '--disable-dev-shm-usage', 
-                    '--no-zygote'
+                    '--no-zygote',
+                    '--single-process'
                 ],
                 executablePath: executablePath 
             }
         });
 
         // ==========================================
-        // 6. EVENTOS DEL CLIENTE (QR Y READY)
+        // 6. EVENTOS DEL CLIENTE
         // ==========================================
         
         client.on('qr', (qr) => {
             console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
             qrcode.generate(qr, { small: true });
             const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-            console.log(`🔗 ESCANEA EL QR AQUÍ:\n${qrLink}`);
+            console.log(`🔗 ESCANEA AQUÍ SI NO VES EL QR:\n${qrLink}`);
         });
 
         client.on('ready', () => {
-            console.log('✅ YakBot está en línea y funcionando');
+            console.log('✅ YakBot ONLINE y operando');
         });
 
         client.on('remote_session_saved', () => {
-            console.log('💾 Sesión remota guardada correctamente en Atlas');
-        });
-
-        client.on('auth_failure', (msg) => {
-            console.error('❌ Fallo de autenticación:', msg);
+            console.log('💾 Sesión guardada en MongoDB Atlas');
         });
 
         // ==========================================
@@ -2330,26 +2327,26 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-	            break;
+            break;
         } // Cierra el switch(comando)
-    } // Cierra el if(message.body.startsWith...)
-}); // Cierra el client.on('message_create')
+    } // Cierra el if(message.body...)
+}); // Cierra el evento client.on('message_create')
 
 // ==========================================
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
-        // Arrancamos el cliente oficialmente
-        await client.initialize();
-        console.log("🚀 Proceso de inicialización terminado.");
+    // Arrancamos el proceso de WhatsApp
+    await client.initialize();
+    console.log("🚀 Inicialización de Puppeteer completada.");
 
     } catch (err) {
-        // Captura errores críticos para evitar bucles de reinicio
+        // Captura errores de "Browser not found" o de red de Mongo
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierra la función asíncrona inicial (async () => {
+})(); // Cierre de la función async principal
 
-// Monitor de actividad para los logs de Railway
+// Monitor de actividad (Vital para que Railway no suspenda el bot)
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
