@@ -2270,32 +2270,31 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break;
-        } // Cierra el switch(comando)
-// --- AQUÍ TERMINAN TUS COMANDOS ---
+break;
+        } 
+    } // Cierre del switch(comando)
 
-        // 4. Actualizar estadísticas finales
-        user.mensajes += 1;
-        await user.save();
+    user.mensajes += 1;
+    await user.save();
 
     } catch (e) {
         console.error("❌ Error en comando:", e);
     }
-}); // Cierre del evento message_create
+}); // Cierre de client.on('message_create')
 
 // ==========================================
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
+(async () => {
+    try {
         await client.initialize();
         console.log("🚀 Puppeteer inicializado correctamente.");
-
     } catch (err) {
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // Cierre de la función async principal del Bloque 5
+})();
 
-// Monitor de actividad para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
