@@ -307,7 +307,7 @@ client.on('message_create', async (message) => {
         const grupoId = message.from;
         const pushname = message._data.notifyName || "Usuario";
 
-        // Lógica de menciones para ?gay, ?pay, etc.
+        // Lógica de menciones
         let targetId = null;
         if (message.hasQuotedMsg) {
             const quoted = await message.getQuotedMessage();
@@ -322,7 +322,6 @@ client.on('message_create', async (message) => {
             user = new User({ userId, dinero: 500, level: 1, mensajes: 0 });
             await user.save();
         }
-
 
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
@@ -2242,50 +2241,58 @@ case 'tr': {
 		}
             break;
 
-                default: {
-            const misComandos = [
-                'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
-                'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
-                'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
-                'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
-                'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
-                'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
-                'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
-                'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
-                'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
-                'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
-                'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
-                'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
-                'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
-                'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
-                'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
-                'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
-                'expulsar', 'ban', 's', 'sticker'
-            ];
-            const listaReacciones = [
-                'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
-                'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
-            ];
-            
-            if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
-                message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+default: {
+                const misComandos = [
+                    'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
+                    'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
+                    'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
+                    'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
+                    'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
+                    'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
+                    'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
+                    'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
+                    'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
+                    'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
+                    'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
+                    'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
+                    'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
+                    'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
+                    'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
+                    'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
+                    'expulsar', 'ban', 's', 'sticker'
+                ];
+                const listaReacciones = [
+                    'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
+                    'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
+                ];
+                
+                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+                }
+                break;
             }
-break;
-        } 
-    } // Cierre del switch(comando)
+        } // Cierre del switch
 
-    user.mensajes += 1;
-    await user.save();
+        // Actualización de estadísticas fuera del switch
+        user.mensajes += 1;
+        await user.save();
 
     } catch (e) {
         console.error("❌ Error en comando:", e);
     }
-}); // Cierre de client.on('message_create')
+}); // Cierre del client.on
 
 // ==========================================
 // 11. INICIALIZACIÓN FINAL
 // ==========================================
 
+// Cerramos el bloque de la sección 5 que quedó abierto arriba
+    } catch (err) {
+        console.error("❌ Error en la configuración inicial:", err);
+    }
+})();
+
+// Función para arrancar el cliente
 (async () => {
     try {
         await client.initialize();
@@ -2295,6 +2302,7 @@ break;
     }
 })();
 
+// Monitor de actividad para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
