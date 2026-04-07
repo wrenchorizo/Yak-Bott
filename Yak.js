@@ -180,6 +180,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         // Configuración sin ruta fija para usar el navegador descargado por Puppeteer
         client = new Client({
             authStrategy: new RemoteAuth({
+				clientId: 'YakBot-Principal',
                 store: store,
                 backupSyncIntervalMs: 300000 
             }),
@@ -350,8 +351,11 @@ client.on('remote_session_saved', () => {
                     user.logros.push(hitosComandos[user.comandos]);
                     message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
                 }
-
+			
+				user.comandos += 1;
                 await user.save();
+
+				console.log(`[BOT] Comando: ${comando} | Usuario: ${pushname} | Grupo: ${message.from}`);
 				
 		
 // ==========================================
