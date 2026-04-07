@@ -195,27 +195,27 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             }
         });
 
-        // ==========================================
-        // 6. EVENTOS DEL CLIENTE
-        // ==========================================
-        
-        client.on('qr', (qr) => {
-            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-            qrcode.generate(qr, { small: true });
-        });
+// ==========================================
+// 6. EVENTOS DEL CLIENTE
+// ==========================================
 
-	 // Genera un link clickeable por si el QR de consola falla
-            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-            console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
-        });
+client.on('qr', (qr) => {
+    console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+    // Esto genera el QR en la consola de Railway
+    qrcode.generate(qr, { small: true });
 
-        client.on('ready', () => {
-            console.log('✅ YakBot está ONLINE y funcionando');
-        });
+    // ESTO DEBE IR AQUÍ DENTRO para que la variable 'qr' funcione
+    const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+    console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
+}); // <--- AQUÍ SOLO VA UN CIERRE
 
-        client.on('remote_session_saved', () => {
-            console.log('💾 Sesión guardada en MongoDB Atlas');
-        });
+client.on('ready', () => {
+    console.log('✅ YakBot está ONLINE y funcionando');
+});
+
+client.on('remote_session_saved', () => {
+    console.log('💾 Sesión guardada en MongoDB Atlas');
+});
 
 
         // ==========================================
