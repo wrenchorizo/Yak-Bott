@@ -183,7 +183,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             authStrategy: new RemoteAuth({
 				clientId: 'YakBot-Principal',
                 store: store,
-                backupSyncIntervalMs: 300000 
+                backupSyncIntervalMs: 60000 
             }),
             puppeteer: {
                 headless: true,
