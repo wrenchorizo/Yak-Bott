@@ -182,23 +182,27 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         const store = new MongoStore({ mongoose: mongoose });
 
         // Configuración sin ruta fija para usar el navegador descargado por Puppeteer
-        client = new Client({
-            authStrategy: new RemoteAuth({
-				clientId: 'YakBot-Principal',
-                store: store,
-                backupSyncIntervalMs: 60000 
-            }),
-            puppeteer: {
-                headless: true,
-                args: [
-                    '--no-sandbox', 
-                    '--disable-setuid-sandbox', 
-                    '--disable-dev-shm-usage', 
-                    '--no-zygote'
-                ]
-                // Eliminamos executablePath para evitar el error de "not found"
-            }
-        });
+       const client = new Client({
+    authStrategy: new RemoteAuth({
+        clientId: 'YakBot-Principal', // ⚠️ NUNCA cambies este nombre
+        store: store,
+        backupSyncIntervalMs: 30000 // Guardar cada 30 segundos para mayor seguridad
+    }),
+    puppeteer: {
+        handleSIGINT: false,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process', 
+            '--disable-gpu'
+        ],
+        executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+    }
+});
 
 // ==========================================
 // 6. EVENTOS DEL CLIENTE
@@ -218,8 +222,8 @@ client.on('ready', () => {
     console.log('✅ YakBot está ONLINE y funcionando');
 });
 
-client.on('remote_session_saved', () => {
-    console.log('💾 Sesión guardada en MongoDB Atlas');
+		client.on('remote_session_saved', () => {
+    console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
 });
 
 
@@ -1274,7 +1278,7 @@ client.on('message_create', async (message) => {
 
                 if (ahora - lastRWGrupo < totalRW) {
                     const restante = totalRW - (ahora - lastRWGrupo);
-                    return message.reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje en este grupo.`);
+                    return message.reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje.`);
                 }
 
                 // --- Lógica de Pesos y Selección (Se mantiene igual) ---
@@ -1342,7 +1346,7 @@ client.on('message_create', async (message) => {
 
             } catch (error) {
                 console.error('Error en RW:', error);
-                message.reply('⚠️ No pude cargar el personaje.');
+                message.reply('⚠️ No se pudo cargar el personaje.');
             } finally {
                 procesandoRW.delete(grupoId);
             }
@@ -1359,7 +1363,7 @@ client.on('message_create', async (message) => {
             const tirada = tiradasTemporales[quoted.id._serialized];
 
             if (!tirada || tirada.reclamado || tirada.grupoId !== grupoId) {
-                return message.reply('⌦ Ese personaje ya no está disponible o es de otro grupo.');
+                return message.reply('⌦ Ese personaje ya no está disponible.');
             }
 
             const ahora = Date.now();
@@ -1367,12 +1371,12 @@ client.on('message_create', async (message) => {
 
             if (ahora - lastClaimGrupo < (20 * 60 * 1000)) {
                 const restante = (20 * 60 * 1000) - (ahora - lastClaimGrupo);
-                return message.reply(`◔ Cooldown activo en este grupo. Espera *${msToTime(restante)}*.`);
+                return message.reply(`◔ Espera *${msToTime(restante)}* para volver a reclamar un personaje.`);
             }
 
             // Verificar dueño en este grupo
             const dueñoExistente = await User.findOne({ "harem.nombre": tirada.personaje.nombre, "harem.grupoId": grupoId });
-            if (dueñoExistente) return message.reply('⌦ Ya lo tienen en este grupo.');
+            if (dueñoExistente) return message.reply('⌦ Este personaje ya fué reclamado.');
 
             // FIX: Guardar con el ID del grupo para separarlo de otros harenes
             user.harem.push({
@@ -1403,7 +1407,7 @@ client.on('message_create', async (message) => {
             const haremFiltrado = dueño?.harem?.filter(p => p.grupoId === grupoId) || [];
 
             if (haremFiltrado.length === 0) {
-                const mensajeVacio = idUsuarioHarem === userId ? '❒ Tu harem en este grupo está vacío.' : '❒ Este usuario no tiene personajes en este grupo.';
+                const mensajeVacio = idUsuarioHarem === userId ? '❒ Tu harem está vacío.' : '❒ Este usuario no tiene personajes.';
                 return message.reply(mensajeVacio);
             }
 
@@ -1445,7 +1449,7 @@ client.on('message_create', async (message) => {
             });
 
             respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-            respuesta += `⌬ Total en este grupo: ${listaOrdenada.length}\n`;
+            respuesta += `⌬ Total: ${listaOrdenada.length}\n`;
             respuesta += `⌬ Usa: ${prefix}harem [número] o ${prefix}harem @user`;
 
             return message.reply(respuesta);
