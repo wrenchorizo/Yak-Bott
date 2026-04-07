@@ -181,7 +181,8 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        const client = new Client({
+        // Inicializamos el cliente AQUÍ
+        client = new Client({
             authStrategy: new RemoteAuth({
                 clientId: 'YakBot-Principal',
                 store: store,
@@ -189,7 +190,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             }),
             puppeteer: {
                 handleSIGINT: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'], // Simplificado para el ejemplo
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
                 executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
             }
         });
@@ -303,24 +304,18 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         // 10. ÚNICO MANEJADOR DE MENSAJES (ESTRUCTURA FIJA)
         // ==========================================
 client.on('message_create', async (message) => {
-    // LOG 1: ¿Llega el mensaje? (Este debe salir siempre que alguien escriba)
-    console.log(`📩 Mensaje recibido: "${message.body}" de ${message.from}`);
-
-    if (message.fromMe) return; // Si eres tú, aquí se detiene.
-    
-    const prefix = '?'; 
-    if (!message.body.startsWith(prefix)) return;
+            if (message.fromMe) return;
+            const prefix = '?';
+            if (!message.body.startsWith(prefix)) return;
 
     try {
-        const args = message.body.slice(prefix.length).trim().split(/\s+/);
-        const comando = args.shift().toLowerCase();
-        
-        // LOG 2: ¿Entró al comando?
-        console.log(`🔎 Procesando comando: ${comando}`);
-
-        const userId = message.author || message._data.participant || message.from;
-        const grupoId = message.from;
-        const pushname = message._data.notifyName || "Usuario";
+                const args = message.body.slice(prefix.length).trim().split(/\s+/);
+                const comando = args.shift().toLowerCase();
+                
+                const userId = message.author || message._data.participant || message.from;
+                const grupoId = message.from;
+                const pushname = message._data.notifyName || "Usuario";
+		
 
         // Detección de Target
         let targetId = null;
@@ -338,12 +333,11 @@ client.on('message_create', async (message) => {
         }
 
         // Carga de Usuario (LOG 3: ¿La base de datos responde?)
-        console.log(`💾 Buscando usuario en DB: ${userId}`);
         let user = await User.findOne({ userId });
-        if (!user) {
-            user = new User({ userId });
-            await user.save();
-        }
+                if (!user) {
+                    user = new User({ userId });
+                    await user.save();
+                }
 
         // Stats
         user.mensajes += 1;
@@ -2337,7 +2331,7 @@ case 'tr': {
 
         console.log("🚀 Inicializando Puppeteer...");
         await client.initialize();
-        console.log("✅ YakBot ONLINE");
+        console.log("✅ casi en ONLINE");
 
     } catch (err) {
         console.error("❌ Error crítico en el arranque:", err);
