@@ -204,9 +204,10 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             qrcode.generate(qr, { small: true });
         });
 
-		const qrLink = 'https://api.qrserver.com/v1/create -qr-code/?size=300x300&data= ${encodeURIComponent(qr)}`;
-
-console.log( LINK DE RESPALDO: \n${qrLink}`); });
+	 // Genera un link clickeable por si el QR de consola falla
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+            console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
+        });
 
         client.on('ready', () => {
             console.log('✅ YakBot está ONLINE y funcionando');
