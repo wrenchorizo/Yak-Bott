@@ -56,7 +56,9 @@ const userSchema = new mongoose.Schema({
     lastRW: { type: Number, default: 0 },
     lastClaim: { type: Number, default: 0 },
     lastSmob: { type: Number, default: 0 },
-    logros: { type: Array, default: [] }
+    logros: { type: Array, default: [] },
+	cooldowns: { type: Map, of: Object, default: {} }, // Guardaremos { "grupoId": { lastRW: 0, lastClaim: 0 } }
+    harem: { type: Array, default: [] }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -129,6 +131,7 @@ const procesandoRW = new Set();
 const duelosActivos = {};
 const tradesPendientes = {};
 let botSettings = {};
+let tiradasTemporales = {};
 
 // ==========================================
 // 4. FUNCIONES DE APOYO (HELPERS)
@@ -1252,23 +1255,29 @@ client.on('message_create', async (message) => {
         break;
 
 //------------------------------------------------RW (ROLL CHARACTER)--------------------------------------------------------
-//------------------------------------------------RW (ROLL CHARACTER)--------------------------------------------------------
         case 'rw':
         case 'roll':
         case 'tirar':
         case 'rpj': {
-            if (procesandoRW.has(chatId)) return;
-            procesandoRW.add(chatId);
+            // Usamos grupoId para que el bloqueo sea por chat
+            if (procesandoRW.has(grupoId)) return;
+            procesandoRW.add(grupoId);
 
             try {
                 const ahora = Date.now();
                 const totalRW = 15 * 60 * 1000;
 
-                if (ahora - (user.lastRW || 0) < totalRW) {
-                    const restante = totalRW - (ahora - user.lastRW);
-                    return message.reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje.`);
+                // FIX: Cooldown INDIVIDUAL por GRUPO
+                // Buscamos el último RW del usuario EN ESTE GRUPO específico
+                if (!user.cooldowns) user.cooldowns = {}; 
+                const lastRWGrupo = user.cooldowns[grupoId]?.lastRW || 0;
+
+                if (ahora - lastRWGrupo < totalRW) {
+                    const restante = totalRW - (ahora - lastRWGrupo);
+                    return message.reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje en este grupo.`);
                 }
 
+                // --- Lógica de Pesos y Selección (Se mantiene igual) ---
                 const listaPesos = personajes.map(p => {
                     const v = parseInt(p.valor) || 1000;
                     let pesoFinal = (v >= 17000) ? 100 / Math.pow(v / 17000, 2.5) : 100;
@@ -1287,12 +1296,13 @@ client.on('message_create', async (message) => {
                     }
                 }
 
+                // FIX: Verificar si YA está reclamado EN ESTE GRUPO
                 const yaReclamado = await User.findOne({ 
-                    "harem.nombre": personajeSeleccionado.nombre,
+                    "harem.nombre": personajeSeleccionado.nombre, 
                     "harem.grupoId": grupoId 
                 });
                 
-                let estado = yaReclamado ? "Ya fue reclamado" : "Libre";
+                let estado = yaReclamado ? "Ya fue reclamado 🔒" : "Libre 🔓";
 
                 const media = await MessageMedia.fromUrl(personajeSeleccionado.imagen).catch(() => null);
 
@@ -1313,13 +1323,17 @@ client.on('message_create', async (message) => {
                     ? await client.sendMessage(grupoId, media, { caption: msgTexto })
                     : await client.sendMessage(grupoId, msgTexto);
 
+                // Guardar tirada temporalmente
                 tiradasTemporales[sentMsg.id._serialized] = {
                     personaje: personajeSeleccionado,
                     grupoId: grupoId,
                     reclamado: false
                 };
 
-                user.lastRW = ahora;
+                // Guardar cooldown específico del grupo
+                if (!user.cooldowns[grupoId]) user.cooldowns[grupoId] = {};
+                user.cooldowns[grupoId].lastRW = ahora;
+                user.markModified('cooldowns'); 
                 await user.save();
 
                 setTimeout(() => {
@@ -1330,7 +1344,7 @@ client.on('message_create', async (message) => {
                 console.error('Error en RW:', error);
                 message.reply('⚠️ No pude cargar el personaje.');
             } finally {
-                procesandoRW.delete(chatId);
+                procesandoRW.delete(grupoId);
             }
         }
         break;
@@ -1345,54 +1359,64 @@ client.on('message_create', async (message) => {
             const tirada = tiradasTemporales[quoted.id._serialized];
 
             if (!tirada || tirada.reclamado || tirada.grupoId !== grupoId) {
-                return message.reply('⌦ Ese personaje ya no está disponible.');
+                return message.reply('⌦ Ese personaje ya no está disponible o es de otro grupo.');
             }
 
             const ahora = Date.now();
-            if (ahora - (user.lastClaim || 0) < (20 * 60 * 1000)) {
-                return message.reply(`◔ Cooldown activo.`);
+            const lastClaimGrupo = user.cooldowns?.[grupoId]?.lastClaim || 0;
+
+            if (ahora - lastClaimGrupo < (20 * 60 * 1000)) {
+                const restante = (20 * 60 * 1000) - (ahora - lastClaimGrupo);
+                return message.reply(`◔ Cooldown activo en este grupo. Espera *${msToTime(restante)}*.`);
             }
 
+            // Verificar dueño en este grupo
             const dueñoExistente = await User.findOne({ "harem.nombre": tirada.personaje.nombre, "harem.grupoId": grupoId });
             if (dueñoExistente) return message.reply('⌦ Ya lo tienen en este grupo.');
 
+            // FIX: Guardar con el ID del grupo para separarlo de otros harenes
             user.harem.push({
                 ...tirada.personaje,
-                level: 1, exp: 0, stamina: 100, grupoId: grupoId, lastUpdate: ahora
+                level: 1, exp: 0, stamina: 100, 
+                grupoId: grupoId, // <--- VITAL
+                lastUpdate: ahora
             });
-            user.lastClaim = ahora;
+
+            if (!user.cooldowns[grupoId]) user.cooldowns[grupoId] = {};
+            user.cooldowns[grupoId].lastClaim = ahora;
             tirada.reclamado = true;
 
+            user.markModified('harem');
+            user.markModified('cooldowns');
             await user.save();
             return message.reply(`꧁¡Reclamaste a ${tirada.personaje.nombre}!꧂`);
         }
         break;
 
-//------------------------------------------------HAREM (COLECCIÓN)--------------------------------------------------------
+        //------------------------------------------------HAREM (COLECCIÓN)--------------------------------------------------------
         case 'harem':
         case 'coleccion': {
-            // 1. Identificar dueño (mención, respuesta o tú mismo)
             const idUsuarioHarem = targetId || userId;
-            
-            // Buscamos al usuario en la DB
             const dueño = (idUsuarioHarem === userId) ? user : await User.findOne({ userId: idUsuarioHarem });
 
-            if (!dueño || !dueño.harem || dueño.harem.length === 0) {
-                const mensajeVacio = idUsuarioHarem === userId ? '❒ Tu harem está vacío.' : '❒ Este usuario no tiene personajes.';
+            // FIX: FILTRAR el harem para que SOLO muestre los personajes de ESTE grupo
+            const haremFiltrado = dueño?.harem?.filter(p => p.grupoId === grupoId) || [];
+
+            if (haremFiltrado.length === 0) {
+                const mensajeVacio = idUsuarioHarem === userId ? '❒ Tu harem en este grupo está vacío.' : '❒ Este usuario no tiene personajes en este grupo.';
                 return message.reply(mensajeVacio);
             }
 
-            // 2. Nombre del dueño
             const contacto = await client.getContactById(idUsuarioHarem);
             const nombreTitulo = (contacto.pushname || "Usuario").toUpperCase();
 
-            // 3. Manejo de páginas
+            // Manejo de páginas
             let pIndex = (message.mentionedIds.length > 0 || message.hasQuotedMsg) ? 1 : 0;
             let pagina = parseInt(args[pIndex]) || 1;
             const personajesPorPagina = 20;
 
-            // 4. Ordenar por Valor Real (Poder actual)
-            let listaOrdenada = [...dueño.harem];
+            // Ordenar por Valor Real
+            let listaOrdenada = [...haremFiltrado];
             listaOrdenada.sort((a, b) => {
                 const vA = Math.floor((Number(a.valor) || 0) * Math.pow(1.20, (a.level || 1) - 1));
                 const vB = Math.floor((Number(b.valor) || 0) * Math.pow(1.20, (b.level || 1) - 1));
@@ -1408,7 +1432,7 @@ client.on('message_create', async (message) => {
 
             let respuesta = `༺ ${nombreTitulo} ༻\n`;
             respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-            respuesta += `         ᴘᴀ́ɢɪɴᴀ ${pagina} ᴅᴇ ${totalPaginas}\n\n`;
+            respuesta += `        ᴘᴀ́ɢɪɴᴀ ${pagina} ᴅᴇ ${totalPaginas}\n\n`;
 
             personajesPagina.forEach((p, index) => {
                 const valBase = Number(p.valor) || 0;
@@ -1416,23 +1440,18 @@ client.on('message_create', async (message) => {
                 const valorReal = Math.floor(valBase * Math.pow(1.20, lvl - 1));
                 let numGlobal = (inicio + index + 1).toString().padStart(2, '0');
                 
-                if (p.nombre === 'Deadpool') {
-                    respuesta += `⌁ ${numGlobal} ⌁ 🔴 *DEADPOOL*\n`;
-                    respuesta += `    ╰┈─ ➤ Marvel ✦ (Valor Insuperable)\n\n`;
-                } else {
-                    respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre} (Lvl ${lvl})\n`;
-                    respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ ${valorReal.toLocaleString()}\n\n`;
-                }
+                respuesta += `⌁ ${numGlobal} ⌁ ${p.nombre} (Lvl ${lvl})\n`;
+                respuesta += `    ╰┈─ ➤ ${p.fuente} ✦ ${valorReal.toLocaleString()}\n\n`;
             });
 
             respuesta += `━━━━━━━━━━━━━━━━━━━━\n`;
-            respuesta += `⌬ Total: ${listaOrdenada.length} ⌁ Paginas: ${totalPaginas}\n`;
+            respuesta += `⌬ Total en este grupo: ${listaOrdenada.length}\n`;
             respuesta += `⌬ Usa: ${prefix}harem [número] o ${prefix}harem @user`;
 
             return message.reply(respuesta);
         }
         break;
-
+			
         //------------------------------------------------WIMAGE (BUSCAR IMAGEN)--------------------------------------------------------
         case 'wimage':
         case 'pjimg':
