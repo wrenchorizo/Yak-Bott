@@ -171,7 +171,7 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
     try {
         const MONGO_URI = process.env.MONGODB_URL;
         if (!MONGO_URI) {
-            console.error("❌ ERROR: La variable MONGODB_URL no está definida en Railway.");
+            console.error("❌ ERROR: La variable MONGODB_URL no está definida.");
             return;
         }
 
@@ -181,51 +181,49 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Configuración sin ruta fija para usar el navegador descargado por Puppeteer
-       const client = new Client({
-    authStrategy: new RemoteAuth({
-        clientId: 'YakBot-Principal', // ⚠️ NUNCA cambies este nombre
-        store: store,
-        backupSyncIntervalMs: 30000 // Guardar cada 30 segundos para mayor seguridad
-    }),
-    puppeteer: {
-        handleSIGINT: false,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process', 
-            '--disable-gpu'
-        ],
-        executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+        const client = new Client({
+            authStrategy: new RemoteAuth({
+                clientId: 'YakBot-Principal',
+                store: store,
+                backupSyncIntervalMs: 30000 
+            }),
+            puppeteer: {
+                handleSIGINT: false,
+                args: ['--no-sandbox', '--disable-setuid-sandbox'], // Simplificado para el ejemplo
+                executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+            }
+        });
+
+        // ==========================================
+        // 6. EVENTOS DEL CLIENTE (¡AHORA DENTRO DEL BLOQUE!)
+        // ==========================================
+
+        client.on('qr', (qr) => {
+            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+            qrcode.generate(qr, { small: true });
+        });
+
+        client.on('ready', () => {
+            console.log('✅ YakBot está ONLINE y funcionando');
+        });
+
+        client.on('remote_session_saved', () => {
+            console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
+        });
+
+        // ¡IMPORTANTE! El evento de mensajes también debe estar aquí dentro
+        client.on('message_create', async (message) => {
+            // ... AQUÍ VA TODO TU CÓDIGO DE LOS COMANDOS (RW, HAREM, ETC) ...
+        });
+
+        // Al final de todo, inicializas
+        console.log('🚀 Inicializando cliente...');
+        await client.initialize();
+
+    } catch (error) {
+        console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
     }
-});
-
-// ==========================================
-// 6. EVENTOS DEL CLIENTE
-// ==========================================
-
-client.on('qr', (qr) => {
-    console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-    // Esto genera el QR en la consola de Railway
-    qrcode.generate(qr, { small: true });
-
-    // ESTO DEBE IR AQUÍ DENTRO para que la variable 'qr' funcione
-    const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-    console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
-}); // <--- AQUÍ SOLO VA UN CIERRE
-
-client.on('ready', () => {
-    console.log('✅ YakBot está ONLINE y funcionando');
-});
-
-		client.on('remote_session_saved', () => {
-    console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
-});
-
+})(); // Cierre de la función autoejecutable
 
         // ==========================================
         // 7. LÓGICA DE PERSONAJES Y TIENDA
