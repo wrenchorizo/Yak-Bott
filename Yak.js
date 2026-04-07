@@ -22,6 +22,7 @@ const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const play = require('play-dl');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { exec } = require('child_process');
 const axios = require('axios');
 const dns = require('dns');
@@ -296,67 +297,63 @@ client.on('remote_session_saved', () => {
         // ==========================================
         // 10. ÚNICO MANEJADOR DE MENSAJES (ESTRUCTURA FIJA)
         // ==========================================
+client.on('message_create', async (message) => {
+    // LOG 1: ¿Llega el mensaje? (Este debe salir siempre que alguien escriba)
+    console.log(`📩 Mensaje recibido: "${message.body}" de ${message.from}`);
 
-        client.on('message_create', async (message) => {
-            if (message.fromMe) return;
-            
-            const prefix = '?'; 
-            // 1. Verificamos prefijo (SIN abrir llave si es un return directo)
-            if (!message.body.startsWith(prefix)) return;
+    if (message.fromMe) return; // Si eres tú, aquí se detiene.
+    
+    const prefix = '?'; 
+    if (!message.body.startsWith(prefix)) return;
 
-            try {
-                const args = message.body.slice(prefix.length).trim().split(/\s+/);
-                const comando = args.shift().toLowerCase();
-                const userId = message.author || message._data.participant || message.from;
-                const grupoId = message.from;
-                const pushname = message._data.notifyName || "Usuario";
+    try {
+        const args = message.body.slice(prefix.length).trim().split(/\s+/);
+        const comando = args.shift().toLowerCase();
+        
+        // LOG 2: ¿Entró al comando?
+        console.log(`🔎 Procesando comando: ${comando}`);
 
-                // Detección de Target
-                let targetId = null;
-                if (message.mentionedIds && message.mentionedIds.length > 0) {
-                    targetId = message.mentionedIds[0];
-                } else if (message.hasQuotedMsg) {
-                    const quotedMsg = await message.getQuotedMessage();
-                    targetId = quotedMsg.author || quotedMsg.from;
-                }
+        const userId = message.author || message._data.participant || message.from;
+        const grupoId = message.from;
+        const pushname = message._data.notifyName || "Usuario";
 
-                // Filtro de Bot encendido/apagado
-                if (message.isGroup) {
-                    if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
-                    if (!botSettings[grupoId].enabled && comando !== 'bot') return;
-                }
+        // Detección de Target
+        let targetId = null;
+        if (message.mentionedIds && message.mentionedIds.length > 0) {
+            targetId = message.mentionedIds[0];
+        } else if (message.hasQuotedMsg) {
+            const quotedMsg = await message.getQuotedMessage();
+            targetId = quotedMsg.author || quotedMsg.from;
+        }
 
-                const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+        // Filtro de Grupo
+        if (message.isGroup) {
+            if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
+            if (!botSettings[grupoId].enabled && comando !== 'bot') return;
+        }
 
-                // Carga de Usuario
-                let user = await User.findOne({ userId });
-                if (!user) {
-                    user = new User({ userId });
-                    await user.save();
-                }
+        // Carga de Usuario (LOG 3: ¿La base de datos responde?)
+        console.log(`💾 Buscando usuario en DB: ${userId}`);
+        let user = await User.findOne({ userId });
+        if (!user) {
+            user = new User({ userId });
+            await user.save();
+        }
 
-                // Stats y Niveles
-                user.mensajes += 1;
-                user.xp += 2;
-                const xpNecesaria = user.level * 100;
-                if (user.xp >= xpNecesaria) {
-                    user.xp -= xpNecesaria;
-                    user.level += 1;
-                    message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
-                }
+        // Stats
+        user.mensajes += 1;
+        user.xp += 2;
+        user.comandos += 1;
+        
+        const xpNecesaria = user.level * 100;
+        if (user.xp >= xpNecesaria) {
+            user.xp -= xpNecesaria;
+            user.level += 1;
+            message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
+        }
 
-                // Logros y Deadpool (Tu lógica actual)
-                const hitosComandos = { 500: "cmd_500", 1000: "cmd_1000", 10000: "cmd_10000", 50000: "cmd_50000" };
-                if (hitosComandos[user.comandos] && !user.logros.includes(hitosComandos[user.comandos])) {
-                    user.logros.push(hitosComandos[user.comandos]);
-                    message.reply(`🏆 Logro desbloqueado: *${logrosInfo[hitosComandos[user.comandos]]}*`);
-                }
-			
-				user.comandos += 1;
-                await user.save();
-
-				console.log(`[BOT] Comando: ${comando} | Usuario: ${pushname} | Grupo: ${message.from}`);
-				
+        await user.save();
+        console.log(`✅ [BOT] Comando ${comando} registrado para ${pushname}`);			
 		
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
