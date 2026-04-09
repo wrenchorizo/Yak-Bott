@@ -2306,7 +2306,6 @@ default: {
 // Ponemos varios cierres seguidos. Si alguno sobra, 
 // nos dará un error diferente que es más fácil de arreglar.
 } catch (err) { }
-} catch (err) { }
 // ==========================================
 
 // SECCIÓN 11: INICIO REAL
