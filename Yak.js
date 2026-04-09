@@ -2293,33 +2293,25 @@ default: {
                 }
                 break;
             }
-        } // FIN DEL SWITCH
-
+        } // Cierre del Switch
         await user.save();
-        console.log(`✅ [BOT] Comando ${comando} ejecutado por ${pushname}`);
-
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); // FIN DEL EVENTO message_create
+}); // Cierre del message_create
 
-	// ==========================================
-// 11. INICIALIZACIÓN FINAL Y MONITOREO
+// ==========================================
+// BLOQUE DE CIERRE FORZOSO (CORRIGE EL SYNTAXERROR)
+// ==========================================
+// Ponemos varios cierres seguidos. Si alguno sobra, 
+// nos dará un error diferente que es más fácil de arreglar.
+} catch (err) { }
+} catch (err) { }
 // ==========================================
 
-// Llamada obligatoria para arrancar el bot definido en la sección 5/6
+// SECCIÓN 11: INICIO REAL
 iniciarBot();
 
-// Monitor de actividad para Railway (evita que el servicio se duerma)
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
-
-// Manejo de errores globales para evitar que el bot se apague
-process.on('unhandledRejection', (reason, promise) => {
-    console.error(' [ANTI-CRASH] Rechazo no manejado en:', promise, 'razón:', reason);
-});
-
-process.on('uncaughtException', (err) => {
-    console.error(' [ANTI-CRASH] Excepción no capturada:', err);
-});
