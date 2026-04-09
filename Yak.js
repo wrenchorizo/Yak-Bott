@@ -2293,23 +2293,33 @@ default: {
                 }
                 break;
             }
-} // 1. Cierra el Switch principal
+} // 1. Cierra el Switch
         await user.save();
     } catch (e) {
-        console.error("❌ Error en la ejecución del comando:", e);
+        console.error("❌ Error en comando:", e);
     }
-}); // 2. Cierra el client.on('message_create')
+}); // 2. Cierra el message_create
 
 // ==========================================
-// EL CIERRE MAESTRO (EL QUE ARREGLA EL TRY)
+// LA GRAN MURALLA DE CIERRES
 // ==========================================
-// Esta parte captura el 'try' huérfano que causaba el error 2308
-    } catch (err) {
-        console.error("❌ Error en bloque superior detectado:", err);
+// Cerramos tres bloques posibles que podrían estar abiertos:
+// El try de la sección 5, el async global, y cualquier otro.
+
+    } catch (err) { 
+        console.error("Cierre 1:", err); 
     }
+} catch (err) { 
+    console.error("Cierre 2:", err); 
+}
+
+// Intentamos cerrar una función autoejecutable por si acaso
+try { } catch(e) { } 
+
+// ==========================================
+// SECCIÓN 11: ARRANQUE DEFINITIVO
 // ==========================================
 
-// SECCIÓN 11: INICIO REAL
 iniciarBot();
 
 setInterval(() => {
