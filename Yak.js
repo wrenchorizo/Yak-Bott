@@ -2320,15 +2320,15 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
+            break; // <-- Asegúrate de que el break esté aquí
         }
-        break;
-    } // CIERRE DEL SWITCH
+    } // CIERRE DEL SWITCH (comando)
 } catch (e) {
     console.error("❌ Error en el comando:", e);
 }
-}); // CIERRE DEL client.on
+}); // CIERRE DEL client.on('message_create', ...)
 
-// INICIALIZACIÓN
+// 11. INICIALIZACIÓN FINAL
 (async () => {
     try {
         console.log("🚀 Inicializando cliente...");
@@ -2336,7 +2336,7 @@ case 'tr': {
     } catch (error) {
         console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
     }
-})();
+})(); // Cierre de la función autoejecutable
 
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
