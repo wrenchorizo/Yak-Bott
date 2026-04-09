@@ -2293,31 +2293,20 @@ default: {
                 }
                 break;
             }
-} // Cierra el switch
+} // Cierre del Switch
         await user.save();
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); // Cierre del client.on('message_create')
+}); 
 
-// ==========================================
-// EL CIERRE TOTAL (LIMPIEZA DE LLAVES)
-// ==========================================
-// Ponemos tres llaves de cierre por si acaso hay un try o un async 
-// abierto desde el inicio del archivo que nunca se cerró.
-} 
-} 
-} 
+// LA LLAVE MAESTRA
+    } catch (err) {
+        console.error("⚠️ Error capturado en el bloque global:", err);
+    }
 
-// SECCIÓN 11: INICIO REAL
-// Usamos un try/catch aquí para que si las llaves de arriba 
-// sobran, el bot ignore el error y arranque de todos modos.
-try {
-    iniciarBot();
-} catch (err) {
-    console.log("⚠️ Nota: Bloques superiores ya cerrados.");
-    iniciarBot();
-}
+// ARRANQUE
+iniciarBot();
 
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
