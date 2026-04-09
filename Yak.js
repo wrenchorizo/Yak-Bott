@@ -164,16 +164,12 @@ process.on('unhandledRejection', (reason) => console.error(' [ANTI-CRASH] Rechaz
 process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción:', err));
 
 // ==========================================
-// 5. INICIO DE EJECUCIÓN Y CONEXIÓN
+// 5. FUNCIÓN MAESTRA DE INICIO
 // ==========================================
-
-(async () => {
+async function iniciarBot() {
     try {
         const MONGO_URI = process.env.MONGODB_URL;
-        if (!MONGO_URI) {
-            console.error("❌ ERROR: La variable MONGODB_URL no está definida.");
-            return;
-        }
+        if (!MONGO_URI) return console.error("❌ MONGODB_URL no definida.");
 
         console.log('⏳ Conectando a MongoDB Atlas...');
         await mongoose.connect(MONGO_URI);
@@ -195,18 +191,19 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
         });
 
 // ==========================================
-// 6. EVENTOS DEL CLIENTE
+// 6. EVENTOS DEL CLIENTE (QR Y READY)
 // ==========================================
 
 client.on('qr', (qr) => {
     console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+    
+    // Genera el QR en la terminal
     qrcode.generate(qr, { small: true });
 
-    // El link de respaldo DEBE estar dentro de estas llaves { } 
-    // para que reconozca la variable 'qr'
+    // Link de respaldo para escanear desde el navegador
     const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
     console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
-}); // <-- Solo un cierre aquí
+});
 
 client.on('ready', () => {
     console.log('✅ YakBot está ONLINE y funcionando');
@@ -216,18 +213,12 @@ client.on('remote_session_saved', () => {
     console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
 });
 
-        // ¡IMPORTANTE! El evento de mensajes también debe estar aquí dentro
-        client.on('message_create', async (message) => {
-            // ... AQUÍ VA TODO TU CÓDIGO DE LOS COMANDOS (RW, HAREM, ETC) ...
-        });
+client.on('auth_failure', (msg) => {
+    console.error('❌ ERROR DE AUTENTICACIÓN:', msg);
+});
 
-        // Al final de todo, inicializas
-        console.log('🚀 Inicializando cliente...');
-        await client.initialize();
-
-    } catch (error) {
-        console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
-    }
+		// Llamamos a la función
+iniciarBot();
 
         // ==========================================
         // 7. LÓGICA DE PERSONAJES Y TIENDA
@@ -303,46 +294,30 @@ client.on('remote_session_saved', () => {
             return filtrados[filtrados.length - 1];
         }
 
-        // ==========================================
-        // 10. ÚNICO MANEJADOR DE MENSAJES (ESTRUCTURA FIJA)
-        // ==========================================
+// ==========================================
+// 10. ÚNICO MANEJADOR DE MENSAJES
+// ==========================================
 client.on('message_create', async (message) => {
-            if (message.fromMe) return;
-            const prefix = '?';
-            if (!message.body.startsWith(prefix)) return;
+    if (message.fromMe) return;
+    const prefix = '?';
+    if (!message.body.startsWith(prefix)) return;
 
     try {
-                const args = message.body.slice(prefix.length).trim().split(/\s+/);
-                const comando = args.shift().toLowerCase();
-                
-                const userId = message.author || message._data.participant || message.from;
-                const grupoId = message.from;
-                const pushname = message._data.notifyName || "Usuario";
-		
+        const args = message.body.slice(prefix.length).trim().split(/\s+/);
+        const comando = args.shift().toLowerCase();
+        
+        const userId = message.author || message._data.participant || message.from;
+        const grupoId = message.from;
+        const pushname = message._data.notifyName || "Usuario";
 
-        // Detección de Target
-        let targetId = null;
-        if (message.mentionedIds && message.mentionedIds.length > 0) {
-            targetId = message.mentionedIds[0];
-        } else if (message.hasQuotedMsg) {
-            const quotedMsg = await message.getQuotedMessage();
-            targetId = quotedMsg.author || quotedMsg.from;
-        }
-
-        // Filtro de Grupo
-        if (message.isGroup) {
-            if (!botSettings[grupoId]) botSettings[grupoId] = { enabled: true };
-            if (!botSettings[grupoId].enabled && comando !== 'bot') return;
-        }
-
-        // Carga de Usuario (LOG 3: ¿La base de datos responde?)
+        // Carga o creación de usuario
         let user = await User.findOne({ userId });
-                if (!user) {
-                    user = new User({ userId });
-                    await user.save();
-                }
+        if (!user) {
+            user = new User({ userId });
+            await user.save();
+        }
 
-        // Stats
+        // Stats básicos
         user.mensajes += 1;
         user.xp += 2;
         user.comandos += 1;
@@ -353,9 +328,6 @@ client.on('message_create', async (message) => {
             user.level += 1;
             message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
         }
-
-        await user.save();
-        console.log(`✅ [BOT] Comando ${comando} registrado para ${pushname}`);			
 		
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
@@ -2292,54 +2264,62 @@ case 'tr': {
             break;
 
 default: {
-            const misComandos = [
-                'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
-                'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
-                'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
-                'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
-                'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
-                'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
-                'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
-                'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
-                'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
-                'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
-                'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
-                'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
-                'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
-                'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
-                'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
-                'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
-                'expulsar', 'ban', 's', 'sticker'
-            ];
-            const listaReacciones = [
-                'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
-                'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
-            ];
-            
-            if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
-                message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+                const misComandos = [
+                    'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
+                    'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
+                    'enciclopedia', 'pay', 'transferencia', 'pagar', 'cooldowns', 'esperas', 'w',
+                    'trabajar', 'chambear', 'work', 'crime', 'crimen', 'daily', 'bal', 'balance',
+                    'cartera', 'billetera', 'dinero', 'shop', 'tienda', 'itemshop', 'buy', 'comprar',
+                    'charshop', 'mercado', 'm', 'bchar', 'buychar', 'buycharacter', 'baltop', 'topricos',
+                    'duel', 'retar', 'duelo', 'accept', 'acceptduel', 'pick', 'info', 'creador', 'numero',
+                    'rw', 'roll', 'tirar', 'rpj', 'c', 'claim', 'reclamar', 'harem', 'coleccion',
+                    'wimage', 'pjimg', 'verchar', 'charinfo', 'infopj', 'pjstats', 'dice', 'dado',
+                    'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
+                    'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
+                    'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
+                    'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
+                    'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
+                    'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
+                    'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
+                    'expulsar', 'ban', 's', 'sticker'
+                ];
+                const listaReacciones = [
+                    'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
+                    'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
+                ];
+                
+                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+                }
+                break;
             }
-            break;
-        } // Cierra el default
-    } // Cierra el switch
+        } // FIN DEL SWITCH
+
+        await user.save();
+        console.log(`✅ [BOT] Comando ${comando} ejecutado por ${pushname}`);
 
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); // Cierra el client.on('message_create')
+}); // FIN DEL EVENTO message_create
 
-// --- INICIALIZACIÓN FINAL ---
-(async () => {
-    try {
-        console.log("🚀 Inicializando cliente...");
-        await client.initialize();
-        console.log("✅ YakBot ONLINE");
-    } catch (err) {
-        console.error("❌ Error crítico en el arranque:", err);
-    }
-})();
+	// ==========================================
+// 11. INICIALIZACIÓN FINAL Y MONITOREO
+// ==========================================
 
-// Monitor para Railway
+// Llamada obligatoria para arrancar el bot definido en la sección 5/6
+iniciarBot();
+
+// Monitor de actividad para Railway (evita que el servicio se duerma)
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
+
+// Manejo de errores globales para evitar que el bot se apague
+process.on('unhandledRejection', (reason, promise) => {
+    console.error(' [ANTI-CRASH] Rechazo no manejado en:', promise, 'razón:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error(' [ANTI-CRASH] Excepción no capturada:', err);
+});
