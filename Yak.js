@@ -203,6 +203,12 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             qrcode.generate(qr, { small: true });
         });
 
+		  // ESTO DEBE IR AQUÍ DENTRO para que la variable 'qr' funcione
+    const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+    console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
+});
+
+
         client.on('ready', () => {
             console.log('✅ YakBot está ONLINE y funcionando');
         });
@@ -2229,7 +2235,7 @@ case 'tr': {
             break;
         }
 
-        //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
+  //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
         case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
         case 'preg': case 'laugh': case 'dance': case 'scared': case 'eat': 
         case 'sleep': case 'cafe': case 'hug': case 'punch': case 'kill': 
@@ -2240,6 +2246,7 @@ case 'tr': {
             const authorContact = await message.getContact();
             const authorName = authorContact.pushname || 'Usuario';
             let nombreMencionado = "";
+            
             if (targetId) {
                 const contactMencionado = await client.getContactById(targetId);
                 nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
@@ -2270,6 +2277,7 @@ case 'tr': {
             const gifPath = path.join(__dirname, randomGif);
             const outputPath = `./temp_${Date.now()}.mp4`;
 
+            // Envolvemos FFmpeg en una función para manejar errores correctamente
             ffmpeg(gifPath)
                 .setFfmpegPath(ffmpegPath)
                 .outputOptions(['-pix_fmt yuv420p', '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'])
@@ -2277,16 +2285,25 @@ case 'tr': {
                 .on('end', async () => {
                     try {
                         const media = MessageMedia.fromFilePath(outputPath);
-                        await client.sendMessage(message.from, media, { caption: textoFinal, sendVideoAsGif: true, mentions: targetId ? [targetId] : [] });
+                        await client.sendMessage(message.from, media, { 
+                            caption: textoFinal, 
+                            sendVideoAsGif: true, 
+                            mentions: targetId ? [targetId] : [] 
+                        });
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error("❌ Error al enviar media:", e);
+                    }
                 })
-                .on('error', () => message.reply("❌ Error en GIF."))
+                .on('error', (err) => {
+                    console.error("❌ Error FFmpeg:", err);
+                    message.reply("❌ Error al procesar el GIF.");
+                })
                 .save(outputPath);
-		}
-            break;
+        } 
+        break;
 
-                default: {
+        default: {
             const misComandos = [
                 'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
                 'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
@@ -2314,25 +2331,27 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-                        break;
-                    }
-               } // Cierre del Switch (comando)
-        } catch (e) {
-            console.error("❌ Error en el comando:", e);
+            break;
         }
-    }); // Cierre del client.on('message_create')
+    } // Cierre del Switch (comando)
+} catch (e) {
+    console.error("❌ Error en el comando:", e);
+}
+}); // Cierre del client.on('message_create')
 
-    // ==========================================
-    // 11. INICIALIZACIÓN FINAL
-    // ==========================================
-    console.log("🚀 Inicializando cliente...");
-    await client.initialize();
-
+// ==========================================
+// 11. INICIALIZACIÓN FINAL
+// ==========================================
+(async () => {
+    try {
+        console.log("🚀 Inicializando cliente...");
+        await client.initialize();
     } catch (error) {
         console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
     }
 })();
-// El monitor de abajo es síncrono, así que puede ir aquí afuera sin problemas
+
+// Monitor de actividad
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
