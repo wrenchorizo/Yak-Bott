@@ -2235,7 +2235,7 @@ case 'tr': {
             break;
         }
 
-  //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
+//------------------------------------------------REACCIONES ANIME--------------------------------------------------------
         case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
         case 'preg': case 'laugh': case 'dance': case 'scared': case 'eat': 
         case 'sleep': case 'cafe': case 'hug': case 'punch': case 'kill': 
@@ -2277,7 +2277,6 @@ case 'tr': {
             const gifPath = path.join(__dirname, randomGif);
             const outputPath = `./temp_${Date.now()}.mp4`;
 
-            // Envolvemos FFmpeg en una función para manejar errores correctamente
             ffmpeg(gifPath)
                 .setFfmpegPath(ffmpegPath)
                 .outputOptions(['-pix_fmt yuv420p', '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'])
@@ -2285,22 +2284,13 @@ case 'tr': {
                 .on('end', async () => {
                     try {
                         const media = MessageMedia.fromFilePath(outputPath);
-                        await client.sendMessage(message.from, media, { 
-                            caption: textoFinal, 
-                            sendVideoAsGif: true, 
-                            mentions: targetId ? [targetId] : [] 
-                        });
+                        await client.sendMessage(message.from, media, { caption: textoFinal, sendVideoAsGif: true, mentions: targetId ? [targetId] : [] });
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-                    } catch (e) {
-                        console.error("❌ Error al enviar media:", e);
-                    }
+                    } catch (e) { console.error(e); }
                 })
-                .on('error', (err) => {
-                    console.error("❌ Error FFmpeg:", err);
-                    message.reply("❌ Error al procesar el GIF.");
-                })
+                .on('error', () => message.reply("❌ Error en GIF."))
                 .save(outputPath);
-        } 
+        }
         break;
 
         default: {
@@ -2331,17 +2321,15 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break;
         }
-    } // Cierre del Switch (comando)
+        break;
+    } // CIERRE DEL SWITCH
 } catch (e) {
     console.error("❌ Error en el comando:", e);
 }
-}); // Cierre del client.on('message_create')
+}); // CIERRE DEL client.on
 
-// ==========================================
-// 11. INICIALIZACIÓN FINAL
-// ==========================================
+// INICIALIZACIÓN
 (async () => {
     try {
         console.log("🚀 Inicializando cliente...");
@@ -2351,7 +2339,6 @@ case 'tr': {
     }
 })();
 
-// Monitor de actividad
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
