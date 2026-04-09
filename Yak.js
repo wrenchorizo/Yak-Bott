@@ -2293,28 +2293,19 @@ default: {
                 }
                 break;
             }
-} // 1. Cierra el Switch
-        
+} // Cierre del Switch
         await user.save();
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); // 2. Cierra el client.on('message_create')
+}); // Cierre del message_create
 
 // ==========================================
-// CIERRE DE BLOQUES PENDIENTES
+// SECCIÓN 11: INICIALIZACIÓN LIMPIA
 // ==========================================
-// Estas tres llaves cierran el 'try' inicial, la función 'async' 
-// y cualquier otro bloque que haya quedado abierto en la sección 5 o 7.
 
-    } catch (err) {
-        console.error("❌ Error en el flujo principal:", err);
-    }
-})(); 
-
-// ==========================================
-// SECCIÓN 11: INICIO REAL (FUERA DE TODO BLOQUE)
-// ==========================================
+// Eliminamos el })(); y los catch extra que daban error.
+// Solo llamamos a la función de arranque.
 
 iniciarBot();
 
