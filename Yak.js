@@ -2320,15 +2320,15 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break; // <-- Asegúrate de que el break esté aquí
+            break;
         }
-    } // CIERRE DEL SWITCH (comando)
+    } // Cierra el SWITCH
 } catch (e) {
     console.error("❌ Error en el comando:", e);
 }
-}); // CIERRE DEL client.on('message_create', ...)
+}); // Cierra el client.on('message_create')
 
-// 11. INICIALIZACIÓN FINAL
+// --- INICIALIZACIÓN FINAL ---
 (async () => {
     try {
         console.log("🚀 Inicializando cliente...");
@@ -2336,8 +2336,14 @@ case 'tr': {
     } catch (error) {
         console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
     }
-})(); // Cierre de la función autoejecutable
+})();
 
+// Monitor
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
+
+// --- ESTOS CIERRES SON VITALES SI TU CÓDIGO EMPIEZA CON UN BLOQUE GLOBAL ---
+// Si tu código NO tiene un bloque global al principio, puedes borrar estas 2 líneas de abajo:
+    } catch (globalError) { console.error("Error Global:", globalError); }
+})();
