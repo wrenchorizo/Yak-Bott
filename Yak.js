@@ -181,12 +181,17 @@ async function iniciarBot() {
             authStrategy: new RemoteAuth({
                 clientId: 'YakBot-Principal',
                 store: store,
-                backupSyncIntervalMs: 60000 // <--- CAMBIA ESTO DE 30000 A 60000
+                backupSyncIntervalMs: 60000 // Ya corregido a 60s
             }),
             puppeteer: {
                 handleSIGINT: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-                executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
+                // QUITAMOS executablePath para que use el del sistema
+                args: [
+                    '--no-sandbox', 
+                    '--disable-setuid-sandbox', 
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu'
+                ],
             }
         });
 		
