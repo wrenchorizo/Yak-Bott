@@ -314,6 +314,7 @@ client.on('message_create', async (message) => {
         const userId = message.author || message._data.participant || message.from;
         const grupoId = message.from;
         const pushname = message._data.notifyName || "Usuario";
+		const targetId = message.mentionedIds[0] || (message.hasQuotedMsg ? (await message.getQuotedMessage()).author : null);
 
         let user = await User.findOne({ userId });
         if (!user) {
