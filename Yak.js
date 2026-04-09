@@ -2212,6 +2212,8 @@ case 'tr': {
             user.reacciones = (user.reacciones || 0) + 1;
             await user.save();
 
+			// Agrega esto justo después de case 'kiss': {
+const targetId = message.mentionedIds[0] || (message.hasQuotedMsg ? (await message.getQuotedMessage()).author : null);
             const authorContact = await message.getContact();
             const authorName = authorContact.pushname || 'Usuario';
             let nombreMencionado = "";
@@ -2258,8 +2260,9 @@ case 'tr': {
                 })
                 .on('error', () => message.reply("❌ Error en GIF."))
                 .save(outputPath);
+			 break;
 		}
-            break;
+           
 
 default: {
                 const misComandos = [
@@ -2291,29 +2294,48 @@ default: {
                 }
                 break;
             }
-} // 1. Cierra el Switch de comandos
+} // 1. Cierre del Switch (Comandos)
 
-        // Guardar cambios del usuario después de cualquier comando
+        // Guardar progreso del usuario al finalizar cualquier comando
         await user.save();
 
     } catch (e) {
-        // Este catch es del try que está dentro de client.on('message_create')
-        console.error("❌ Error en la ejecución del comando:", e);
+        // Cierre del try interno de message_create
+        console.error("❌ Error en la lógica de comandos:", e);
     }
-}); // 2. Cierra el client.on('message_create')
+}); // 2. Cierre del client.on('message_create')
 
 // ==========================================
-// SECCIÓN 11: ARRANQUE DEL SISTEMA
+// EL ANTÍDOTO: CIERRES DE BLOQUES GLOBALES
+// ==========================================
+// Estos cierres saldan la "deuda" de las llaves que quedaron 
+// abiertas en la Sección 5 (iniciarBot y su try-catch).
+
+    } catch (err) {
+        console.error("❌ Error crítico en el núcleo del Bot:", err);
+    }
+} // CIERRE DEFINITIVO DE LA FUNCIÓN iniciarBot()
+
+// ==========================================
+// 11. ARRANQUE DEL SISTEMA
 // ==========================================
 
-// Llamamos a la función principal que definimos en la Sección 5
+// Llamamos a la función principal para que el bot encienda
 iniciarBot();
 
-// Mantener el proceso activo y mostrar señal de vida cada minuto
+// Señal de vida en consola cada 60 segundos
 setInterval(() => {
     if (client && client.info) {
-        console.log(`⌬ YakBot activo [${client.info.pushname}]:`, new Date().toLocaleTimeString());
+        console.log(`⌬ YakBot ONLINE [${client.info.pushname}] - ${new Date().toLocaleTimeString()}`);
     } else {
-        console.log("⌬ YakBot activo (Esperando conexión):", new Date().toLocaleTimeString());
+        console.log(`⌬ YakBot STANDBY (Esperando conexión...) - ${new Date().toLocaleTimeString()}`);
     }
 }, 60000);
+
+// Anti-Crash Global para evitar que Railway detenga el contenedor
+process.on('unhandledRejection', (reason) => {
+    console.error(' [ANTI-CRASH] Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error(' [ANTI-CRASH] Exception:', err);
+});
