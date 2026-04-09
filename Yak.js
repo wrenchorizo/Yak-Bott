@@ -1465,7 +1465,7 @@ client.on('message_create', async (message) => {
         }
         break;
 
-        //------------------------------------------------CHARINFO (DETALLES)--------------------------------------------------------
+      //------------------------------------------------CHARINFO (DETALLES)--------------------------------------------------------
         case 'charinfo':
         case 'infopj':
         case 'pjstats': {
@@ -1478,8 +1478,9 @@ client.on('message_create', async (message) => {
 
             if (!pj) return message.reply(`❌ No tienes a "${nombreBusqueda}" en tu colección.`);
 
-            const lvl = Number(pj.level) || 1;
-            const exp = Number(pj.exp) || 0;
+            // Asegurar que sean números
+            const lvl = parseInt(pj.level) || 1;
+            const exp = parseInt(pj.exp) || 0;
             const stamina = pj.stamina !== undefined ? pj.stamina : 100;
             const xpSiguienteNivel = lvl * 100;
             const poderReal = Math.floor(Number(pj.valor) * Math.pow(1.20, (lvl - 1)));
@@ -1495,23 +1496,17 @@ client.on('message_create', async (message) => {
             infoMsg += `━━━━━━━━━━━━━━━━━━━━`;
 
             try {
-                // MEJORA: Validación de URL y timeout para evitar cuelgues en Railway
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-                const response = await fetch(pj.imagen, { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                const buffer = Buffer.from(await response.arrayBuffer());
-                const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'char.jpg');
-                return client.sendMessage(message.from, media, { caption: infoMsg });
+                const media = await MessageMedia.fromUrl(pj.imagen).catch(() => null);
+                if (media) {
+                    return client.sendMessage(message.from, media, { caption: infoMsg });
+                } else {
+                    return message.reply(infoMsg + "\n\n⚠️ _(Imagen no disponible)_");
+                }
             } catch (error) {
-                // Si la imagen falla, al menos envía el texto
-                return message.reply(infoMsg + "\n\n⚠️ _(Imagen no disponible)_");
+                return message.reply(infoMsg);
             }
         }
         break;
-
 
 //------------------------------------------------DICE (APUESTAS)--------------------------------------------------------
         case 'dice':
@@ -1874,7 +1869,7 @@ case 'tr': {
         }
         break;
 
-        //------------------------------------------------FIGHT (PELEAR)--------------------------------------------------------
+//------------------------------------------------FIGHT (PELEAR)--------------------------------------------------------
         case 'fight':
         case 'fmob':
         case 'atacar':
@@ -1889,7 +1884,6 @@ case 'tr': {
                 return message.reply("⏰ El mob se ha escapado...");
             }
 
-            // Obtener nombres de personajes de los argumentos (ej: goku, luffy)
             const nombresPjs = args.join(" ").split(',').map(n => n.trim().toLowerCase());
             if (nombresPjs.length === 0 || !nombresPjs[0]) return message.reply("❌ Uso: *?fight pj1, pj2...*");
 
@@ -1897,9 +1891,7 @@ case 'tr': {
             for (let nombrePj of nombresPjs) {
                 let pj = user.harem.find(p => p.nombre.toLowerCase() === nombrePj);
                 if (pj) {
-                    // Actualizar stamina antes de la pelea
                     if (typeof actualizarStamina === 'function') actualizarStamina(pj);
-                    
                     if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}%).`);
                     if (!equipo.find(e => e.nombre === pj.nombre)) equipo.push(pj);
                 }
@@ -1908,15 +1900,12 @@ case 'tr': {
             if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
 
             const mob = mobActual[grupoId];
-
-            // CÁLCULO DE PODER DEL EQUIPO
             let poderTuEquipo = equipo.reduce((sum, p) => {
                 const nivel = Number(p.level) || 1;
                 const valorBase = Number(p.valor) || 0;
                 return sum + (valorBase * Math.pow(1.20, nivel - 1));
             }, 0);
 
-            // Factor de suerte (95% a 110%)
             poderTuEquipo *= (0.95 + Math.random() * 0.15);
 
             message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
@@ -1934,6 +1923,7 @@ case 'tr': {
                         p.stamina = Math.max(0, p.stamina - 15);
 
                         let subio = false;
+                        // Cambiamos a un cálculo de nivel más robusto
                         while (p.exp >= (Number(p.level) || 1) * 100) {
                             p.exp -= (Number(p.level) || 1) * 100;
                             p.level = (Number(p.level) || 1) + 1;
@@ -1942,8 +1932,6 @@ case 'tr': {
 
                         if (subio) {
                             avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
-
-                            // ✅ LÓGICA DE EVOLUCIÓN INTEGRADA
                             if (p.nivelEvo && p.level >= p.nivelEvo && p.evolucion) {
                                 const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
                                 if (datosEvo) {
@@ -1960,14 +1948,17 @@ case 'tr': {
                     }
 
                     mobActual[grupoId].vencido = true;
-                    await user.save(); // GUARDADO ÚNICO EN MONGO
+                    
+                    // --- EL TRUCO ESTÁ AQUÍ ---
+                    user.markModified('harem'); 
+                    await user.save(); 
                     
                     return client.sendMessage(message.from, `✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
                 } else {
-                    // Si pierden, también consumen un poco de stamina por el esfuerzo
                     for (let p of equipo) {
                         p.stamina = Math.max(0, p.stamina - 5);
                     }
+                    user.markModified('harem');
                     await user.save();
                     return message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
                 }
