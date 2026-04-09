@@ -2293,22 +2293,29 @@ default: {
                 }
                 break;
             }
-        } // Cierre del Switch
+} // 1. Cierra el Switch
+        
         await user.save();
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); // Cierre del message_create
+}); // 2. Cierra el client.on('message_create')
 
 // ==========================================
-// BLOQUE DE CIERRE FORZOSO (CORRIGE EL SYNTAXERROR)
+// CIERRE DE BLOQUES PENDIENTES
 // ==========================================
-// Ponemos varios cierres seguidos. Si alguno sobra, 
-// nos dará un error diferente que es más fácil de arreglar.
-} catch (err) { }
+// Estas tres llaves cierran el 'try' inicial, la función 'async' 
+// y cualquier otro bloque que haya quedado abierto en la sección 5 o 7.
+
+    } catch (err) {
+        console.error("❌ Error en el flujo principal:", err);
+    }
+})(); 
+
+// ==========================================
+// SECCIÓN 11: INICIO REAL (FUERA DE TODO BLOQUE)
 // ==========================================
 
-// SECCIÓN 11: INICIO REAL
 iniciarBot();
 
 setInterval(() => {
