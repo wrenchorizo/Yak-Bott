@@ -2291,7 +2291,7 @@ case 'tr': {
 		}
             break;
 
-                default: {
+default: {
             const misComandos = [
                 'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
                 'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
@@ -2319,29 +2319,23 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-                        break;
-                    }
-                } // FIN DEL SWITCH
+            break;
+        } 
+    } // Cierra Switch
+} catch (e) { console.error("Error en comandos:", e); }
+}); // Cierra message_create
 
-            } catch (e) {
-                console.error("❌ Error en el comando:", e);
-            }
-        }); // FIN DEL EVENTO message_create
+// --- BLOQUE DE CIERRE DE EMERGENCIA ---
+// Si hay una llave abierta arriba por error, estas la cerrarán
+} catch (err) { console.error("Error balanceando llaves:", err); }
+})(); 
 
-        // ==========================================
-        // 11. INICIALIZACIÓN FINAL
-        // ==========================================
+// --- INICIALIZACIÓN LIMPIA ---
+console.log("🚀 Inicializando cliente...");
+client.initialize().then(() => {
+    console.log("✅ YakBot ONLINE");
+}).catch(err => console.error("❌ Error al iniciar:", err));
 
-        console.log("🚀 Inicializando Puppeteer...");
-        await client.initialize();
-        console.log("✅ YakBot ONLINE");
-
-    } catch (err) {
-        console.error("❌ Error crítico en el arranque:", err);
-    }
-})(); // FIN DE LA FUNCIÓN PRINCIPAL
-
-// Monitor para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
