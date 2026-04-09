@@ -181,7 +181,6 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Inicializamos el cliente AQUÍ
         client = new Client({
             authStrategy: new RemoteAuth({
                 clientId: 'YakBot-Principal',
@@ -224,7 +223,6 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
     } catch (error) {
         console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
     }
-})(); // Cierre de la función autoejecutable
 
         // ==========================================
         // 7. LÓGICA DE PERSONAJES Y TIENDA
@@ -2318,27 +2316,23 @@ case 'tr': {
             }
                         break;
                     }
-                } // FIN DEL SWITCH
+               } // Cierre del Switch (comando)
+        } catch (e) {
+            console.error("❌ Error en el comando:", e);
+        }
+    }); // Cierre del client.on('message_create')
 
-            } catch (e) {
-                console.error("❌ Error en el comando:", e);
-            }
-        }); // FIN DEL EVENTO message_create
+    // ==========================================
+    // 11. INICIALIZACIÓN FINAL
+    // ==========================================
+    console.log("🚀 Inicializando cliente...");
+    await client.initialize();
 
-        // ==========================================
-        // 11. INICIALIZACIÓN FINAL
-        // ==========================================
-
-        console.log("🚀 Inicializando Puppeteer...");
-        await client.initialize();
-        console.log("✅ casi en ONLINE");
-
-    } catch (err) {
-        console.error("❌ Error crítico en el arranque:", err);
+    } catch (error) {
+        console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
     }
-})(); // FIN DE LA FUNCIÓN PRINCIPAL
-
-// Monitor para Railway
+})();
+// El monitor de abajo es síncrono, así que puede ir aquí afuera sin problemas
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
