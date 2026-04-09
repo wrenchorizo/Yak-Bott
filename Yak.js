@@ -181,7 +181,7 @@ async function iniciarBot() {
             authStrategy: new RemoteAuth({
                 clientId: 'YakBot-Principal',
                 store: store,
-                backupSyncIntervalMs: 30000 
+                backupSyncIntervalMs: 60000 // <--- CAMBIA ESTO DE 30000 A 60000
             }),
             puppeteer: {
                 handleSIGINT: false,
@@ -189,7 +189,7 @@ async function iniciarBot() {
                 executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome-stable'
             }
         });
-
+		
 // ==========================================
         // 6. EVENTOS DEL CLIENTE (QR Y READY)
         // ==========================================
