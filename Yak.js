@@ -191,108 +191,108 @@ async function iniciarBot() {
         });
 
 // ==========================================
-// 6. EVENTOS DEL CLIENTE (QR Y READY)
+        // 6. EVENTOS DEL CLIENTE (QR Y READY)
+        // ==========================================
+
+        client.on('qr', (qr) => {
+            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+            
+            // Genera el QR en la terminal
+            qrcode.generate(qr, { small: true });
+
+            // Link de respaldo para escanear desde el navegador
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+            console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
+        });
+
+        client.on('ready', () => {
+            console.log('✅ YakBot está ONLINE y funcionando');
+        });
+
+        client.on('remote_session_saved', () => {
+            console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
+        });
+
+        client.on('auth_failure', (msg) => {
+            console.error('❌ ERROR DE AUTENTICACIÓN:', msg);
+        });
+
+        // INICIALIZAR EL CLIENTE (Esto es lo que arranca todo)
+        await client.initialize();
+
+// ==========================================
+// 7. LÓGICA DE PERSONAJES Y TIENDA (FUERA DE iniciarBot)
 // ==========================================
 
-client.on('qr', (qr) => {
-    console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-    
-    // Genera el QR en la terminal
-    qrcode.generate(qr, { small: true });
+const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
 
-    // Link de respaldo para escanear desde el navegador
-    const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-    console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
-});
+async function obtenerHarem(userId, grupoId) {
+    const idUnico = `${userId}_${grupoId}`;
+    let h = await Harem.findOne({ idUnico });
+    if (!h) {
+        h = new Harem({ idUnico, userId, grupoId, personajes: [] });
+    }
+    return h;
+}
 
-client.on('ready', () => {
-    console.log('✅ YakBot está ONLINE y funcionando');
-});
+async function actualizarCharShop(grupoId, forzar = false) {
+    const ahora = Date.now();
+    const tiempoRotacion = 3000000; 
 
-client.on('remote_session_saved', () => {
-    console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
-});
+    let shop = await CharShop.findOne({ grupoId });
+    if (!shop) shop = new CharShop({ grupoId });
 
-client.on('auth_failure', (msg) => {
-    console.error('❌ ERROR DE AUTENTICACIÓN:', msg);
-});
+    if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
+        const haremsDelGrupo = await Harem.find({ grupoId });
+        const nombresEnHarem = haremsDelGrupo.flatMap(h => 
+            h.personajes.map(p => p.nombre.toLowerCase())
+        );
 
-		// Llamamos a la función
-iniciarBot();
+        const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
+        const copiaDisponibles = [...disponibles];
+        const nuevosPersonajes = [];
 
-        // ==========================================
-        // 7. LÓGICA DE PERSONAJES Y TIENDA
-        // ==========================================
-
-        const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
-
-        async function obtenerHarem(userId, grupoId) {
-            const idUnico = `${userId}_${grupoId}`;
-            let h = await Harem.findOne({ idUnico });
-            if (!h) {
-                h = new Harem({ idUnico, userId, grupoId, personajes: [] });
+        for (let i = 0; i < 5; i++) {
+            if (copiaDisponibles.length === 0) break;
+            const indexAleatorio = Math.floor(Math.random() * copiaDisponibles.length);
+            const pBase = copiaDisponibles.splice(indexAleatorio, 1)[0];
+            const valorBase = parseInt(pBase.valor) || 0;
+            
+            let precioFinal;
+            if (valorBase >= 17000) {
+                precioFinal = 700000 + Math.floor(Math.random() * 300001);
+            } else if (valorBase >= 5000) {
+                precioFinal = 250000 + Math.floor(Math.random() * 250000);
+            } else {
+                precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000);
             }
-            return h;
+            nuevosPersonajes.push({ ...pBase, precio: precioFinal });
         }
 
-        async function actualizarCharShop(grupoId, forzar = false) {
-            const ahora = Date.now();
-            const tiempoRotacion = 3000000; // 50 minutos
+        shop.personajes = nuevosPersonajes;
+        shop.ultimaActualizacion = ahora;
+        await shop.save();
+    }
+    return shop;
+}
 
-            let shop = await CharShop.findOne({ grupoId });
-            if (!shop) shop = new CharShop({ grupoId });
+// ==========================================
+// 9. HELPERS DE PROBABILIDAD
+// ==========================================
 
-            if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
-                const haremsDelGrupo = await Harem.find({ grupoId });
-                const nombresEnHarem = haremsDelGrupo.flatMap(h => 
-                    h.personajes.map(p => p.nombre.toLowerCase())
-                );
+function personajeRandom(listaPersonajes) {
+    const filtrados = listaPersonajes.filter(p => p.nombre !== 'Deadpool');
+    if (filtrados.length === 0) return null;
 
-                const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
-                const copiaDisponibles = [...disponibles];
-                const nuevosPersonajes = [];
+    const total = filtrados.reduce((sum, p) => sum + (100000 - Number(p.valor || 0)), 0);
+    let rnd = Math.random() * total;
 
-                for (let i = 0; i < 5; i++) {
-                    if (copiaDisponibles.length === 0) break;
-                    const indexAleatorio = Math.floor(Math.random() * copiaDisponibles.length);
-                    const pBase = copiaDisponibles.splice(indexAleatorio, 1)[0];
-                    const valorBase = parseInt(pBase.valor) || 0;
-                    
-                    let precioFinal;
-                    if (valorBase >= 17000) {
-                        precioFinal = 700000 + Math.floor(Math.random() * 300001);
-                    } else if (valorBase >= 5000) {
-                        precioFinal = 250000 + Math.floor(Math.random() * 250000);
-                    } else {
-                        precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000);
-                    }
-                    nuevosPersonajes.push({ ...pBase, precio: precioFinal });
-                }
-
-                shop.personajes = nuevosPersonajes;
-                shop.ultimaActualizacion = ahora;
-                await shop.save();
-            }
-            return shop;
-        }
-
-        // ==========================================
-        // 9. HELPERS DE PROBABILIDAD
-        // ==========================================
-
-        function personajeRandom(listaPersonajes) {
-            const filtrados = listaPersonajes.filter(p => p.nombre !== 'Deadpool');
-            if (filtrados.length === 0) return null;
-
-            const total = filtrados.reduce((sum, p) => sum + (100000 - Number(p.valor || 0)), 0);
-            let rnd = Math.random() * total;
-
-            for (let p of filtrados) {
-                rnd -= (100000 - Number(p.valor || 0));
-                if (rnd <= 0) return p;
-            }
-            return filtrados[filtrados.length - 1];
-        }
+    for (let p of filtrados) {
+        rnd -= (100000 - Number(p.valor || 0));
+        if (rnd <= 0) return p;
+    }
+    return filtrados[filtrados.length - 1];
+}
 
 // ==========================================
 // 10. ÚNICO MANEJADOR DE MENSAJES
@@ -310,14 +310,12 @@ client.on('message_create', async (message) => {
         const grupoId = message.from;
         const pushname = message._data.notifyName || "Usuario";
 
-        // Carga o creación de usuario
         let user = await User.findOne({ userId });
         if (!user) {
             user = new User({ userId });
             await user.save();
         }
 
-        // Stats básicos
         user.mensajes += 1;
         user.xp += 2;
         user.comandos += 1;
@@ -2293,26 +2291,29 @@ default: {
                 }
                 break;
             }
-} // Cierra el switch principal
+} // 1. Cierra el Switch de comandos
+
+        // Guardar cambios del usuario después de cualquier comando
         await user.save();
+
     } catch (e) {
-        console.error("❌ Error en el comando:", e);
+        // Este catch es del try que está dentro de client.on('message_create')
+        console.error("❌ Error en la ejecución del comando:", e);
     }
-}); // Cierre del client.on('message_create')
+}); // 2. Cierra el client.on('message_create')
 
 // ==========================================
-// SECCIÓN 11: ARRANQUE FINAL
+// SECCIÓN 11: ARRANQUE DEL SISTEMA
 // ==========================================
-// Quitamos los catch y las llaves extra porque 
-// el error anterior confirmó que ya no hay bloques abiertos.
 
+// Llamamos a la función principal que definimos en la Sección 5
 iniciarBot();
 
+// Mantener el proceso activo y mostrar señal de vida cada minuto
 setInterval(() => {
-    console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
+    if (client && client.info) {
+        console.log(`⌬ YakBot activo [${client.info.pushname}]:`, new Date().toLocaleTimeString());
+    } else {
+        console.log("⌬ YakBot activo (Esperando conexión):", new Date().toLocaleTimeString());
+    }
 }, 60000);
-
-// Esto ayuda a que el bot no se muera si hay un error pequeño
-process.on('unhandledRejection', error => {
-    console.error('Unhandled promise rejection:', error);
-});
