@@ -2234,7 +2234,7 @@ case 'tr': {
             break;
         }
 
-//------------------------------------------------REACCIONES ANIME--------------------------------------------------------
+ //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
         case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
         case 'preg': case 'laugh': case 'dance': case 'scared': case 'eat': 
         case 'sleep': case 'cafe': case 'hug': case 'punch': case 'kill': 
@@ -2245,7 +2245,6 @@ case 'tr': {
             const authorContact = await message.getContact();
             const authorName = authorContact.pushname || 'Usuario';
             let nombreMencionado = "";
-            
             if (targetId) {
                 const contactMencionado = await client.getContactById(targetId);
                 nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
@@ -2285,14 +2284,14 @@ case 'tr': {
                         const media = MessageMedia.fromFilePath(outputPath);
                         await client.sendMessage(message.from, media, { caption: textoFinal, sendVideoAsGif: true, mentions: targetId ? [targetId] : [] });
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-                    } catch (e) { console.error(e); }
+                    } catch (e) {}
                 })
                 .on('error', () => message.reply("❌ Error en GIF."))
                 .save(outputPath);
-        }
-        break;
+		}
+            break;
 
-default: {
+                default: {
             const misComandos = [
                 'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
                 'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
@@ -2320,28 +2319,27 @@ default: {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-            break;
-        } // 1. Cierra el bloque del default
-    } // 2. Cierra el bloque del switch
+                        break;
+                    }
+                } // FIN DEL SWITCH
 
-    } catch (e) {
-        console.error("❌ Error en el comando:", e);
-    }
-}); // 3. Cierra el client.on('message_create')
+            } catch (e) {
+                console.error("❌ Error en el comando:", e);
+            }
+        }); // FIN DEL EVENTO message_create
 
-// ==========================================
-// 11. INICIALIZACIÓN FINAL
-// ==========================================
+        // ==========================================
+        // 11. INICIALIZACIÓN FINAL
+        // ==========================================
 
-(async () => {
-    try {
         console.log("🚀 Inicializando Puppeteer...");
         await client.initialize();
         console.log("✅ YakBot ONLINE");
+
     } catch (err) {
         console.error("❌ Error crítico en el arranque:", err);
     }
-})(); // 4. Cierra la función principal
+})(); // FIN DE LA FUNCIÓN PRINCIPAL
 
 // Monitor para Railway
 setInterval(() => {
