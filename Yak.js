@@ -2293,21 +2293,23 @@ default: {
                 }
                 break;
             }
-} // Cierre del Switch
+} // 1. Cierra el Switch principal
         await user.save();
     } catch (e) {
-        console.error("❌ Error en el comando:", e);
+        console.error("❌ Error en la ejecución del comando:", e);
     }
-}); // Cierre del message_create
+}); // 2. Cierra el client.on('message_create')
 
 // ==========================================
-// EL CIERRE DE SEGURIDAD (SALDA LA DEUDA)
+// EL CIERRE MAESTRO (EL QUE ARREGLA EL TRY)
 // ==========================================
-// Esta llave extra cierra el bloque async que se quedó abierto 
-// arriba de la sección 10. Si sobra, nos dará un error de token.
-} 
+// Esta parte captura el 'try' huérfano que causaba el error 2308
+    } catch (err) {
+        console.error("❌ Error en bloque superior detectado:", err);
+    }
+// ==========================================
 
-// Sección 11: Inicio
+// SECCIÓN 11: INICIO REAL
 iniciarBot();
 
 setInterval(() => {
