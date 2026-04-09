@@ -2293,30 +2293,26 @@ default: {
                 }
                 break;
             }
-} // 1. Cierra el Switch
+} // Cierra el switch principal
         await user.save();
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); // 2. Cierra el message_create
+}); // Cierre del client.on('message_create')
 
 // ==========================================
-// EL CIERRE NUCLEAR (COMPENSACIÓN TOTAL)
+// SECCIÓN 11: ARRANQUE FINAL
 // ==========================================
-// Ponemos 4 llaves y 2 catches. Esto debería cerrar 
-// cualquier cosa que haya quedado abierta en 2300 líneas.
-
-    } catch (err) { }
-} catch (err) { }
-} 
-}
-
-// ==========================================
-// SECCIÓN 11: ARRANQUE
-// ==========================================
+// Quitamos los catch y las llaves extra porque 
+// el error anterior confirmó que ya no hay bloques abiertos.
 
 iniciarBot();
 
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
+
+// Esto ayuda a que el bot no se muera si hay un error pequeño
+process.on('unhandledRejection', error => {
+    console.error('Unhandled promise rejection:', error);
+});
