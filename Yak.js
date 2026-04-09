@@ -2293,35 +2293,25 @@ default: {
                 }
                 break;
             }
-} // 1. Cierra el Switch
+} // Cierra el Switch
         await user.save();
     } catch (e) {
         console.error("❌ Error en comando:", e);
     }
-}); // 2. Cierra el message_create
+}); // Cierra el message_create
 
 // ==========================================
-// LA GRAN MURALLA DE CIERRES
+// SECCIÓN 11: ARRANQUE LIMPIO
 // ==========================================
-// Cerramos tres bloques posibles que podrían estar abiertos:
-// El try de la sección 5, el async global, y cualquier otro.
-
-    } catch (err) { 
-        console.error("Cierre 1:", err); 
-    }
-} catch (err) { 
-    console.error("Cierre 2:", err); 
-}
-
-// Intentamos cerrar una función autoejecutable por si acaso
-try { } catch(e) { } 
-
-// ==========================================
-// SECCIÓN 11: ARRANQUE DEFINITIVO
-// ==========================================
+// Aquí ya no ponemos llaves sueltas ni catches, 
+// porque el error anterior confirmó que ya no hay bloques abiertos.
 
 iniciarBot();
 
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
+
+// Manejo de errores globales
+process.on('unhandledRejection', (reason) => console.error(' [ANTI-CRASH]:', reason));
+process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH]:', err));
