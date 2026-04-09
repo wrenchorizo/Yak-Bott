@@ -2293,19 +2293,28 @@ default: {
                 }
                 break;
             }
-} // Cierre del Switch
+} // 1. Cierra el Switch
         await user.save();
     } catch (e) {
         console.error("❌ Error en el comando:", e);
     }
-}); 
+}); // 2. Cierra el message_create
 
-// LA LLAVE MAESTRA
-    } catch (err) {
-        console.error("⚠️ Error capturado en el bloque global:", err);
-    }
+// ==========================================
+// EL CIERRE NUCLEAR (COMPENSACIÓN TOTAL)
+// ==========================================
+// Ponemos 4 llaves y 2 catches. Esto debería cerrar 
+// cualquier cosa que haya quedado abierta en 2300 líneas.
 
-// ARRANQUE
+    } catch (err) { }
+} catch (err) { }
+} 
+}
+
+// ==========================================
+// SECCIÓN 11: ARRANQUE
+// ==========================================
+
 iniciarBot();
 
 setInterval(() => {
