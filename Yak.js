@@ -2292,7 +2292,7 @@ case 'tr': {
         }
         break;
 
-        default: {
+default: {
             const misComandos = [
                 'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
                 'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
@@ -2320,25 +2320,30 @@ case 'tr': {
             if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
-        }
-        break; // Cerramos el default
-    } // CERRAMOS EL SWITCH
-} catch (e) {
-    console.error("❌ Error en el comando:", e);
-}
-}); // CERRAMOS EL client.on('message_create')
+            break;
+        } // 1. Cierra el bloque del default
+    } // 2. Cierra el bloque del switch
 
-// --- ESTE BLOQUE ES EL QUE MUEVE EL BOT ---
+    } catch (e) {
+        console.error("❌ Error en el comando:", e);
+    }
+}); // 3. Cierra el client.on('message_create')
+
+// ==========================================
+// 11. INICIALIZACIÓN FINAL
+// ==========================================
+
 (async () => {
     try {
-        console.log("🚀 Inicializando cliente...");
+        console.log("🚀 Inicializando Puppeteer...");
         await client.initialize();
-    } catch (error) {
-        console.error("❌ ERROR CRÍTICO AL INICIAR:", error);
+        console.log("✅ YakBot ONLINE");
+    } catch (err) {
+        console.error("❌ Error crítico en el arranque:", err);
     }
-})();
+})(); // 4. Cierra la función principal
 
-// Monitor de actividad
+// Monitor para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
