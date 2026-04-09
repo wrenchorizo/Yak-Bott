@@ -194,28 +194,27 @@ process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción
             }
         });
 
-        // ==========================================
-        // 6. EVENTOS DEL CLIENTE (¡AHORA DENTRO DEL BLOQUE!)
-        // ==========================================
+// ==========================================
+// 6. EVENTOS DEL CLIENTE
+// ==========================================
 
-        client.on('qr', (qr) => {
-            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-            qrcode.generate(qr, { small: true });
-        });
+client.on('qr', (qr) => {
+    console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
+    qrcode.generate(qr, { small: true });
 
-		  // ESTO DEBE IR AQUÍ DENTRO para que la variable 'qr' funcione
+    // El link de respaldo DEBE estar dentro de estas llaves { } 
+    // para que reconozca la variable 'qr'
     const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
     console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
+}); // <-- Solo un cierre aquí
+
+client.on('ready', () => {
+    console.log('✅ YakBot está ONLINE y funcionando');
 });
 
-
-        client.on('ready', () => {
-            console.log('✅ YakBot está ONLINE y funcionando');
-        });
-
-        client.on('remote_session_saved', () => {
-            console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
-        });
+client.on('remote_session_saved', () => {
+    console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
+});
 
         // ¡IMPORTANTE! El evento de mensajes también debe estar aquí dentro
         client.on('message_create', async (message) => {
