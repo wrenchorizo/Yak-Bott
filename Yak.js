@@ -57,7 +57,7 @@ const userSchema = new mongoose.Schema({
     lastClaim: { type: Number, default: 0 },
     lastSmob: { type: Number, default: 0 },
     logros: { type: Array, default: [] },
-	cooldowns: { type: Map, of: Object, default: {} }, // Guardaremos { "grupoId": { lastRW: 0, lastClaim: 0 } }
+	cooldowns: { type: Object, default: {} }, // Guardaremos { "grupoId": { lastRW: 0, lastClaim: 0 } }
     harem: { type: Array, default: [] }
 });
 const User = mongoose.model('User', userSchema);
@@ -1234,27 +1234,30 @@ client.on('message_create', async (message) => {
         case 'roll':
         case 'tirar':
         case 'rpj': {
-            // Usamos grupoId para que el bloqueo sea por chat
+            // Evitar spam de comandos mientras se procesa uno en el mismo grupo
             if (procesandoRW.has(grupoId)) return;
             procesandoRW.add(grupoId);
 
             try {
                 const ahora = Date.now();
-                const totalRW = 15 * 60 * 1000;
+                const totalRW = 15 * 60 * 1000; // 15 minutos
 
-                // FIX: Cooldown INDIVIDUAL por GRUPO
-                // Buscamos el último RW del usuario EN ESTE GRUPO específico
-                if (!user.cooldowns) user.cooldowns = {}; 
-                const lastRWGrupo = user.cooldowns[grupoId]?.lastRW || 0;
+                // Inicializar objeto de cooldowns si no existe
+                if (!user.cooldowns) user.cooldowns = {};
+                
+                // Verificar cooldown específico de este grupo
+                const cooldownGrupo = user.cooldowns[grupoId] || {};
+                const lastRWGrupo = cooldownGrupo.lastRW || 0;
 
                 if (ahora - lastRWGrupo < totalRW) {
                     const restante = totalRW - (ahora - lastRWGrupo);
                     return message.reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje.`);
                 }
 
-                // --- Lógica de Pesos y Selección (Se mantiene igual) ---
+                // --- Lógica de Pesos y Selección ---
                 const listaPesos = personajes.map(p => {
                     const v = parseInt(p.valor) || 1000;
+                    // Los personajes más caros tienen menos probabilidad
                     let pesoFinal = (v >= 17000) ? 100 / Math.pow(v / 17000, 2.5) : 100;
                     return { p, peso: pesoFinal };
                 });
@@ -1271,13 +1274,13 @@ client.on('message_create', async (message) => {
                     }
                 }
 
-                // FIX: Verificar si YA está reclamado EN ESTE GRUPO
+                // Verificar si ya está reclamado en este grupo
                 const yaReclamado = await User.findOne({ 
                     "harem.nombre": personajeSeleccionado.nombre, 
                     "harem.grupoId": grupoId 
                 });
                 
-                let estado = yaReclamado ? "Ya fue reclamado 🔒" : "Libre 🔓";
+                let estado = yaReclamado ? "Ya fue reclamado" : "Libre";
 
                 const media = await MessageMedia.fromUrl(personajeSeleccionado.imagen).catch(() => null);
 
@@ -1298,19 +1301,23 @@ client.on('message_create', async (message) => {
                     ? await client.sendMessage(grupoId, media, { caption: msgTexto })
                     : await client.sendMessage(grupoId, msgTexto);
 
-                // Guardar tirada temporalmente
+                // --- GUARDADO DE COOLDOWN (Lógica de persistencia) ---
+                const nuevosCooldowns = { ...user.cooldowns }; // Clonar para que Mongoose detecte el cambio
+                if (!nuevosCooldowns[grupoId]) nuevosCooldowns[grupoId] = {};
+                nuevosCooldowns[grupoId].lastRW = ahora;
+
+                user.cooldowns = nuevosCooldowns;
+                user.markModified('cooldowns'); // Forzar actualización en MongoDB
+                await user.save();
+
+                // Guardar tirada en memoria temporal para el comando ?c
                 tiradasTemporales[sentMsg.id._serialized] = {
                     personaje: personajeSeleccionado,
                     grupoId: grupoId,
                     reclamado: false
                 };
 
-                // Guardar cooldown específico del grupo
-                if (!user.cooldowns[grupoId]) user.cooldowns[grupoId] = {};
-                user.cooldowns[grupoId].lastRW = ahora;
-                user.markModified('cooldowns'); 
-                await user.save();
-
+                // Eliminar de memoria después de 1 minuto (tiempo para reclamar)
                 setTimeout(() => {
                     delete tiradasTemporales[sentMsg.id._serialized];
                 }, 60000);
@@ -1319,6 +1326,7 @@ client.on('message_create', async (message) => {
                 console.error('Error en RW:', error);
                 message.reply('⚠️ No se pudo cargar el personaje.');
             } finally {
+                // Liberar el bloqueo del comando para este grupo
                 procesandoRW.delete(grupoId);
             }
         }
