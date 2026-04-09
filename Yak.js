@@ -2320,22 +2320,26 @@ default: {
                 message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
             }
             break;
-        } 
-    } // Cierra Switch
-} catch (e) { console.error("Error en comandos:", e); }
-}); // Cierra message_create
+        } // Cierra el default
+    } // Cierra el switch
 
-// --- BLOQUE DE CIERRE DE EMERGENCIA ---
-// Si hay una llave abierta arriba por error, estas la cerrarán
-} catch (err) { console.error("Error balanceando llaves:", err); }
-})(); 
+    } catch (e) {
+        console.error("❌ Error en el comando:", e);
+    }
+}); // Cierra el client.on('message_create')
 
-// --- INICIALIZACIÓN LIMPIA ---
-console.log("🚀 Inicializando cliente...");
-client.initialize().then(() => {
-    console.log("✅ YakBot ONLINE");
-}).catch(err => console.error("❌ Error al iniciar:", err));
+// --- INICIALIZACIÓN FINAL ---
+(async () => {
+    try {
+        console.log("🚀 Inicializando cliente...");
+        await client.initialize();
+        console.log("✅ YakBot ONLINE");
+    } catch (err) {
+        console.error("❌ Error crítico en el arranque:", err);
+    }
+})();
 
+// Monitor para Railway
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
