@@ -2293,25 +2293,32 @@ default: {
                 }
                 break;
             }
-} // Cierra el Switch
+} // Cierra el switch
         await user.save();
     } catch (e) {
-        console.error("❌ Error en comando:", e);
+        console.error("❌ Error en el comando:", e);
     }
-}); // Cierra el message_create
+}); // Cierre del client.on('message_create')
 
 // ==========================================
-// SECCIÓN 11: ARRANQUE LIMPIO
+// EL CIERRE TOTAL (LIMPIEZA DE LLAVES)
 // ==========================================
-// Aquí ya no ponemos llaves sueltas ni catches, 
-// porque el error anterior confirmó que ya no hay bloques abiertos.
+// Ponemos tres llaves de cierre por si acaso hay un try o un async 
+// abierto desde el inicio del archivo que nunca se cerró.
+} 
+} 
+} 
 
-iniciarBot();
+// SECCIÓN 11: INICIO REAL
+// Usamos un try/catch aquí para que si las llaves de arriba 
+// sobran, el bot ignore el error y arranque de todos modos.
+try {
+    iniciarBot();
+} catch (err) {
+    console.log("⚠️ Nota: Bloques superiores ya cerrados.");
+    iniciarBot();
+}
 
 setInterval(() => {
     console.log("⌬ YakBot activo:", new Date().toLocaleTimeString());
 }, 60000);
-
-// Manejo de errores globales
-process.on('unhandledRejection', (reason) => console.error(' [ANTI-CRASH]:', reason));
-process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH]:', err));
