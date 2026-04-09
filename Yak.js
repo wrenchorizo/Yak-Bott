@@ -2301,12 +2301,13 @@ default: {
 }); // Cierre del message_create
 
 // ==========================================
-// SECCIÓN 11: INICIALIZACIÓN LIMPIA
+// EL CIERRE DE SEGURIDAD (SALDA LA DEUDA)
 // ==========================================
+// Esta llave extra cierra el bloque async que se quedó abierto 
+// arriba de la sección 10. Si sobra, nos dará un error de token.
+} 
 
-// Eliminamos el })(); y los catch extra que daban error.
-// Solo llamamos a la función de arranque.
-
+// Sección 11: Inicio
 iniciarBot();
 
 setInterval(() => {
