@@ -353,87 +353,128 @@ client.on('message_create', async (message) => {
 		break;
 
 //------------------------------------------------MENU / HELP--------------------------------------------------------
-        case 'menu':
+case 'menu':
         case 'help':
         case 'ayuda': {
-            const menuText = `『 *MENÚ DE YAKBOT* 』
+            let menuText = `◢◤ *YAK-BOT SYSTEM* ◢◤\n`;
+            menuText += `   _Estado: Online_ 🔋\n\n`;
 
-✦ *GACHA & RPG*
-⌬ ${prefix}rw | ${prefix}roll
-> Tira un personaje aleatorio (15 min CD).
-⌬ ${prefix}c | ${prefix}claim
-> Reclama el personaje (20 min CD).
-⌬ ${prefix}harem [n]
-> Tu colección (20 por página).
-⌬ ${prefix}wtired [n]
-> Energía y cansancio de tu harem.
-⌬ ${prefix}charinfo [Nombre]
-> Stats detallados: Nivel, EXP y Poder Real.
-⌬ ${prefix}wimage [Nombre]
-> Muestra la imagen de un personaje.
-⌬ ${prefix}charlist [Fuente]
-> Lista de personajes disponibles por serie.
-⌬ ${prefix}givechar @usuario [Nombre]
-> Regala un personaje de tu harem.
-⌬ ${prefix}trade @usuario [MiChar] | [SuChar]
-> Intercambio de personajes.
-⌬ ${prefix}aceptartrade
-> Aceptar un trade pendiente.
-⌬ ${prefix}smob
-> Busca mobs para pelear contra ellos.
-⌬ ${prefix}fight p1, p2, p3
-> Pelea contra los mobs que salieron en smob.
+            menuText += `*〔 ⚔️ GACHA & AVENTURA 〕*\n`;
+            menuText += `✧ *${prefix}rw* *${prefix}roll* *${prefix}tirar* *${prefix}rpj*\n`;
+            menuText += `> Tira un personaje aleatorio (15m CD).\n\n`;
 
-✧ *PVP 3v3 (NIVELES)*
-⌬ ${prefix}duel @usuario | ${prefix}duelo
-> Reta a alguien (5 min para aceptar).
-⌬ ${prefix}accept
-> Acepta el duelo pendiente.
-⌬ ${prefix}pick [c1, c2, c3]
-> Elige equipo. ¡Los niveles aumentan tu poder!
+            menuText += `✧ *${prefix}c* *${prefix}claim* *${prefix}reclamar*\n`;
+            menuText += `> Reclama el personaje aparecido.\n\n`;
 
-✦ *ECONOMÍA & TIENDAS*
-⌬ ${prefix}w | ${prefix}trabajar
-> Trabaja para ganar dinero (1 min CD).
-⌬ ${prefix}crime
-> Intenta un crimen (5 min CD).
-⌬ ${prefix}daily
-> Recompensa diaria (Reset 9 PM).
-⌬ ${prefix}bal | ${prefix}balance
-> Consulta tu dinero actual.
-⌬ ${prefix}pay [cantidad] @usuario
-> Transfiere dinero a otro usuario.
-⌬ ${prefix}dice [cantidad]
-> Apuesta tu dinero al dado.
-⌬ ${prefix}charshop | ${prefix}mercado
-> Mercado rotativo de personajes nuevos.
-⌬ ${prefix}bchar [número]
-> Compra un personaje del mercado.
-⌬ ${prefix}shop | ${prefix}tienda
-> Tienda de objetos (Pociones, XP, Evolución).
-⌬ ${prefix}buy [número] [nombre]
-> Compra y usa un objeto en un personaje.
-⌬ ${prefix}cooldowns
-> Consulta tus tiempos de espera.
+            menuText += `✧ *${prefix}smob* *${prefix}mob* *${prefix}buscarmob*\n`;
+            menuText += `> Busca monstruos en la zona actual.\n\n`;
 
-✧ *REACCIONES ANIME*
-⌁ ${prefix}cry | ${prefix}sad | ${prefix}happy | ${prefix}angry
-⌁ ${prefix}laugh | ${prefix}run | ${prefix}dance | ${prefix}scared
-⌁ ${prefix}eat | ${prefix}sleep | ${prefix}cafe
-⌁ ${prefix}punch @user | ${prefix}kill @user | ${prefix}pat @user
-⌁ ${prefix}preg @user | ${prefix}hug @user | ${prefix}kiss @user
+            menuText += `✧ *${prefix}fight* *${prefix}fmob* *${prefix}atacar* *${prefix}farmear*\n`;
+            menuText += `> Pelea contra los mobs (ej: ${prefix}fight p1, p2).\n\n`;
 
-⊹ *DIVERSIÓN*
-⌬ ${prefix}gay
-> Calcula qué tan gay es alguien.
+            menuText += `✧ *${prefix}charinfo* *${prefix}infopj* *${prefix}pjstats*\n`;
+            menuText += `> Stats, nivel y experiencia del personaje.\n\n`;
 
-✦ *STICKERS*
-⌬ ${prefix}s | ${prefix}sticker
-> Convierte imagen, GIF o video en sticker.
+            menuText += `✧ *${prefix}harem* *${prefix}coleccion*\n`;
+            menuText += `> Mira tu lista de personajes capturados.\n\n`;
 
-✧ *ADMIN & OTROS*
-⌬ ${prefix}kick | ${prefix}tr | ${prefix}say | ${prefix}cal
-⌬ ${prefix}hola | ${prefix}ping | ${prefix}info | ${prefix}creador`;
+            menuText += `✧ *${prefix}wimage* *${prefix}pjimg* *${prefix}verchar*\n`;
+            menuText += `> Muestra la imagen de un personaje.\n\n`;
+
+            menuText += `✧ *${prefix}ctired* *${prefix}cansados* *${prefix}cstamina*\n`;
+            menuText += `> Energía y cansancio de tu harem.\n\n`;
+
+            menuText += `✧ *${prefix}charlist* *${prefix}enciclopedia*\n`;
+            menuText += `> Lista de personajes por serie.\n\n`;
+
+            menuText += `*〔 💰 ECONOMÍA & TIENDA 〕*\n`;
+            menuText += `✧ *${prefix}w* *${prefix}chambear* *${prefix}trabajar* *${prefix}work*\n`;
+            menuText += `> Gana dinero legalmente.\n\n`;
+
+            menuText += `✧ *${prefix}crime* *${prefix}crimen*\n`;
+            menuText += `> Intenta un robo arriesgado.\n\n`;
+
+            menuText += `✧ *${prefix}bal* *${prefix}dinero* *${prefix}cartera* *${prefix}coins*\n`;
+            menuText += `> Consulta tu saldo actual.\n\n`;
+
+            menuText += `✧ *${prefix}m* *${prefix}mercado* *${prefix}charshop*\n`;
+            menuText += `> Mercado rotativo de personajes nuevos.\n\n`;
+
+            menuText += `✧ *${prefix}bchar* *${prefix}buychar* *${prefix}buycharacter*\n`;
+            menuText += `> Compra un personaje del mercado.\n\n`;
+
+            menuText += `✧ *${prefix}shop* *${prefix}tienda* *${prefix}itemshop*\n`;
+            menuText += `> Tienda de items (Pociones, XP, Evolución).\n\n`;
+
+            menuText += `✧ *${prefix}buy* *${prefix}comprar*\n`;
+            menuText += `> Compra y usa un objeto en un personaje.\n\n`;
+
+            menuText += `✧ *${prefix}daily*\n`;
+            menuText += `> Recompensa diaria (Reset 9 PM).\n\n`;
+
+            menuText += `✧ *${prefix}baltop* *${prefix}topricos*\n`;
+            menuText += `> Ranking de los más millonarios.\n\n`;
+
+            menuText += `*〔 🫂 SOCIAL & JUEGOS 〕*\n`;
+            menuText += `✧ *${prefix}trade* *${prefix}intercambio* *${prefix}trueque*\n`;
+            menuText += `> Intercambio de personajes.\n\n`;
+
+            menuText += `✧ *${prefix}aceptartrade* *${prefix}confirmartrade*\n`;
+            menuText += `> Acepta el intercambio pendiente.\n\n`;
+
+            menuText += `✧ *${prefix}givechar* *${prefix}regalar* *${prefix}darpersonaje*\n`;
+            menuText += `> Obsequia un personaje de tu harem.\n\n`;
+
+            menuText += `✧ *${prefix}duel* *${prefix}retar* *${prefix}duelo*\n`;
+            menuText += `> Reta a un usuario a un duelo 3v3.\n\n`;
+
+            menuText += `✧ *${prefix}accept* *${prefix}acceptduel*\n`;
+            menuText += `> Acepta el reto de duelo.\n\n`;
+
+            menuText += `✧ *${prefix}pick* [c1, c2, c3]\n`;
+            menuText += `> Elige tu equipo para el duelo.\n\n`;
+
+            menuText += `✧ *${prefix}pay* *${prefix}pagar* *${prefix}transferencia*\n`;
+            menuText += `> Envía dinero a otro usuario.\n\n`;
+
+            menuText += `✧ *${prefix}dice* *${prefix}dado* *${prefix}apostar*\n`;
+            menuText += `> Apuesta dinero al azar.\n\n`;
+
+            menuText += `✧ *${prefix}ship* *${prefix}pareja* *${prefix}shippear*\n`;
+            menuText += `> Calcula compatibilidad amorosa.\n\n`;
+
+            menuText += `✧ *${prefix}gay* *${prefix}homo*\n`;
+            menuText += `> Calcula el nivel de "gayness".\n\n`;
+
+            menuText += `✧ *Reacciones* (Anime)\n`;
+            menuText += `> ${prefix}cry, ${prefix}happy, ${prefix}punch, ${prefix}kill, ${prefix}pat,\n`;
+            menuText += `> ${prefix}preg, ${prefix}laugh, ${prefix}dance, ${prefix}sleep, ${prefix}hug...\n\n`;
+
+            menuText += `*〔 ⚙️ UTILIDAD & SISTEMA 〕*\n`;
+            menuText += `✧ *${prefix}profile* *${prefix}perfil*\n`;
+            menuText += `> Mira tu perfil global.\n\n`;
+
+            menuText += `✧ *${prefix}logros* *${prefix}platino*\n`;
+            menuText += `> Tus medallas y objetivos completados.\n\n`;
+
+            menuText += `✧ *${prefix}cooldowns* *${prefix}esperas*\n`;
+            menuText += `> Revisa tus tiempos de espera restantes.\n\n`;
+
+            menuText += `✧ *${prefix}s* *${prefix}sticker*\n`;
+            menuText += `> Imagen/Video ⇢ Sticker.\n\n`;
+
+            menuText += `✧ *${prefix}cal* *${prefix}calculadora*\n`;
+            menuText += `> Realiza operaciones matemáticas.\n\n`;
+
+            menuText += `✧ *${prefix}tr* *${prefix}say* *${prefix}ping* *${prefix}info*\n`;
+            menuText += `> Traductor, repetir, estado y creador.\n\n`;
+
+            menuText += `✧ *${prefix}kick* *${prefix}sacar* *${prefix}expulsar*\n`;
+            menuText += `> (Admin) Remueve a un usuario del grupo.\n\n`;
+
+            menuText += `━━━━━━━━━━━━━━━━━━━━\n`;
+            menuText += `⌬ _Prefijo: [ ${prefix} ]_ | *YakBot v2.5*\n`;
+            menuText += `_Usa ${prefix}ayuda [comando] para más info._`;
 
             return message.reply(menuText);
         }
@@ -678,43 +719,30 @@ client.on('message_create', async (message) => {
         break;
 
         //------------------------------------------------COOLDOWNS (SISTEMA PERSISTENTE)--------------------------------------------------------
-        case 'cooldowns':
-		case 'esperas': {
+ 		case 'cooldowns':
+        case 'esperas': {
             const ahora = Date.now();
-            let texto = "『 ◔ *TUS COOLDOWNS* 』\n\n";
-            let hayCooldowns = false;
+            // Obtenemos los cooldowns específicos de este grupo
+            const cd = user.cooldowns?.[grupoId] || {};
 
-            // Tiempos configurados (en milisegundos)
-            const tiempos = {
-                rw: 15 * 60 * 1000,
-                c: 20 * 60 * 1000,
-                smob: 15 * 60 * 1000,
-                work: 60 * 1000,
-                crime: 5 * 60 * 1000
-            };
+            const tiempoRW = 15 * 60 * 1000;    // 15 min
+            const tiempoC = 20 * 60 * 1000;     // 20 min
+            const tiempoW = 1 * 60 * 1000;      // 1 min (ejemplo)
+            const tiempoCrime = 5 * 60 * 1000;  // 5 min (ejemplo)
 
-            // Estructura de chequeo: [Nombre, Propiedad en DB, Duración total]
-            const listaChequeo = [
-                ["✨ rw", "lastRW", tiempos.rw],
-                ["🫴 c", "lastClaim", tiempos.c],
-                ["👾 smob", "lastSmob", tiempos.smob],
-                ["💼 work", "lastWork", tiempos.work],
-                ["🧨 crime", "lastCrime", tiempos.crime]
-            ];
+            const rRestante = Math.max(0, tiempoRW - (ahora - (cd.lastRW || 0)));
+            const cRestante = Math.max(0, tiempoC - (ahora - (cd.lastClaim || 0)));
+            const wRestante = Math.max(0, tiempoW - (ahora - (user.lastWork || 0)));
+            const crRestante = Math.max(0, tiempoCrime - (ahora - (user.lastCrime || 0)));
 
-            listaChequeo.forEach(([nombre, prop, duracion]) => {
-                const transcurrido = ahora - (user[prop] || 0);
-                if (transcurrido < duracion) {
-                    texto += `${nombre}: ${msToTime(duracion - transcurrido)}\n`;
-                    hayCooldowns = true;
-                }
-            });
+            let msg = `『 ⏱️ *TUS TIEMPOS EN ESTE GRUPO* 』\n\n`;
+            msg += `🎰 *Roll (?rw):* ${rRestante > 0 ? msToTime(rRestante) : '✅ LISTO'}\n`;
+            msg += `📩 *Claim (?c):* ${cRestante > 0 ? msToTime(cRestante) : '✅ LISTO'}\n`;
+            msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+            msg += `💼 *Trabajo:* ${wRestante > 0 ? msToTime(wRestante) : '✅ LISTO'}\n`;
+            msg += `🕶️ *Crimen:* ${crRestante > 0 ? msToTime(crRestante) : '✅ LISTO'}\n`;
 
-            if (!hayCooldowns) {
-                texto += "❏ No tienes cooldowns activos.";
-            }
-
-            return message.reply(texto);
+            return message.reply(msg);
         }
         break;
 
@@ -998,6 +1026,7 @@ client.on('message_create', async (message) => {
                 level: 1,
                 exp: 0,
                 stamina: 100,
+				grupoId: grupoId,
                 lastUpdate: Date.now(),
                 evolucion: item.evolucion || null, // Importante para que puedan evolucionar luego
                 nivelEvo: item.nivelEvo || null
@@ -1488,10 +1517,10 @@ client.on('message_create', async (message) => {
             const nombreBusqueda = args.join("").toLowerCase().trim();
             if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
-            let pj = user.harem.find(p => p.nombre.toLowerCase() === nombreBusqueda) ||
-                     user.harem.find(p => p.nombre.toLowerCase().startsWith(nombreBusqueda)) ||
-                     user.harem.find(p => p.nombre.toLowerCase().includes(nombreBusqueda));
-
+            let pj = user.harem.find(p => p.grupoId === grupoId && (
+                p.nombre.toLowerCase() === nombreBusqueda || 
+                p.nombre.toLowerCase().includes(nombreBusqueda)
+            ));
             if (!pj) return message.reply(`❌ No tienes a "${nombreBusqueda}" en tu colección.`);
 
             // Asegurar que sean números
@@ -1613,34 +1642,29 @@ client.on('message_create', async (message) => {
         case 'darpersonaje':
         case 'obsequiar': {
             if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
-            
             if (!targetId) return message.reply("❌ Menciona a alguien o responde a su mensaje.");
             if (targetId === userId) return message.reply("❌ No puedes regalarte algo a ti mismo.");
 
-            // MEJORA: Extraer el nombre de forma segura sin romper números en el nombre del PJ
-            let nombrePJ = args.join(" ").trim();
-            if (message.mentionedIds.length > 0) {
-                // Si hay mención, quitamos la primera palabra (que suele ser @user)
-                const tempArgs = args.slice(1);
-                nombrePJ = tempArgs.join(" ").trim().toLowerCase();
-            } else {
-                nombrePJ = nombrePJ.toLowerCase();
-            }
-
+            let nombrePJ = args.join(" ").replace(/@\d+\s*/g, "").trim().toLowerCase();
             if (!nombrePJ) return message.reply(`❌ Uso: ${prefix}givechar @usuario Nombre`);
 
             const receptor = await User.findOne({ userId: targetId });
             if (!receptor) return message.reply("❌ El usuario no está registrado.");
 
-            const index = user.harem.findIndex(p => p.nombre.toLowerCase() === nombrePJ);
+            // Buscar el personaje que pertenezca a ESTE grupo
+            const index = user.harem.findIndex(p => p.grupoId === grupoId && p.nombre.toLowerCase() === nombrePJ);
+            
             if (index === -1) {
-                return message.reply(`❌ No tienes a "${nombrePJ}" en tu colección.`);
+                return message.reply(`❌ No tienes a "${nombrePJ}" en este grupo.`);
             }
 
-            // --- OPERACIÓN DE TRASPASO ---
-            const [personaje] = user.harem.splice(index, 1);
-            receptor.harem.push(personaje);
+            // Traspaso
+            const personaje = user.harem[index];
+            user.harem.splice(index, 1);
+            receptor.harem.push(personaje); // Mantiene el grupoId original
 
+            user.markModified('harem');
+            receptor.markModified('harem');
             await user.save();
             await receptor.save();
 
@@ -1655,7 +1679,9 @@ client.on('message_create', async (message) => {
 
 	
 //------------------------------------------------TR (TRADUCTOR)--------------------------------------------------------
-case 'tr': {
+			case 'tr':
+			case 'traslate':
+			case 'traducir': {
             const text = args.join(" ").trim();
             if (!text) return message.reply(`❌ Ejemplo: \`${prefix}tr hello world\``);
 
@@ -1687,7 +1713,7 @@ case 'tr': {
         case 'trueque':
         case 'cambiar': {
             if (!message.from.endsWith("@g.us")) return message.reply("❌ Solo en grupos.");
-            if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un intercambio pendiente. Espera 60s.");
+            if (tradesPendientes[grupoId]) return message.reply("⚠️ Ya hay un intercambio pendiente.");
 
             if (!targetId || targetId === userId) return message.reply("❌ Menciona a alguien para tradear.");
 
@@ -1701,12 +1727,12 @@ case 'tr': {
             const receptorDoc = await User.findOne({ userId: targetId });
             if (!receptorDoc) return message.reply("❌ El receptor no está registrado.");
 
-            // Búsqueda flexible (por si no escriben el nombre exacto)
-            const miPJ = user.harem.find(p => p.nombre.toLowerCase() === miNombreBusqueda);
-            const suPJ = receptorDoc.harem.find(p => p.nombre.toLowerCase() === suNombreBusqueda);
+            // Validar que ambos tengan los personajes EN ESTE GRUPO
+            const miPJ = user.harem.find(p => p.grupoId === grupoId && p.nombre.toLowerCase() === miNombreBusqueda);
+            const suPJ = receptorDoc.harem.find(p => p.grupoId === grupoId && p.nombre.toLowerCase() === suNombreBusqueda);
 
-            if (!miPJ) return message.reply(`❌ No tienes a "${miNombreBusqueda}".`);
-            if (!suPJ) return message.reply(`❌ El receptor no tiene a "${suNombreBusqueda}".`);
+            if (!miPJ) return message.reply(`❌ No tienes a "${miNombreBusqueda}" en este grupo.`);
+            if (!suPJ) return message.reply(`❌ @${targetId.split('@')[0]} no tiene a "${suNombreBusqueda}" aquí.`, { mentions: [targetId] });
 
             tradesPendientes[grupoId] = {
                 iniciador: userId,
@@ -1730,7 +1756,7 @@ case 'tr': {
 
 			     //------------------------------------------------ACEPTAR TRADE--------------------------------------------------------
         case 'aceptartrade':
-		case 'confirmartrade':
+        case 'confirmartrade':
         case 'aceptarcambio': {
             const trade = tradesPendientes[grupoId];
             if (!trade) return message.reply("❌ No hay intercambios pendientes.");
@@ -1739,22 +1765,27 @@ case 'tr': {
             const iniciadorDoc = await User.findOne({ userId: trade.iniciador });
             if (!iniciadorDoc) return message.reply("❌ Error: No se encontró al proponente.");
 
-            // MEJORA: Búsqueda exacta ignorando mayúsculas/minúsculas para evitar errores de tipeo
-            const idxIniciador = iniciadorDoc.harem.findIndex(p => p.nombre.toLowerCase() === trade.nombrePJIniciador.toLowerCase());
-            const idxReceptor = user.harem.findIndex(p => p.nombre.toLowerCase() === trade.nombrePJReceptor.toLowerCase());
+            // Búsqueda final antes de ejecutar el swap (Filtrando por grupoId)
+            const idxIniciador = iniciadorDoc.harem.findIndex(p => p.grupoId === grupoId && p.nombre.toLowerCase() === trade.nombrePJIniciador.toLowerCase());
+            const idxReceptor = user.harem.findIndex(p => p.grupoId === grupoId && p.nombre.toLowerCase() === trade.nombrePJReceptor.toLowerCase());
 
             if (idxIniciador === -1 || idxReceptor === -1) {
                 clearTimeout(trade.timeout);
                 delete tradesPendientes[grupoId];
-                return message.reply("❌ El intercambio falló: uno de los personajes ya no está.");
+                return message.reply("❌ El intercambio falló: uno de los personajes ya no está en este grupo.");
             }
 
             try {
+                // Intercambio de objetos completos
                 const [pjDelIniciador] = iniciadorDoc.harem.splice(idxIniciador, 1);
                 const [pjDelReceptor] = user.harem.splice(idxReceptor, 1);
 
                 iniciadorDoc.harem.push(pjDelReceptor);
                 user.harem.push(pjDelIniciador);
+
+                // Forzar guardado en Mongo
+                iniciadorDoc.markModified('harem');
+                user.markModified('harem');
 
                 await iniciadorDoc.save();
                 await user.save();
@@ -1762,10 +1793,10 @@ case 'tr': {
                 clearTimeout(trade.timeout);
                 delete tradesPendientes[grupoId];
 
-                return client.sendMessage(message.from, `🤝 *¡INTERCAMBIO EXITOSO!*`, { mentions: [trade.iniciador, trade.receptor] });
+                return client.sendMessage(message.from, `🤝 *¡INTERCAMBIO EXITOSO!*\n\n*${trade.nombrePJIniciador}* ↔️ *${trade.nombrePJReceptor}*`);
             } catch (err) {
                 delete tradesPendientes[grupoId];
-                return message.reply("⚠️ Error crítico al guardar el intercambio.");
+                return message.reply("⚠️ Error crítico al procesar la base de datos.");
             }
         }
         break;
@@ -2142,6 +2173,7 @@ case 'tr': {
                 level: 100,
                 exp: 0,
                 stamina: 1000,
+				grupoId: grupoId,
                 lastUpdate: Date.now()
             };
 
