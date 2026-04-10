@@ -175,24 +175,32 @@ async function iniciarBot() {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Conectado a MongoDB Atlas');
 
-        const store = new MongoStore({ mongoose: mongoose });
-
-        client = new Client({
+const store = new MongoStore({ mongoose: mongoose });
+		
+client = new Client({
             authStrategy: new RemoteAuth({
                 clientId: 'YakBot-Principal',
                 store: store,
-                backupSyncIntervalMs: 60000 // Ya corregido a 60s
+				takeoverOnConflict: true,
+                backupSyncIntervalMs: 60000,
+                dataPath: './.wwebjs_auth' 
             }),
-            puppeteer: {
-                handleSIGINT: false,
-                // QUITAMOS executablePath para que use el del sistema
-                args: [
-                    '--no-sandbox', 
-                    '--disable-setuid-sandbox', 
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu'
-                ],
-            }
+            // ESTO ES CLAVE PARA EL PLAN GRATUITO
+            takeoverOnConflict: true, 
+            takeoverTimeoutMs: 0,
+           puppeteer: {
+    handleSIGINT: false,
+    args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process', // Crucial: reduce el uso de RAM al no abrir varios procesos de Chrome
+        '--disable-extensions'
+    ],
+}
         });
 		
 // ==========================================
@@ -2344,3 +2352,14 @@ process.on('unhandledRejection', (reason) => {
 process.on('uncaughtException', (err) => {
     console.error(' [ANTI-CRASH] Exception:', err);
 });
+
+setInterval(() => {
+    const memoriaUsada = process.memoryUsage().heapUsed / 1024 / 1024;
+    console.log(`📊 RAM en uso: ${Math.round(memoriaUsada)}MB`);
+    
+    // Si pasa de 450MB (estando cerca del límite de 512MB), reiniciamos
+    if (memoriaUsada > 450) {
+        console.log("🚨 MEMORIA CRÍTICA: Reiniciando proceso para evitar crash...");
+        process.exit(1); // Railway lo reiniciará automáticamente al fallar
+    }
+}, 300000); // Revisa cada 5 minutos
