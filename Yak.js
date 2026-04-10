@@ -34,13 +34,6 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 // ==========================================
 // 2. ESQUEMAS DE MONGODB
 // ==========================================
-const haremSchema = new mongoose.Schema({
-    idUnico: { type: String, required: true, unique: true },
-    userId: String,
-    grupoId: String,
-    personajes: { type: Array, default: [] }
-});
-const Harem = mongoose.model('Harem', haremSchema);
 
 const userSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
@@ -57,9 +50,10 @@ const userSchema = new mongoose.Schema({
     lastClaim: { type: Number, default: 0 },
     lastSmob: { type: Number, default: 0 },
     logros: { type: Array, default: [] },
-	cooldowns: { type: Object, default: {} }, // Guardaremos { "grupoId": { lastRW: 0, lastClaim: 0 } }
+    cooldowns: { type: Object, default: {} }, 
     harem: { type: Array, default: [] }
-});
+}, { minimize: false }); // <--- IMPORTANTE: evita que se borren objetos vacíos
+
 const User = mongoose.model('User', userSchema);
 
 const charShopSchema = new mongoose.Schema({
@@ -175,32 +169,31 @@ async function iniciarBot() {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Conectado a MongoDB Atlas');
 
-const store = new MongoStore({ mongoose: mongoose });
-		
-client = new Client({
+        const store = new MongoStore({ mongoose: mongoose });
+        
+        client = new Client({
             authStrategy: new RemoteAuth({
                 clientId: 'YakBot-Principal',
                 store: store,
-				takeoverOnConflict: true,
+                takeoverOnConflict: true,
                 backupSyncIntervalMs: 60000,
-                dataPath: './.wwebjs_auth' 
+                dataPath: './sessions' // <--- Apunta a tu Volume de Railway
             }),
-            // ESTO ES CLAVE PARA EL PLAN GRATUITO
             takeoverOnConflict: true, 
             takeoverTimeoutMs: 0,
-           puppeteer: {
-    handleSIGINT: false,
-    args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process', // Crucial: reduce el uso de RAM al no abrir varios procesos de Chrome
-        '--disable-extensions'
-    ],
-}
+            puppeteer: {
+                handleSIGINT: false,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-extensions'
+                ],
+            }
         });
 		
 // ==========================================
@@ -239,15 +232,7 @@ client = new Client({
 
 const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
 
-async function obtenerHarem(userId, grupoId) {
-    const idUnico = `${userId}_${grupoId}`;
-    let h = await Harem.findOne({ idUnico });
-    if (!h) {
-        h = new Harem({ idUnico, userId, grupoId, personajes: [] });
-    }
-    return h;
-}
-
+// Función para rotar la tienda del grupo
 async function actualizarCharShop(grupoId, forzar = false) {
     const ahora = Date.now();
     const tiempoRotacion = 3000000; 
@@ -256,9 +241,10 @@ async function actualizarCharShop(grupoId, forzar = false) {
     if (!shop) shop = new CharShop({ grupoId });
 
     if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
-        const haremsDelGrupo = await Harem.find({ grupoId });
-        const nombresEnHarem = haremsDelGrupo.flatMap(h => 
-            h.personajes.map(p => p.nombre.toLowerCase())
+        // Buscamos en todos los usuarios quién tiene personajes registrados en este grupo
+        const usuariosConPjs = await User.find({ "harem.grupoId": grupoId });
+        const nombresEnHarem = usuariosConPjs.flatMap(u => 
+            u.harem.filter(p => p.grupoId === grupoId).map(p => p.nombre.toLowerCase())
         );
 
         const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
