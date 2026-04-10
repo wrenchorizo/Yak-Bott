@@ -169,6 +169,14 @@ async function iniciarBot() {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Conectado a MongoDB Atlas');
 
+        // --- EL PARCHE PARA EL ERROR ENOENT ---
+        const sessionPath = './sessions';
+        if (!fs.existsSync(sessionPath)) {
+            console.log('📂 Creando carpeta de sesión para el volumen...');
+            fs.mkdirSync(sessionPath, { recursive: true });
+        }
+        // ---------------------------------------
+
         const store = new MongoStore({ mongoose: mongoose });
         
         client = new Client({
@@ -177,8 +185,9 @@ async function iniciarBot() {
                 store: store,
                 takeoverOnConflict: true,
                 backupSyncIntervalMs: 60000,
-                dataPath: './sessions' // <--- Apunta a tu Volume de Railway
+                dataPath: sessionPath // Usamos la variable que acabamos de validar
             }),
+            authTimeoutMs: 60000, // Le damos tiempo a la base de datos
             takeoverOnConflict: true, 
             takeoverTimeoutMs: 0,
             puppeteer: {
