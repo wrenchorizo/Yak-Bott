@@ -939,26 +939,27 @@ client.on('message_create', async (message) => {
         break;
 
         //------------------------------------------------CHARSHOP (MERCADO ROTATIVO)--------------------------------------------------------
-        case 'charshop':
-		case 'mercado':
-		case 'm': {
-            // Esta función actualizarCharShop debe estar definida fuera del switch para manejar la RAM de la tienda
-            actualizarCharShop(grupoId); 
-            const shopDelGrupo = charShopsPorGrupo[grupoId];
-            const tiempoRestante = 3000000 - (Date.now() - shopDelGrupo.ultimaActualizacion);
+ 		case 'charshop':
+        case 'mercado':
+        case 'm': {
+            // Llamamos a la función asíncrona y esperamos el resultado de Mongo
+            const shopDelGrupo = await actualizarCharShop(grupoId); 
             
-            let msg = `🏪 *MERCADO DE PERSONAJES*\n`;
+            const ahora = Date.now();
+            const tiempoRestante = 3000000 - (ahora - shopDelGrupo.ultimaActualizacion);
+            
+            let msg = `『 🏪 *MERCADO DE PERSONAJES* 』\n`;
             msg += `⏱️ Rotación en: ${msToTime(tiempoRestante)}\n`;
             msg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-            if (shopDelGrupo.personajes.length === 0) {
-                msg += "⚠️ No hay personajes en esta rotación.";
+            if (!shopDelGrupo.personajes || shopDelGrupo.personajes.length === 0) {
+                msg += "⚠️ No hay personajes disponibles en este momento.";
             } else {
                 shopDelGrupo.personajes.forEach((p, i) => {
                     msg += `*${i + 1}* ⇢ *${p.nombre}*\n`;
                     msg += `╰┈─ ➤ *Costo:* $${p.precio.toLocaleString()} | *Fuente:* ${p.fuente}\n\n`;
                 });
-                msg += `_Usa *${prefix}bchar [número]* para comprar._\n`;
+                msg += `_Usa *?bchar [número]* para comprar._\n`;
             }
 
             msg += `━━━━━━━━━━━━━━━━━━━━\n⌬ Tu Saldo: *$${user.dinero.toLocaleString()}*`;
@@ -968,15 +969,15 @@ client.on('message_create', async (message) => {
 
         //------------------------------------------------BCHAR (COMPRAR PERSONAJE)--------------------------------------------------------
         case 'bchar':
-		case 'buychar':
-		case 'buycharacter': {
-            actualizarCharShop(grupoId);
-            const shopDelGrupo = charShopsPorGrupo[grupoId];
+        case 'buychar':
+        case 'buycharacter': {
+            // Obtenemos la tienda de la DB
+            const shopDelGrupo = await actualizarCharShop(grupoId);
             const num = parseInt(args[0]);
             const indice = num - 1;
 
-            if (isNaN(num) || !shopDelGrupo || !shopDelGrupo.personajes[indice]) {
-                return message.reply("❌ Número inválido.");
+            if (isNaN(num) || !shopDelGrupo.personajes[indice]) {
+                return message.reply("❌ Número inválido. Mira el mercado con *?m*.");
             }
 
             const item = shopDelGrupo.personajes[indice];
@@ -987,6 +988,8 @@ client.on('message_create', async (message) => {
 
             // Transacción
             user.dinero -= item.precio;
+            
+            // Añadir al harem con todos los datos necesarios para evolución/XP
             user.harem.push({
                 nombre: item.nombre,
                 fuente: item.fuente,
@@ -995,13 +998,18 @@ client.on('message_create', async (message) => {
                 level: 1,
                 exp: 0,
                 stamina: 100,
-                obtencion: 'Comprado'
+                lastUpdate: Date.now(),
+                evolucion: item.evolucion || null, // Importante para que puedan evolucionar luego
+                nivelEvo: item.nivelEvo || null
             });
 
-            // Quitar de la tienda de este grupo
+            // Quitar de la tienda y guardar en la base de datos de la tienda
             shopDelGrupo.personajes.splice(indice, 1);
-
+            
+            // Guardamos ambos: el usuario y la tienda actualizada
             await user.save();
+            await shopDelGrupo.save(); // ¡Vital! Para que el personaje desaparezca para todos
+
             return message.reply(`🎉 ¡COMPRA EXITOSA!\n\nHas adquirido a: *${item.nombre}*\n💰 Saldo restante: *$${user.dinero.toLocaleString()}*`);
         }
         break;
