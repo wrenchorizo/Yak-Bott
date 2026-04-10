@@ -1499,42 +1499,46 @@ case 'menu':
       //------------------------------------------------CHARINFO (DETALLES)--------------------------------------------------------
         case 'charinfo':
         case 'infopj':
-        case 'pjstats': {
-            const nombreBusqueda = args.join("").toLowerCase().trim();
+		case 'pjstats': {
+            // Unimos los argumentos con espacio para nombres como "Human Torch"
+            let nombreBusqueda = args.join(" ").trim().toLowerCase();
+
             if (!nombreBusqueda) return message.reply("❌ Escribe el nombre del personaje.");
 
-            let pj = user.harem.find(p => p.grupoId === grupoId && (
-                p.nombre.toLowerCase() === nombreBusqueda || 
-                p.nombre.toLowerCase().includes(nombreBusqueda)
-            ));
-            if (!pj) return message.reply(`❌ No tienes a "${nombreBusqueda}" en tu colección.`);
+            // Buscamos dentro del array 'harem' que ya cargaste en el objeto 'user'
+            const personaje = user.harem.find(p => 
+                p.grupoId === grupoId && 
+                p.nombre.toLowerCase() === nombreBusqueda
+            );
 
-            // Asegurar que sean números
-            const lvl = parseInt(pj.level) || 1;
-            const exp = parseInt(pj.exp) || 0;
-            const stamina = pj.stamina !== undefined ? pj.stamina : 100;
-            const xpSiguienteNivel = lvl * 100;
-            const poderReal = Math.floor(Number(pj.valor) * Math.pow(1.20, (lvl - 1)));
+            if (!personaje) {
+                return message.reply(`❌ No tienes a "${nombreBusqueda}" en este grupo. Asegúrate de escribir el nombre exacto.`);
+            }
 
-            let infoMsg = `『 👤 *DETALLES DEL PERSONAJE* 』\n`;
-            infoMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-            infoMsg += `⭐ *Nombre:* ${pj.nombre}\n`;
-            infoMsg += `🎬 *Serie:* ${pj.fuente}\n`;
-            infoMsg += `📊 *Nivel:* ${lvl}\n`;
-            infoMsg += `✨ *XP:* ${exp} / ${xpSiguienteNivel}\n`;
-            infoMsg += `⚔️ *Poder Real:* ${poderReal.toLocaleString()}\n`;
-            infoMsg += `⚡ *Energía:* ${stamina}%\n\n`;
-            infoMsg += `━━━━━━━━━━━━━━━━━━━━`;
+            // Actualizamos stamina por si acaso para mostrar el valor real actual
+            actualizarStamina(personaje);
 
-            try {
-                const media = await MessageMedia.fromUrl(pj.imagen).catch(() => null);
-                if (media) {
-                    return client.sendMessage(message.from, media, { caption: infoMsg });
-                } else {
-                    return message.reply(infoMsg + "\n\n⚠️ _(Imagen no disponible)_");
+            let info = `『 *DETALLES DEL PERSONAJE* 』\n\n`;
+            info += `⭐ *Nombre:* ${personaje.nombre}\n`;
+            info += `🎬 *Serie:* ${personaje.serie || 'Desconocida'}\n`;
+            info += `📈 *Nivel:* ${personaje.level || 1}\n`;
+            info += `🔋 *Stamina:* ${personaje.stamina || 100}%\n`;
+            info += `💰 *Valor:* ${personaje.valor || '???'}\n`;
+            info += `━━━━━━━━━━━━━━━━━━━━\n`;
+            info += `💬 _Usa este personaje para duelos o intercambios._`;
+
+            // Intentar enviar con imagen si existe la URL
+            const urlImagen = personaje.imagen || personaje.url;
+            if (urlImagen) {
+                try {
+                    const media = await MessageMedia.fromUrl(urlImagen);
+                    return client.sendMessage(message.from, media, { caption: info });
+                } catch (e) {
+                    console.error("Error al cargar imagen en charinfo:", e);
+                    return message.reply(info);
                 }
-            } catch (error) {
-                return message.reply(infoMsg);
+            } else {
+                return message.reply(info);
             }
         }
         break;
