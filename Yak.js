@@ -2008,8 +2008,7 @@ function escuchadorMensajes(sock) {
         break;
 	
 
-
-//------------------------------------------------SMOB (BUSCAR MONSTRUO)--------------------------------------------------------
+        //------------------------------------------------SMOB (BUSCAR MONSTRUO)--------------------------------------------------------
         case 'smob':
         case 'searchmob':
         case 'buscarmob':
@@ -2018,13 +2017,15 @@ function escuchadorMensajes(sock) {
             const tiempoEspera = 15 * 60 * 1000; // 15 minutos
 
             // --- SISTEMA DE COOLDOWN (En memoria del bot) ---
-            if (!cooldownsBuscarmob[grupoId]) cooldownsBuscarmob[grupoId] = {};
-            if (cooldownsBuscarmob[grupoId][userId] && ahora - cooldownsBuscarmob[grupoId][userId] < tiempoEspera) {
-                const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[grupoId][userId])) / 1000 / 60);
-                return message.reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min** para buscar otro mob.`);
+            // Asegúrate de tener: const cooldownsBuscarmob = {}; al inicio del archivo
+            if (!cooldownsBuscarmob[jid]) cooldownsBuscarmob[jid] = {};
+            
+            if (cooldownsBuscarmob[jid][userId] && ahora - cooldownsBuscarmob[jid][userId] < tiempoEspera) {
+                const restante = Math.ceil((tiempoEspera - (ahora - cooldownsBuscarmob[jid][userId])) / 1000 / 60);
+                return reply(`⏳ Tus rastreadores están cargando. Espera **${restante} min** para buscar otro mob.`);
             }
 
-            // Seleccionar mob de tu data de monstruos
+            // Seleccionar mob de tu data de monstruos (mobsData debe estar cargado)
             const mobTemplate = mobsData[Math.floor(Math.random() * mobsData.length)];
             
             // --- LÓGICA DE PODER CONTROLADA ---
@@ -2032,13 +2033,16 @@ function escuchadorMensajes(sock) {
             let bonoNivel = 0;
 
             if (user.harem && user.harem.length > 0) {
-                // Promedio de los 3 mejores niveles
+                // Filtramos por jid para que el bono dependa de lo que tienes en este grupo
                 const mejores = [...user.harem]
+                    .filter(p => p.grupoId === jid)
                     .sort((a, b) => (b.level || 1) - (a.level || 1))
                     .slice(0, 3);
                 
-                const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
-                bonoNivel = nivelPromedio * 1500;
+                if (mejores.length > 0) {
+                    const nivelPromedio = mejores.reduce((sum, p) => sum + (Number(p.level) || 1), 0) / mejores.length;
+                    bonoNivel = nivelPromedio * 1500;
+                }
             }
 
             let poderMob = Math.floor(poderBase + bonoNivel);
@@ -2049,126 +2053,157 @@ function escuchadorMensajes(sock) {
             }
 
             // Guardar mob en memoria del grupo (RAM temporal)
-            mobActual[grupoId] = {
+            // Asegúrate de tener: const mobActual = {}; al inicio del archivo
+            mobActual[jid] = {
                 nombre: mobTemplate.nombre,
                 poderTotal: poderMob,
                 vencido: false,
                 creadoEn: ahora
             };
 
-            cooldownsBuscarmob[grupoId][userId] = ahora;
+            cooldownsBuscarmob[jid][userId] = ahora;
 
-            return message.reply(`👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n> Tienes **7 minutos** para pelear antes de que escape.`);
+            const textoMob = `👾 ¡Detección de Poder! Ha aparecido: *${mobTemplate.nombre}*\n💪 Nivel de Poder: *${poderMob.toLocaleString()}*\n\n> Tienes **7 minutos** para pelear antes de que escape con *${prefix}fightmob*.`;
+
+            return reply(textoMob);
         }
         break;
-
-//------------------------------------------------FIGHT (PELEAR)--------------------------------------------------------
+			
+			
+        //------------------------------------------------FIGHT (PELEAR)--------------------------------------------------------
         case 'fight':
         case 'fmob':
         case 'atacar':
         case 'farmear': {
-            if (!mobActual[grupoId] || mobActual[grupoId].vencido) {
-                return message.reply("❌ No hay mobs en esta zona. Usa *?smob* para buscar uno.");
+            // Verificamos si existe un mob en este grupo (jid)
+            if (!mobActual[jid] || mobActual[jid].vencido) {
+                return reply("❌ No hay mobs en esta zona. Usa *?smob* para buscar uno.");
             }
 
             const ahora = Date.now();
-            if (ahora - mobActual[grupoId].creadoEn > 7 * 60 * 1000) {
-                delete mobActual[grupoId];
-                return message.reply("⏰ El mob se ha escapado...");
+            // Si pasaron más de 7 minutos, el mob escapa
+            if (ahora - mobActual[jid].creadoEn > 7 * 60 * 1000) {
+                delete mobActual[jid];
+                return reply("⏰ El mob se ha escapado...");
             }
 
+            // Separamos los personajes por comas
             const nombresPjs = args.join(" ").split(',').map(n => n.trim().toLowerCase());
-            if (nombresPjs.length === 0 || !nombresPjs[0]) return message.reply("❌ Uso: *?fight pj1, pj2...*");
+            if (nombresPjs.length === 0 || !nombresPjs[0]) return reply(`❌ Uso: *${prefix}fight pj1, pj2...*`);
 
             let equipo = [];
             for (let nombrePj of nombresPjs) {
-                let pj = user.harem.find(p => p.nombre.toLowerCase() === nombrePj);
+                // Buscamos el PJ en el harem del usuario filtrando por grupo actual
+                let pj = user.harem.find(p => p.grupoId === jid && p.nombre.toLowerCase() === nombrePj);
+                
                 if (pj) {
                     if (typeof actualizarStamina === 'function') actualizarStamina(pj);
-                    if ((pj.stamina || 0) < 15) return message.reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}%).`);
+                    
+                    // Verificamos energía mínima para pelear
+                    if ((pj.stamina || 0) < 15) {
+                        return reply(`😫 *${pj.nombre}* está agotado (${pj.stamina}%).`);
+                    }
+                    
+                    // Evitamos duplicados en el equipo de ataque
                     if (!equipo.find(e => e.nombre === pj.nombre)) equipo.push(pj);
                 }
             }
 
-            if (equipo.length === 0) return message.reply("❌ Esos personajes no están en tu harem.");
+            if (equipo.length === 0) return reply("❌ Esos personajes no están en tu colección de este grupo.");
 
-            const mob = mobActual[grupoId];
+            const mob = mobActual[jid];
+            
+            // Calculamos el poder total del equipo (con la fórmula de nivel)
             let poderTuEquipo = equipo.reduce((sum, p) => {
                 const nivel = Number(p.level) || 1;
                 const valorBase = Number(p.valor) || 0;
                 return sum + (valorBase * Math.pow(1.20, nivel - 1));
             }, 0);
 
+            // Añadimos un factor de suerte (variación del 5%)
             poderTuEquipo *= (0.95 + Math.random() * 0.15);
 
-            message.reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
+            reply(`⚔️ *BATALLA EN CURSO* ⚔️\n\n🛡️ Poder Equipo: *${Math.floor(poderTuEquipo).toLocaleString()}*\n👾 Poder Enemigo: *${mob.poderTotal.toLocaleString()}*`);
 
+            // Esperamos 2 segundos para dar suspenso
             setTimeout(async () => {
-                if (poderTuEquipo >= mob.poderTotal) {
-                    const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
-                    const xpGanada = Math.floor(mob.poderTotal / 200); 
+                try {
+                    if (poderTuEquipo >= mob.poderTotal) {
+                        const gananciaDinero = Math.floor(Math.random() * 10001) + 5000;
+                        const xpGanada = Math.floor(mob.poderTotal / 200); 
 
-                    user.dinero = (Number(user.dinero) || 0) + gananciaDinero;
-                    let avisosNivel = "";
+                        user.dinero = (Number(user.dinero) || 0) + gananciaDinero;
+                        let avisosNivel = "";
 
-                    for (let p of equipo) {
-                        p.exp = (Number(p.exp) || 0) + xpGanada;
-                        p.stamina = Math.max(0, p.stamina - 15);
+                        for (let p of equipo) {
+                            p.exp = (Number(p.exp) || 0) + xpGanada;
+                            p.stamina = Math.max(0, p.stamina - 15); // Gasto de energía por victoria
 
-                        let subio = false;
-                        // Cambiamos a un cálculo de nivel más robusto
-                        while (p.exp >= (Number(p.level) || 1) * 100) {
-                            p.exp -= (Number(p.level) || 1) * 100;
-                            p.level = (Number(p.level) || 1) + 1;
-                            subio = true;
-                        }
+                            let subio = false;
+                            // Sistema de Level Up
+                            while (p.exp >= (Number(p.level) || 1) * 100) {
+                                p.exp -= (Number(p.level) || 1) * 100;
+                                p.level = (Number(p.level) || 1) + 1;
+                                subio = true;
+                            }
 
-                        if (subio) {
-                            avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
-                            if (p.nivelEvo && p.level >= p.nivelEvo && p.evolucion) {
-                                const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
-                                if (datosEvo) {
-                                    const nombreViejo = p.nombre;
-                                    p.nombre = datosEvo.nombre;
-                                    p.imagen = datosEvo.imagen;
-                                    p.valor = datosEvo.valor;
-                                    p.evolucion = datosEvo.evolucion || null;
-                                    p.nivelEvo = datosEvo.nivelEvo || null;
-                                    avisosNivel += `\n✨ *${nombreViejo}* evolucionó a *${p.nombre}*!`;
+                            if (subio) {
+                                avisosNivel += `\n🆙 *${p.nombre}* subió al nivel *${p.level}*!`;
+                                
+                                // Sistema de Evolución
+                                if (p.nivelEvo && p.level >= p.nivelEvo && p.evolucion) {
+                                    // Buscamos los datos de la evolución en la lista global
+                                    const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
+                                    if (datosEvo) {
+                                        const nombreViejo = p.nombre;
+                                        p.nombre = datosEvo.nombre;
+                                        p.imagen = datosEvo.imagen;
+                                        p.valor = datosEvo.valor;
+                                        p.evolucion = datosEvo.evolucion || null;
+                                        p.nivelEvo = datosEvo.nivelEvo || null;
+                                        avisosNivel += `\n✨ *${nombreViejo}* evolucionó a *${p.nombre}*!`;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    mobActual[grupoId].vencido = true;
-                    
-                    // --- EL TRUCO ESTÁ AQUÍ ---
-                    user.markModified('harem'); 
-                    await user.save(); 
-                    
-                    return client.sendMessage(message.from, `✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`);
-                } else {
-                    for (let p of equipo) {
-                        p.stamina = Math.max(0, p.stamina - 5);
+                        mobActual[jid].vencido = true;
+                        
+                        // Guardamos cambios en MongoDB
+                        user.markModified('harem'); 
+                        await user.save(); 
+                        
+                        const textoVictoria = `✅ *¡VICTORIA!* 🎉\n\n💰 Dinero: *$${gananciaDinero.toLocaleString()}*\n✨ XP: *+${xpGanada}*${avisosNivel}`;
+                        return sock.sendMessage(jid, { text: textoVictoria }, { quoted: m });
+
+                    } else {
+                        // Penalización por derrota
+                        for (let p of equipo) {
+                            p.stamina = Math.max(0, p.stamina - 5);
+                        }
+                        user.markModified('harem');
+                        await user.save();
+                        return sock.sendMessage(jid, { text: `💀 *DERROTA...* El mob era muy fuerte.` }, { quoted: m });
                     }
-                    user.markModified('harem');
-                    await user.save();
-                    return message.reply(`💀 *DERROTA...* El mob era muy fuerte.`);
+                } catch (err) {
+                    console.error("Error en resultado de pelea:", err);
                 }
             }, 2000);
         }
         break;
+			
 	
 
-//------------------------------------------------FIXLEVELS (PURIFICACIÓN ADMIN)--------------------------------------------------------
+        //------------------------------------------------FIXLEVELS (PURIFICACIÓN ADMIN)--------------------------------------------------------
         case 'fixlevels':
         case 'limpiarniveles':
         case 'resetlevels': {
+            // Asegúrate de que este ID sea el correcto en Baileys (suele terminar en @s.whatsapp.net o @lid)
             const adminID = '232246195839008@lid'; 
-            if (userId !== adminID) return; // Silencio total si no eres tú
+            if (userId !== adminID) return; 
 
             try {
-                // Buscamos a TODOS los usuarios que tengan algún personaje con nivel > 1000 o infinito
+                // Buscamos en MongoDB a todos los usuarios con niveles excesivos
                 const usuariosAfectados = await User.find({ 
                     "harem.level": { $gt: 1000 } 
                 });
@@ -2177,9 +2212,10 @@ function escuchadorMensajes(sock) {
 
                 for (let uDoc of usuariosAfectados) {
                     let huboCambio = false;
+                    
                     uDoc.harem.forEach(p => {
                         let lvl = Number(p.level);
-                        // Si el nivel es mayor a 1,000, Infinito o NaN
+                        // Limpieza de niveles corruptos, infinitos o excesivos
                         if (lvl > 1000 || !isFinite(lvl) || isNaN(lvl)) {
                             p.level = 1;
                             p.exp = 0;
@@ -2189,39 +2225,43 @@ function escuchadorMensajes(sock) {
                     });
 
                     if (huboCambio) {
+                        // Importante avisar a Mongoose que el array cambió
+                        uDoc.markModified('harem');
                         await uDoc.save();
                     }
                 }
 
-                return message.reply(`✨ *PURIFICACIÓN COMPLETADA* ✨\n\nSe han reseteado **${cont}** personajes que superaban el nivel 1,000 en toda la base de datos.\n\n*(Tu Admin Char y personajes legales no han sido afectados)*.`);
+                return reply(`✨ *PURIFICACIÓN COMPLETADA* ✨\n\nSe han reseteado **${cont}** personajes con niveles corruptos o superiores a 1,000 en la base de datos global.`);
             } catch (err) {
                 console.error("Error en fixlevels:", err);
-                return message.reply("⚠️ Error en la purificación de niveles.");
+                return reply("⚠️ Error en la purificación de niveles.");
             }
         }
         break;
+			
 
-        //------------------------------------------------ADDMONEY (DINERO INFINITO)--------------------------------------------------------
+                //------------------------------------------------ADDMONEY (ADMIN)--------------------------------------------------------
         case 'addmoney':
         case 'admdinero':
         case 'createmoney':
         case 'spawnmoney': {
             const adminID = '232246195839008@lid'; 
-            if (userId !== adminID) return message.reply("⚠️ No tienes permiso.");
+            if (userId !== adminID) return reply("⚠️ No tienes permiso para usar comandos de administrador.");
 
-            // args[0] es la cantidad, args[1] sería la mención si existe
+            // args[0] es la cantidad
             let cantidad = parseInt(args[0]); 
-            if (isNaN(cantidad)) return message.reply(`❌ Uso: \`${prefix}addmoney [cantidad] [@usuario]\``);
+            if (isNaN(cantidad)) return reply(`❌ Uso: *${prefix}addmoney [cantidad] [@usuario]*`);
 
-            // Lógica de destino: si hay mención o respuesta, usamos ese ID, si no, el tuyo
+            // Lógica de destino: targetId ya viene resuelto por mención o quoted en el Bloque 10
             let destinoId = targetId || userId;
 
             try {
                 // Buscamos al usuario destino en Mongo
                 const receptor = (destinoId === userId) ? user : await User.findOne({ userId: destinoId });
 
-                if (!receptor) return message.reply("❌ El usuario no está registrado.");
+                if (!receptor) return reply("❌ El usuario no está registrado en la base de datos.");
 
+                // Actualizamos el saldo
                 receptor.dinero = (Number(receptor.dinero) || 0) + cantidad;
                 await receptor.save();
 
@@ -2229,74 +2269,82 @@ function escuchadorMensajes(sock) {
                 const nombreDestino = destinoId === userId ? "tu cuenta" : `@${destinoId.split('@')[0]}`;
                 const menciones = destinoId === userId ? [] : [destinoId];
 
-                // Lógica de Logro (Si tienes la función darLogro activa)
+                let msgFinal = `✅ *ECONOMÍA MODIFICADA*\n` +
+                               `💰 Cantidad: *$${cantidad.toLocaleString()}*\n` +
+                               `👤 Destino: ${nombreDestino}\n` +
+                               `✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`;
+
+                // Verificación de Logro
                 if (typeof darLogro === 'function' && darLogro(receptor, "admin_money")) {
-                    return client.sendMessage(message.from, 
-                        `🏆 *LOGRO:* Generosidad del Admin\n💰 Se han añadido *$${cantidad.toLocaleString()}* a ${nombreDestino}.\n✨ Saldo: *$${totalActual.toLocaleString()}*`, 
-                        { mentions: menciones }
-                    );
-                } else {
-                    return client.sendMessage(message.from, 
-                        `✅ *DINERO ENVIADO*\n💰 Cantidad: *$${cantidad.toLocaleString()}*\n👤 Destino: ${nombreDestino}\n✨ Nuevo Saldo: *$${totalActual.toLocaleString()}*`, 
-                        { mentions: menciones }
-                    );
+                    msgFinal = `🏆 *LOGRO DESBLOQUEADO: Beneficencia Real*\n\n` + msgFinal;
                 }
+
+                // Enviamos con menciones para que el usuario destino reciba la notificación
+                return sock.sendMessage(jid, { 
+                    text: msgFinal, 
+                    mentions: menciones 
+                }, { quoted: m });
+
             } catch (err) {
                 console.error("Error en addmoney:", err);
-                return message.reply("⚠️ Error al modificar la economía.");
+                return reply("⚠️ Error crítico al modificar la economía en la base de datos.");
             }
         }
         break;
+			
 
-//------------------------------------------------DELCHAR (BORRADO ADMIN)--------------------------------------------------------
+        //------------------------------------------------DELCHAR (BORRADO ADMIN)--------------------------------------------------------
         case 'delchar':
         case 'borrarpj':
         case 'removerchar':
         case 'quitarpj': {
             const adminID = '232246195839008@lid'; 
-            if (userId !== adminID) return message.reply("⚠️ No tienes permisos para borrar personajes.");
+            if (userId !== adminID) return reply("⚠️ No tienes permisos para borrar personajes.");
 
-            // 1. Identificar a la "víctima" (Mención o Respuesta) usando el targetId universal
-            if (!targetId) return message.reply(`❌ Uso: \`${prefix}delchar [Nombre] @usuario\` o responde a su mensaje.`);
+            // 1. Identificar a la "víctima" usando el targetId universal (Mención o Respuesta)
+            if (!targetId) return reply(`❌ Uso: *${prefix}delchar [Nombre] @usuario* o responde a su mensaje.`);
 
-            // 2. Limpiar el nombre del personaje de los argumentos
+            // 2. Limpiar el nombre del personaje de los argumentos (quitando la mención)
             const nombrePJ = args.join(" ").replace(/@\d+\s*/g, "").trim().toLowerCase();
-            if (!nombrePJ) return message.reply("❌ Debes especificar el nombre del personaje.");
+            if (!nombrePJ) return reply("❌ Debes especificar el nombre del personaje.");
 
             try {
                 // 3. Buscar a la víctima en MongoDB
                 const victimaDoc = await User.findOne({ userId: targetId });
                 if (!victimaDoc || !victimaDoc.harem || victimaDoc.harem.length === 0) {
-                    return message.reply("❌ Esa persona no tiene personajes en su colección.");
+                    return reply("❌ Esa persona no tiene personajes en su colección.");
                 }
 
-                // 4. Buscar el personaje en su harem
-                const index = victimaDoc.harem.findIndex(p => p.nombre.toLowerCase() === nombrePJ);
+                // 4. Buscar el personaje en su harem (usualmente filtrado por jid si quieres ser específico del grupo)
+                const index = victimaDoc.harem.findIndex(p => p.nombre.toLowerCase() === nombrePJ && p.grupoId === jid);
 
                 if (index === -1) {
-                    return message.reply(`❌ No se encontró a "${nombrePJ}" en el harem de ese usuario.`);
+                    return reply(`❌ No se encontró a "${nombrePJ}" en el harem de ese usuario en este grupo.`);
                 }
 
                 // 5. Ejecución del borrado
                 const [eliminado] = victimaDoc.harem.splice(index, 1);
 
-                // 6. Guardar cambios en MongoDB
+                // 6. Notificar a Mongoose del cambio y guardar
+                victimaDoc.markModified('harem');
                 await victimaDoc.save();
 
-                return client.sendMessage(
-                    message.from,
-                    `🗑️ *PERSONAJE ELIMINADO*\n\nEl personaje *${eliminado.nombre}* ha sido borrado para siempre del harem de @${targetId.split('@')[0]}.`,
-                    { mentions: [targetId] }
-                );
+                const textoBorrado = `🗑️ *PERSONAJE ELIMINADO*\n\nEl personaje *${eliminado.nombre}* ha sido borrado para siempre del harem de @${targetId.split('@')[0]}.`;
+
+                return sock.sendMessage(jid, { 
+                    text: textoBorrado, 
+                    mentions: [targetId] 
+                }, { quoted: m });
 
             } catch (err) {
                 console.error("Error en delchar:", err);
-                return message.reply("⚠️ Error de base de datos al intentar borrar el personaje.");
+                return reply("⚠️ Error de base de datos al intentar borrar el personaje.");
             }
         }
         break;
+			
 	
-//------------------------------------------------ADMINCHAR (PODER ABSOLUTO)--------------------------------------------------------
+        //------------------------------------------------ADMINCHAR (PODER ABSOLUTO)--------------------------------------------------------
         case 'adminchar':
         case 'pjadmin':
         case 'godmode':
@@ -2304,11 +2352,12 @@ function escuchadorMensajes(sock) {
             const adminNumber = "232246195839008@lid"; 
 
             if (userId !== adminNumber) {
-                return message.reply("❌ ERROR: Acceso denegado. No eres el Creador.");
+                return reply("❌ ERROR: Acceso denegado. No eres el Creador.");
             }
 
-            const yaLoTiene = user.harem.find(p => p.nombre === "EL ADMIN");
-            if (yaLoTiene) return message.reply("⚡ Ya posees el poder absoluto en tu colección.");
+            // Verificar si ya existe en el grupo actual
+            const yaLoTiene = user.harem.find(p => p.nombre === "EL ADMIN" && p.grupoId === jid);
+            if (yaLoTiene) return reply("⚡ Ya posees el poder absoluto en este grupo.");
 
             const adminChar = {
                 nombre: "EL ADMIN",
@@ -2319,89 +2368,113 @@ function escuchadorMensajes(sock) {
                 level: 100,
                 exp: 0,
                 stamina: 1000,
-				grupoId: grupoId,
+                grupoId: jid, // Usamos la constante del Bloque 10
                 lastUpdate: Date.now()
             };
 
             try {
-                const response = await fetch(adminChar.imagen);
-                const arrayBuffer = await response.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                const media = new MessageMedia('image/jpeg', buffer.toString('base64'), 'admin.jpg');
-
+                // Añadimos al harem
                 user.harem.push(adminChar);
+                user.markModified('harem'); // Vital para que Mongoose guarde el nuevo objeto
                 await user.save();
 
-                await client.sendMessage(message.from, media, { 
+                // En Baileys enviamos la imagen directamente por URL
+                await sock.sendMessage(jid, { 
+                    image: { url: adminChar.imagen }, 
                     caption: "⚡ *EL PODER ABSOLUTO HA SIDO RECLAMADO* ⚡\n\nBienvenido, Creador." 
-                });
+                }, { quoted: m });
+
             } catch (error) {
-                user.harem.push(adminChar);
-                await user.save();
-                await message.reply("⚡ Personaje reclamado, pero la imagen falló. Revisa con ?charinfo.");
+                console.error("Error en adminchar:", error);
+                return reply("⚡ Personaje reclamado en la DB, pero hubo un error al enviar la imagen.");
             }
-            break;
         }
+        break;
+			
 
         //------------------------------------------------KICK (EXPULSAR)--------------------------------------------------------
         case 'kick':
         case 'sacar':
         case 'expulsar':
         case 'ban': {
-            const chat = await message.getChat();
-            if (!chat.isGroup) return message.reply("❌ Solo en grupos.");
+            if (!m.isGroup) return reply("❌ Solo en grupos.");
 
-            const botId = client.info.wid._serialized;
-            const senderParticipant = chat.participants.find(p => p.id._serialized === userId);
-            const botParticipant = chat.participants.find(p => p.id._serialized === botId);
+            // 1. Verificamos permisos (Usando las constantes del Bloque 10)
+            // 'isAdmins' verifica si el que escribe es admin
+            if (!isAdmins) return reply("❌ Solo admins pueden usar este comando.");
+            
+            // 'isBotAdmins' verifica si el bot tiene poder para banear
+            if (!isBotAdmins) return reply("⚠️ No soy admin, no puedo expulsar a nadie.");
 
-            if (!senderParticipant?.isAdmin && !senderParticipant?.isSuperAdmin) return message.reply("❌ Solo admins.");
-            if (!botParticipant?.isAdmin && !botParticipant?.isSuperAdmin) return message.reply("⚠️ No soy admin.");
-
+            // 2. Identificar al objetivo (Ya resuelto por el Bloque 10 en 'targetId')
             let objetivoId = targetId;
-            if (!objetivoId) return message.reply("❌ Menciona a alguien.");
+            if (!objetivoId) return reply("❌ Menciona a alguien o responde a su mensaje.");
 
-            const target = chat.participants.find(p => p.id._serialized === objetivoId);
-            if (!target) return message.reply("❌ No está en el grupo.");
-            if (target.id._serialized === botId) return message.reply("❌ No puedo auto-expulsarme.");
-            if (target.isAdmin || target.isSuperAdmin) return message.reply("❌ No puedo sacar a otro admin.");
+            // 3. Validaciones de seguridad
+            if (objetivoId === botNumber) return reply("❌ No puedo auto-expulsarme.");
+            
+            // Verificamos si el objetivo es admin (no podemos sacar a colegas)
+            const targetParticipant = participants.find(p => p.id === objetivoId);
+            if (targetParticipant && (targetParticipant.admin === 'admin' || targetParticipant.admin === 'superadmin')) {
+                return reply("❌ No puedo sacar a otro admin.");
+            }
 
             try {
-                const contacto = await client.getContactById(target.id._serialized);
-                const nombre = contacto.pushname || contacto.name || contacto.number;
-                await chat.removeParticipants([target.id._serialized]);
-                await client.sendMessage(message.from, `🚀 *JUSTICIA APLICADA*\n\n*${nombre}* expulsado.`);
-            } catch (err) {
-                message.reply("⚠️ Error al expulsar.");
-            }
-            break;
-        }
+                // 4. Ejecución en Baileys: groupParticipantsUpdate
+                // 'remove' es la acción para expulsar
+                await sock.groupParticipantsUpdate(jid, [objetivoId], "remove");
 
-        //------------------------------------------------S (STICKERS)--------------------------------------------------------
+                const nombreTarget = objetivoId.split('@')[0];
+                return sock.sendMessage(jid, { 
+                    text: `🚀 *JUSTICIA APLICADA*\n\n@${nombreTarget} ha sido expulsado.`, 
+                    mentions: [objetivoId] 
+                }, { quoted: m });
+
+            } catch (err) {
+                console.error("Error en KICK:", err);
+                return reply("⚠️ Error al intentar expulsar al usuario.");
+            }
+        }
+        break;
+			
+
+          //------------------------------------------------S (STICKERS)--------------------------------------------------------
         case 's':
         case 'sticker': {
-            let mediaMsg;
-            if (message.hasQuotedMsg) {
-                const quoted = await message.getQuotedMessage();
-                if (quoted.hasMedia) mediaMsg = quoted;
-            } else if (message.hasMedia) {
-                mediaMsg = message;
-            }
+            // Verificamos si hay una imagen/video en el mensaje o en el citado
+            const quoted = m.quoted ? m.quoted : m;
+            const mime = (quoted.msg || quoted).mimetype || '';
 
-            if (!mediaMsg) return message.reply("❌ Responde a una imagen/video.");
+            if (!/image|video|webp/.test(mime)) {
+                return reply(`❌ Responde a una imagen o video corto con *${prefix}s*`);
+            }
 
             try {
-                const media = await mediaMsg.downloadMedia();
-                await client.sendMessage(message.from, media, {
-                    sendMediaAsSticker: true,
-                    stickerAuthor: "YakBot",
-                    stickerName: "YakBot tm"
+                // Descargamos el contenido multimedia
+                const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+                const buffer = await quoted.download();
+
+                // Configuramos el sticker
+                const sticker = new Sticker(buffer, {
+                    pack: 'YakBot Pack', // Nombre del paquete
+                    author: 'YakBot',     // Tu nombre de autor
+                    type: StickerTypes.FULL, // FULL para que no se corte, CROPPED para cuadrado
+                    categories: ['🤩', '🎉'],
+                    id: '12345',
+                    quality: 70, // Calidad del sticker
                 });
+
+                // Convertimos y enviamos
+                const stickerBuffer = await sticker.toBuffer();
+                return sock.sendMessage(jid, { sticker: stickerBuffer }, { quoted: m });
+
             } catch (err) {
-                message.reply("❌ Error al crear sticker.");
+                console.error("ERROR STICKER:", err);
+                return reply("❌ Error al procesar el sticker. Intenta con una imagen más ligera.");
             }
-            break;
         }
+        break;
+			
 
  //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
         case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
