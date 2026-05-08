@@ -250,7 +250,7 @@ function obtenerPersonajeRandom() {
 }
 
 // ==========================================
-// 10. SECCIÓN: MANEJADOR DE MENSAJES
+// 10. SECCIÓN: MANEJADOR DE MENSAJES (MÉDULA ESPINAL)
 // ==========================================
 function escuchadorMensajes(sock) {
     sock.ev.on('messages.upsert', async (chatUpdate) => {
@@ -258,44 +258,76 @@ function escuchadorMensajes(sock) {
             const m = chatUpdate.messages[0];
             if (!m.message) return;
 
+            // --- VARIABLES DE IDENTIFICACIÓN ---
             const jid = m.key.remoteJid;
-            // Captura quién envía: el bot (fromMe) o cualquier participante
             const userId = decodeJid(m.key.participant || m.key.remoteJid);
-            const authorName = m.pushName || 'Usuario';
             const isGroup = jid.endsWith('@g.us');
+            const botNumber = decodeJid(sock.user.id);
             
-            // Extraer el tipo de contenido y el texto del mensaje
+            // Extraer el texto del mensaje (Soporta texto, botones, listas y leyendas de multimedia)
             const type = getContentType(m.message);
             const content = type === 'conversation' ? m.message.conversation : 
                             type === 'extendedTextMessage' ? m.message.extendedTextMessage.text : 
                             type === 'imageMessage' ? m.message.imageMessage.caption : 
-                            type === 'videoMessage' ? m.message.videoMessage.caption : '';
+                            type === 'videoMessage' ? m.message.videoMessage.caption : 
+                            type === 'buttonsResponseMessage' ? m.message.buttonsResponseMessage.selectedButtonId : 
+                            type === 'listResponseMessage' ? m.message.listResponseMessage.singleSelectReply.selectedRowId : 
+                            type === 'templateButtonReplyMessage' ? m.message.templateButtonReplyMessage.selectedId : '';
 
-            // Filtro de prefijo
-            if (!content.startsWith(prefix)) return;
+            // Detectar si es un comando (empieza con el prefijo ?)
+            const isCmd = content.startsWith(prefix);
+            if (!isCmd) return;
 
-            // Preparación de argumentos y comando
+            // Preparar comando y argumentos
             const args = content.slice(prefix.length).trim().split(/ +/);
             const comando = args.shift().toLowerCase();
 
-            // Cargar o crear el perfil del usuario en MongoDB
-            let user = await User.findOne({ userId });
-            if (!user) {
-                user = new User({ userId });
-                await user.save();
-            }
+            // --- METADATOS DE GRUPO (PARA ADMINS Y MODERACIÓN) ---
+            const groupMetadata = isGroup ? await sock.groupMetadata(jid) : null;
+            const participants = isGroup ? groupMetadata.participants : [];
+            const pushname = m.pushName || 'Usuario';
 
-            // --- HELPERS DE RESPUESTA ---
-            // Responde citando el mensaje original (quoted)
-            const reply = (texto) => sock.sendMessage(jid, { text: texto }, { quoted: m });
+            const getAdmins = (participants) => {
+                let admins = [];
+                for (let i of participants) {
+                    i.admin ? admins.push(i.id) : '';
+                }
+                return admins;
+            };
 
-            // Detectar objetivos (Menciones o Respuestas a otros mensajes)
+            const admins = isGroup ? getAdmins(participants) : [];
+            const isAdmins = isGroup ? admins.includes(userId) : false;
+            const isBotAdmins = isGroup ? admins.includes(botNumber) : false;
+
+            // --- RESOLVER OBJETIVO (TARGET) ---
+            // Esta función detecta a quién te refieres si etiquetas a alguien o respondes a su mensaje
             const getTarget = () => {
                 let ment = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
                 let quot = m.message?.extendedTextMessage?.contextInfo?.participant;
                 return decodeJid(ment || quot || null);
             };
             const targetId = getTarget();
+
+            // --- HELPER DE DESCARGA (PARA STICKERS Y MULTIMEDIA) ---
+            // Añadimos la función .download() al mensaje para que el comando 's' funcione
+            const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+            m.download = () => downloadMediaMessage(m, 'buffer', {}, { logger: P({ level: 'silent' }), reuploadRequest: sock.updateMediaMessage });
+            if (m.quoted) {
+                m.quoted.download = () => downloadMediaMessage(m.quoted, 'buffer', {}, { logger: P({ level: 'silent' }), reuploadRequest: sock.updateMediaMessage });
+            }
+
+            // --- CARGA DE PERFIL DESDE MONGODB ---
+            let user = await User.findOne({ userId });
+            if (!user) {
+                user = new User({ userId });
+                await user.save();
+            }
+
+            // Actualizar stamina antes de cualquier comando
+            if (user.harem) user.harem.forEach(p => actualizarStamina(p));
+
+            // --- HELPER DE RESPUESTA RÁPIDA ---
+            const reply = (texto) => sock.sendMessage(jid, { text: texto }, { quoted: m });
 
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
@@ -2476,22 +2508,22 @@ function escuchadorMensajes(sock) {
         break;
 			
 
- //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
+        //------------------------------------------------REACCIONES ANIME--------------------------------------------------------
         case 'cry': case 'sad': case 'happy': case 'angry': case 'pat': 
         case 'preg': case 'laugh': case 'dance': case 'scared': case 'eat': 
         case 'sleep': case 'cafe': case 'hug': case 'punch': case 'kill': 
         case 'run': case 'kiss': {
+            // Incrementamos el contador de reacciones en el perfil del usuario
             user.reacciones = (user.reacciones || 0) + 1;
             await user.save();
 
-			// Agrega esto justo después de case 'kiss': {
-const targetId = message.mentionedIds[0] || (message.hasQuotedMsg ? (await message.getQuotedMessage()).author : null);
-            const authorContact = await message.getContact();
-            const authorName = authorContact.pushname || 'Usuario';
+            // Identificamos al autor y al objetivo (Bloque 10)
+            const authorName = pushname || 'Usuario';
             let nombreMencionado = "";
+            
             if (targetId) {
-                const contactMencionado = await client.getContactById(targetId);
-                nombreMencionado = `*${contactMencionado.pushname || contactMencionado.number.split('@')[0]}*`;
+                // Obtenemos solo el número para el nombre si no tenemos el contacto
+                nombreMencionado = `*@${targetId.split('@')[0]}*`;
             }
 
             const frases = {
@@ -2511,32 +2543,42 @@ const targetId = message.mentionedIds[0] || (message.hasQuotedMsg ? (await messa
                 run: { solo: `*${authorName}* corre`, con: `*${authorName}* huye de ${nombreMencionado}` },
                 kill: { solo: `*${authorName}* murió`, con: `*${authorName}* mató a ${nombreMencionado}` },
                 pat: { solo: `*${authorName}* se acaricia`, con: `*${authorName}* acaricia a ${nombreMencionado}` },
-                preg: { solo: `*${authorName}* está embarazado`, con: `*${authorName}* embarazó a ${nombreMencionado}` }
+                preg: { solo: `*${authorName}* está en cinta`, con: `*${authorName}* dejó en cinta a ${nombreMencionado}` }
             };
 
+            // Seleccionamos la frase según el comando ejecutado (comando ya viene definido en tu switch)
             const textoFinal = targetId ? frases[comando].con : frases[comando].solo;
-            const randomGif = animeGifs[comando][Math.floor(Math.random() * animeGifs[comando].length)];
+            
+            // Obtenemos el archivo desde tu array animeGifs
+            const categoriaGifs = animeGifs[comando];
+            if (!categoriaGifs || categoriaGifs.length === 0) return reply("⚠️ No hay GIFs configurados para este comando.");
+            
+            const randomGif = categoriaGifs[Math.floor(Math.random() * categoriaGifs.length)];
             const gifPath = path.join(__dirname, randomGif);
-            const outputPath = `./temp_${Date.now()}.mp4`;
 
-            ffmpeg(gifPath)
-                .setFfmpegPath(ffmpegPath)
-                .outputOptions(['-pix_fmt yuv420p', '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'])
-                .toFormat('mp4')
-                .on('end', async () => {
-                    try {
-                        const media = MessageMedia.fromFilePath(outputPath);
-                        await client.sendMessage(message.from, media, { caption: textoFinal, sendVideoAsGif: true, mentions: targetId ? [targetId] : [] });
-                        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-                    } catch (e) {}
-                })
-                .on('error', () => message.reply("❌ Error en GIF."))
-                .save(outputPath);
-			 break;
-		}
+            try {
+                // Validamos que el archivo exista antes de intentar enviarlo
+                if (!fs.existsSync(gifPath)) throw new Error("Archivo no encontrado");
+
+                // En Baileys enviamos el video/gif directamente
+                // gifPlayback: true lo hace ver como un GIF (reproducción automática)
+                await sock.sendMessage(jid, {
+                    video: fs.readFileSync(gifPath),
+                    caption: textoFinal,
+                    gifPlayback: true,
+                    mentions: targetId ? [targetId] : []
+                }, { quoted: m });
+
+            } catch (err) {
+                console.error("ERROR EN REACCIONES:", err);
+                return reply(textoFinal + "\n\n⚠️ _(Error al cargar el video de reacción)_");
+            }
+        }
+        break;
            
 
-default: {
+            //------------------------------------------------DEFAULT (MANEJO DE COMANDOS INEXISTENTES)--------------------------------------------------------
+            default: {
                 const misComandos = [
                     'hola', 'saludo', 'menu', 'help', 'ayuda', 'cal', 'calculadora', 'gay', 'homo',
                     'profile', 'perfil', 'logros', 'platino', 'say', 'repetir', 'ping', 'charlist',
@@ -2550,34 +2592,35 @@ default: {
                     'apostar', 'ship', 'pareja', 'shippear', 'testearamor', 'givechar', 'regalar',
                     'darpersonaje', 'obsequiar', 'tr', 'traducir', 'traductor', 'traduccion', 'trade',
                     'intercambio', 'trueque', 'cambiar', 'aceptartrade', 'confirmartrade', 'aceptarcambio',
-                    'ctired', 'cansados', 'cstamina', 'smob', 'searchmob', 'buscarmob', 'mob', 'fight',
-                    'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 'addmoney',
-                    'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 'removerchar',
-                    'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 'sacar',
-                    'expulsar', 'ban', 's', 'sticker'
+                    'ctired', 'cansados', 'cstamina', 'wtired', 'smob', 'searchmob', 'buscarmob', 'mob', 
+                    'fight', 'fmob', 'atacar', 'farmear', 'fixlevels', 'limpiarniveles', 'resetlevels', 
+                    'addmoney', 'admdinero', 'createmoney', 'spawnmoney', 'delchar', 'borrarpj', 
+                    'removerchar', 'quitarpj', 'adminchar', 'pjadmin', 'godmode', 'modoadmin', 'kick', 
+                    'sacar', 'expulsar', 'ban', 's', 'sticker'
                 ];
                 const listaReacciones = [
                     'cry', 'sad', 'happy', 'angry', 'pat', 'preg', 'laugh', 'dance', 'scared',
                     'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
                 ];
                 
-                if (!misComandos.includes(comando) && !listaReacciones.includes(comando)) {
-                    message.reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
+                // Si el mensaje empieza con el prefijo pero no es un comando conocido
+                if (isCmd && !misComandos.includes(comando) && !listaReacciones.includes(comando)) {
+                    reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
                 }
                 break;
             }
-} // 1. Cierre del Switch (Comandos)
+        } // 1. CIERRE DEL SWITCH (COMANDOS)
 
-        // Guardar progreso del usuario al finalizar cualquier comando
-        await user.save();
+        // Guardar progreso del usuario al finalizar cualquier comando (Persistencia en MongoDB)
+        if (user) await user.save();
 
     } catch (e) {
-        // Cierre del try interno de message_create
         console.error("❌ Error en la lógica de comandos:", e);
     }
-}); // 2. Cierre del client.on('message_create')
+}); // 2. CIERRE DE sock.ev.on('messages.upsert')
 
-	function msToTime(duration) {
+// Función de utilidad para formatear tiempo (ms a hh:mm:ss)
+function msToTime(duration) {
     let seconds = Math.floor((duration / 1000) % 60),
         minutes = Math.floor((duration / (1000 * 60)) % 60),
         hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
@@ -2587,50 +2630,46 @@ default: {
     seconds = (seconds < 10) ? "0" + seconds : seconds;
 
     return (hours !== "00" ? hours + "h " : "") + minutes + "m " + seconds + "s";
-	}
+}
 
 // ==========================================
 // EL ANTÍDOTO: CIERRES DE BLOQUES GLOBALES
 // ==========================================
-// Estos cierres saldan la "deuda" de las llaves que quedaron 
-// abiertas en la Sección 5 (iniciarBot y su try-catch).
 
     } catch (err) {
         console.error("❌ Error crítico en el núcleo del Bot:", err);
     }
-} // CIERRE DEFINITIVO DE LA FUNCIÓN iniciarBot()
+} // 3. CIERRE DEFINITIVO DE LA FUNCIÓN iniciarBot()
 
 // ==========================================
 // 11. ARRANQUE DEL SISTEMA
 // ==========================================
 
-// Llamamos a la función principal para que el bot encienda
+// Lanzamos el bot al espacio
 iniciarBot();
 
-// Señal de vida en consola cada 60 segundos
+// Señal de vida en consola cada 60 segundos (Mantenimiento de logs en Railway)
 setInterval(() => {
-    if (client && client.info) {
-        console.log(`⌬ YakBot ONLINE [${client.info.pushname}] - ${new Date().toLocaleTimeString()}`);
-    } else {
-        console.log(`⌬ YakBot STANDBY (Esperando conexión...) - ${new Date().toLocaleTimeString()}`);
-    }
+    console.log(`⌬ YakBot ONLINE - ${new Date().toLocaleTimeString()}`);
 }, 60000);
 
-// Anti-Crash Global para evitar que Railway detenga el contenedor
-process.on('unhandledRejection', (reason) => {
-    console.error(' [ANTI-CRASH] Rejection:', reason);
-});
-process.on('uncaughtException', (err) => {
-    console.error(' [ANTI-CRASH] Exception:', err);
+// Anti-Crash Global: Evita que el bot muera por errores menores
+process.on('unhandledRejection', (reason, promise) => {
+    console.error(' [ANTI-CRASH] Rejection no manejada:', reason);
 });
 
+process.on('uncaughtException', (err) => {
+    console.error(' [ANTI-CRASH] Excepción no capturada:', err);
+});
+
+// Vigilante de Memoria RAM (Para el plan gratuito de Railway de 512MB)
 setInterval(() => {
     const memoriaUsada = process.memoryUsage().heapUsed / 1024 / 1024;
-    console.log(`📊 RAM en uso: ${Math.round(memoriaUsada)}MB`);
+    console.log(`📊 Uso de RAM: ${Math.round(memoriaUsada)}MB`);
     
-    // Si pasa de 450MB (estando cerca del límite de 512MB), reiniciamos
+    // Reinicio preventivo si se acerca al límite de 512MB
     if (memoriaUsada > 450) {
-        console.log("🚨 MEMORIA CRÍTICA: Reiniciando proceso para evitar crash...");
-        process.exit(1); // Railway lo reiniciará automáticamente al fallar
+        console.log("🚨 ALERTA DE MEMORIA: Reiniciando proceso para refrescar recursos...");
+        process.exit(1); 
     }
-}, 300000); // Revisa cada 5 minutos
+}, 300000); // Revisión cada 5 minutos
