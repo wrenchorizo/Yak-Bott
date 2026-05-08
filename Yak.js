@@ -1,341 +1,302 @@
 // ==========================================
-// 1. POLIFILLS Y MÓDULOS
+// 1. SECCIÓN: NÚCLEO (MÓDULOS BAILEYS)
 // ==========================================
-if (!global.File) {
-    const { Blob } = require('buffer');
-    global.File = class extends Blob {
-        constructor(parts, filename, options = {}) {
-            super(parts, options);
-            this.name = filename;
-            this.lastModified = options.lastModified || Date.now();
-        }
-    };
-}
+const { 
+    makeWASocket, 
+    useMultiFileAuthState, 
+    DisconnectReason, 
+    fetchLatestBaileysVersion, 
+    makeInMemoryStore, 
+    jidDecode, 
+    getContentType,
+    downloadContentFromMessage 
+} = require('@whiskeysockets/baileys');
 
-const mongoose = require('mongoose');
-const { Client, RemoteAuth, MessageMedia } = require('whatsapp-web.js');
-const { MongoStore } = require('wwebjs-mongo');
-const qrcode = require('qrcode-terminal');
+const { Boom } = require('@hapi/boom');
+const P = require('pino');
 const fs = require('fs');
-const sharp = require('sharp');
 const path = require('path');
+const axios = require('axios');
+const mongoose = require('mongoose');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
-const play = require('play-dl');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { exec } = require('child_process');
-const axios = require('axios');
-const dns = require('dns');
-const http = require('http');
 
-ffmpeg.setFfmpegPath(ffmpegPath);
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+// Almacén de datos en memoria para Baileys (contactos, chats, etc.)
+const store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
+
 
 // ==========================================
-// 2. ESQUEMAS DE MONGODB
+// 2. SECCIÓN: ESQUEMAS DE MONGODB
 // ==========================================
-
 const userSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
-    dinero: { type: Number, default: 0 },
-    xp: { type: Number, default: 0 },
-    level: { type: Number, default: 1 },
-    mensajes: { type: Number, default: 0 },
-    comandos: { type: Number, default: 0 },
-    lastWork: { type: Number, default: 0 },
-    lastDaily: { type: Number, default: 0 },
-    rachaDaily: { type: Number, default: 0 },
-    lastCrime: { type: Number, default: 0 },
-    lastRW: { type: Number, default: 0 },
-    lastClaim: { type: Number, default: 0 },
-    lastSmob: { type: Number, default: 0 },
+    dinero: { type: Number, default: 5000 },
+    harem: { type: Array, default: [] },
     logros: { type: Array, default: [] },
-    cooldowns: { type: Object, default: {} }, 
-    harem: { type: Array, default: [] }
-}, { minimize: false }); // <--- IMPORTANTE: evita que se borren objetos vacíos
+    reacciones: { type: Number, default: 0 },
+    stats: {
+        rws: { type: Number, default: 0 },
+        claims: { type: Number, default: 0 },
+        duelosGanados: { type: Number, default: 0 }
+    },
+    cooldowns: { type: Object, default: {} },
+    lastDaily: { type: Number, default: 0 }
+});
 
 const User = mongoose.model('User', userSchema);
 
-const charShopSchema = new mongoose.Schema({
-    grupoId: { type: String, required: true, unique: true },
-    personajes: { type: Array, default: [] },
-    ultimaActualizacion: { type: Number, default: 0 }
-});
-const CharShop = mongoose.model('CharShop', charShopSchema);
 
 // ==========================================
-// 3. VARIABLES GLOBALES Y DATOS ESTATICOS
+// 3. SECCIÓN: VARIABLES GLOBALES Y GIFS
 // ==========================================
-let client;
-const MONGO_URI = process.env.MONGODB_URL; 
+const prefix = '?';
+const adminID = '232246195839008@s.whatsapp.net'; // Formato Baileys
 
-
-const animeGifs = {
-    cry: ['./gifs/cry1.gif', './gifs/cry2.gif', './gifs/cry3.gif', './gifs/cry4.gif', './gifs/cry5.gif'],
-    happy: ['./gifs/happy1.gif', './gifs/happy2.gif', './gifs/happy3.gif'],
-    angry: ['./gifs/angry1.gif', './gifs/angry2.gif', './gifs/angry3.gif'],
-    laugh: ['./gifs/laugh1.gif', './gifs/laugh2.gif', './gifs/laugh3.gif'],
-    hug: ['./gifs/hug1.gif', './gifs/hug2.gif', './gifs/hug3.gif'],
-    dance: ['./gifs/dance1.gif', './gifs/dance2.gif', './gifs/dance3.gif'],
-    cafe: ['./gifs/cafe1.gif', './gifs/cafe2.gif', './gifs/cafe3.gif'],
-    kiss: ['./gifs/kiss1.gif', './gifs/kiss2.gif', './gifs/kiss3.gif', './gifs/kiss4.gif'],
-    sad: ['./gifs/sad1.gif', './gifs/sad2.gif', './gifs/sad3.gif', './gifs/sad4.gif'],
-    eat: ['./gifs/eat1.gif', './gifs/eat2.gif', './gifs/eat3.gif', './gifs/eat4.gif'],
-    sleep: ['./gifs/sleep1.gif', './gifs/sleep2.gif', './gifs/sleep3.gif', './gifs/sleep4.gif'],
-    scared: ['./gifs/scared1.gif', './gifs/scared2.gif', './gifs/scared3.gif', './gifs/scared4.gif'],
-    punch: ['./gifs/punch1.gif', './gifs/punch2.gif', './gifs/punch3.gif', './gifs/punch4.gif'],
-    run: ['./gifs/run1.gif', './gifs/run2.gif', './gifs/run3.gif', './gifs/run4.gif'],
-    kill: ['./gifs/kill1.gif', './gifs/kill2.gif', './gifs/kill3.gif', './gifs/kill4.gif'],
-    preg: ['./gifs/Preg1.gif', './gifs/Preg2.gif', './gifs/Preg3.gif', './gifs/Preg4.gif', './gifs/Preg5.gif', './gifs/Preg6.gif'],
-    pat: ['./gifs/Pat1.gif', './gifs/Pat2.gif', './gifs/Pat3.gif', './gifs/Pat4.gif', './gifs/Pat5.gif']
-};
-
-const logrosInfo = {
-    cmd_500: "Veterano de Comandos (500 usos)",
-    cmd_1000: "Adicto al Bot (1,000 usos)",
-    cmd_10000: "Leyenda Viviente (10,000 usos)",
-    cmd_50000: "DIOS de los Comandos (50,000 usos)",
-    three_am: "Insomnio Activo (3 AM)",
-    money_100k: "Ahorrador (100k)",
-    money_1m: "Millonario (1M)",
-    money_10m: "Magnate (10M)",
-    money_100m: "Dueño del Mundo (100M)",
-    chars_15: "Coleccionista Principiante (15 personajes)",
-    chars_30: "Dueño de Harem (30 personajes)",
-    chars_50: "Comandante de Almas (50 personajes)",
-    chars_100: "Soberano del Harem (100 personajes)"
-};
-
-const mobsData = [
-    { nombre: 'Zombies salvages', lvls: [5, 9], desc: 'Protestan por tu presencia.' },
-    { nombre: 'Mentes manipuladas ultra mejoradas', lvls: [10, 50], desc: 'Un zumbido molesto pero letal.' },
-    { nombre: 'Esqueletos infernales', lvls: [100, 500], desc: 'Huesos crujientes que buscan pelea.' },
-    { nombre: 'Robots de ultron', lvls: [1000, 3500], desc: 'Cerebros... y tu dinero.' },
-    { nombre: 'Devastadores', lvls: [5000, 8000], desc: 'Máquinas de destrucción masiva.' },
-    { nombre: 'Piratas con recompensas altas', lvls: [10000, 12000], desc: 'Buscadores de tesoros del Grand Line.' },
-    { nombre: 'Ejército de Viltrumitas', lvls: [15000, 17000], desc: 'Omni-man estaría orgulloso.' },
-    { nombre: 'Soldados de Freezer', lvls: [20000, 30000], desc: 'La élite galáctica del emperador.' },
-    { nombre: 'Celestiales errantes', lvls: [30000, 60000], desc: 'Entidades cósmicas fuera de control.' },
-    { nombre: 'Guerreros Universales', lvls: [70000, 100000], desc: 'Los más fuertes de todos los universos.' }
-];
-
-let cooldownsBuscarmob = {}; 
-let mobActual = {};
-const procesandoRW = new Set();
+// Bases de datos temporales (RAM)
 const duelosActivos = {};
 const tradesPendientes = {};
-let botSettings = {};
-let tiradasTemporales = {};
+const mobActual = {};
+const cooldownsBuscarmob = {};
+const procesandoRW = new Set();
 
-// ==========================================
-// 4. FUNCIONES DE APOYO (HELPERS)
-// ==========================================
-function msToTime(ms) {
-    const minutos = Math.floor(ms / 60000);
-    const segundos = Math.floor((ms % 60000) / 1000);
-    return `${minutos}m ${segundos}s`;
+// Carga de JSONs
+let personajes = [];
+let mobsData = [];
+try {
+    personajes = JSON.parse(fs.readFileSync('./Personajes.json', 'utf-8'));
+    mobsData = JSON.parse(fs.readFileSync('./Mobs.json', 'utf-8'));
+    console.log(`✅ Recursos listos: ${personajes.length} PJs y ${mobsData.length} Mobs.`);
+} catch (e) {
+    console.error("❌ Error en carga de JSON:", e);
 }
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+// Mapa de Gifs para reacciones
+const animeGifs = {};
+const categorias = ['cry', 'hug', 'kiss', 'punch', 'kill', 'pat', 'happy', 'sad', 'angry', 'laugh', 'dance', 'scared', 'eat', 'sleep', 'cafe', 'run', 'preg'];
+
+categorias.forEach(cat => {
+    const dir = `./Gifs/${cat}`;
+    if (fs.existsSync(dir)) {
+        animeGifs[cat] = fs.readdirSync(dir).map(f => `Gifs/${cat}/${f}`);
+    }
+});
+
+// ==========================================
+// 4. SECCIÓN: FUNCIONES DE APOYO
+// ==========================================
+
+function msToTime(duration) {
+    let seconds = Math.floor((duration / 1000) % 60),
+        minutes = Math.floor((duration / (1000 * 60)) % 60),
+        hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+    return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+}
 
 function actualizarStamina(personaje) {
-    if (personaje.level === undefined) personaje.level = 1;
-    if (personaje.stamina === undefined) personaje.stamina = 100;
-    if (personaje.lastUpdate === undefined) personaje.lastUpdate = Date.now();
     const ahora = Date.now();
-    const tiempoPasado = ahora - personaje.lastUpdate;
-    const porcionRecuperada = Math.floor(tiempoPasado / 1800000) * 10;
-    if (porcionRecuperada > 0) {
-        personaje.stamina = Math.min(100, personaje.stamina + porcionRecuperada);
-        personaje.lastUpdate = ahora; 
+    const tiempoPasado = ahora - (personaje.lastUpdate || ahora);
+    const regeneracion = Math.floor(tiempoPasado / 600000) * 5; // 5% cada 10 min
+    if (regeneracion > 0) {
+        personaje.stamina = Math.min(100, (personaje.stamina || 0) + regeneracion);
+        personaje.lastUpdate = ahora;
     }
-    return personaje;
 }
 
-http.createServer((req, res) => { res.write('YakBot está vivo'); res.end(); }).listen(process.env.PORT || 3000);
+// Helper para decodificar JIDs (Nombres de usuario)
+const decodeJid = (jid) => {
+    if (!jid) return jid;
+    if (/:\d+@/gi.test(jid)) {
+        let decode = jidDecode(jid) || {};
+        return decode.user && decode.server && decode.user + '@' + decode.server || jid;
+    } else return jid;
+};
 
-process.on('unhandledRejection', (reason) => console.error(' [ANTI-CRASH] Rechazo:', reason));
-process.on('uncaughtException', (err) => console.error(' [ANTI-CRASH] Excepción:', err));
 
 // ==========================================
-// 5. FUNCIÓN MAESTRA DE INICIO
+// 5. SECCIÓN: DONDE ARRANCA EL BOT
 // ==========================================
 async function iniciarBot() {
-    try {
-        const MONGO_URI = process.env.MONGODB_URL;
-        if (!MONGO_URI) return console.error("❌ MONGODB_URL no definida.");
+    // 1. Conexión a MongoDB
+    await mongoose.connect('TU_MONGO_URI_AQUÍ')
+        .then(() => console.log("✅ Conectado a MongoDB Atlas"))
+        .catch(err => console.error("❌ Error Mongo:", err));
 
-        console.log('⏳ Conectando a MongoDB Atlas...');
-        await mongoose.connect(MONGO_URI);
-        console.log('✅ Conectado a MongoDB Atlas');
+    // 2. Gestión de sesión (Multi-File Auth)
+    const { state, saveCreds } = await useMultiFileAuthState('./Data/session_baileys');
+    const { version } = await fetchLatestBaileysVersion();
 
-        // --- EL PARCHE PARA EL ERROR ENOENT ---
-        const sessionPath = './sessions';
-        if (!fs.existsSync(sessionPath)) {
-            console.log('📂 Creando carpeta de sesión para el volumen...');
-            fs.mkdirSync(sessionPath, { recursive: true });
-        }
-        // ---------------------------------------
-
-        const store = new MongoStore({ mongoose: mongoose });
-        
-        client = new Client({
-            authStrategy: new RemoteAuth({
-                clientId: 'YakBot-Principal',
-                store: store,
-                takeoverOnConflict: true,
-                backupSyncIntervalMs: 60000,
-                dataPath: sessionPath // Usamos la variable que acabamos de validar
-            }),
-            authTimeoutMs: 60000, // Le damos tiempo a la base de datos
-            takeoverOnConflict: true, 
-            takeoverTimeoutMs: 0,
-            puppeteer: {
-                handleSIGINT: false,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--single-process',
-                    '--disable-extensions'
-                ],
+    const sock = makeWASocket({
+        version,
+        logger: P({ level: 'silent' }),
+        printQRInTerminal: true, // Cambia a false si solo quieres usar Pairing Code
+        auth: state,
+        browser: ['Ubuntu', 'Chrome', '20.0.0'], // Necesario para que el Pairing funcione
+        getMessage: async (key) => {
+            if (store) {
+                const msg = await store.loadMessage(key.remoteJid, key.id);
+                return msg?.message || undefined;
             }
-        });
-		
-// ==========================================
-        // 6. EVENTOS DEL CLIENTE (QR Y READY)
-        // ==========================================
-
-        client.on('qr', (qr) => {
-            console.log('⚡ NUEVO CÓDIGO QR GENERADO:');
-            
-            // Genera el QR en la terminal
-            qrcode.generate(qr, { small: true });
-
-            // Link de respaldo para escanear desde el navegador
-            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
-            console.log(`🔗 LINK DE RESPALDO (Escanea aquí si el de arriba no funciona):\n${qrLink}`);
-        });
-
-        client.on('ready', () => {
-            console.log('✅ YakBot está ONLINE y funcionando');
-        });
-
-        client.on('remote_session_saved', () => {
-            console.log('✅ ¡SESIÓN GUARDADA! La sesión se ha respaldado en MongoDB Atlas.');
-        });
-
-        client.on('auth_failure', (msg) => {
-            console.error('❌ ERROR DE AUTENTICACIÓN:', msg);
-        });
-
-        // INICIALIZAR EL CLIENTE (Esto es lo que arranca todo)
-        await client.initialize();
-
-// ==========================================
-// 7. LÓGICA DE PERSONAJES Y TIENDA (FUERA DE iniciarBot)
-// ==========================================
-
-const personajes = JSON.parse(fs.readFileSync("./personajes.json", "utf8"));
-
-// Función para rotar la tienda del grupo
-async function actualizarCharShop(grupoId, forzar = false) {
-    const ahora = Date.now();
-    const tiempoRotacion = 3000000; 
-
-    let shop = await CharShop.findOne({ grupoId });
-    if (!shop) shop = new CharShop({ grupoId });
-
-    if (forzar || (ahora - shop.ultimaActualizacion >= tiempoRotacion)) {
-        // Buscamos en todos los usuarios quién tiene personajes registrados en este grupo
-        const usuariosConPjs = await User.find({ "harem.grupoId": grupoId });
-        const nombresEnHarem = usuariosConPjs.flatMap(u => 
-            u.harem.filter(p => p.grupoId === grupoId).map(p => p.nombre.toLowerCase())
-        );
-
-        const disponibles = personajes.filter(p => !nombresEnHarem.includes(p.nombre.toLowerCase()));
-        const copiaDisponibles = [...disponibles];
-        const nuevosPersonajes = [];
-
-        for (let i = 0; i < 5; i++) {
-            if (copiaDisponibles.length === 0) break;
-            const indexAleatorio = Math.floor(Math.random() * copiaDisponibles.length);
-            const pBase = copiaDisponibles.splice(indexAleatorio, 1)[0];
-            const valorBase = parseInt(pBase.valor) || 0;
-            
-            let precioFinal;
-            if (valorBase >= 17000) {
-                precioFinal = 700000 + Math.floor(Math.random() * 300001);
-            } else if (valorBase >= 5000) {
-                precioFinal = 250000 + Math.floor(Math.random() * 250000);
-            } else {
-                precioFinal = 15000 + Math.floor((valorBase / 5000) * 200000);
-            }
-            nuevosPersonajes.push({ ...pBase, precio: precioFinal });
+            return { conversation: "YakBot Online" };
         }
+    });
 
-        shop.personajes = nuevosPersonajes;
-        shop.ultimaActualizacion = ahora;
-        await shop.save();
+    store.bind(sock.ev);
+
+    // --- LÓGICA DE PAIRING CODE (OPCIONAL) ---
+    // Si quieres vincular por código de 8 dígitos, descomenta y pon tu número:
+	if (!sock.authState.creds.registered) {
+        const codigo = await sock.requestPairingCode('5214772025939'); 
+        console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
     }
-    return shop;
+
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'close') {
+            const code = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
+            const shouldReconnect = code !== DisconnectReason.loggedOut;
+            console.log(`📡 Conexión cerrada (${code}). Reconectando: ${shouldReconnect}`);
+            if (shouldReconnect) iniciarBot();
+        } else if (connection === 'open') {
+            console.log('✅ YakBot Baileys: CONECTADO Y LISTO');
+        }
+    });
+
+    // Pasamos el socket al Bloque 10
+    escuchadorMensajes(sock);
+}
+
+
+
+// ==========================================
+// 6. SECCIÓN: LÓGICA DE PERSONAJES Y TIENDA
+// ==========================================
+function actualizarHarem(harem) {
+    harem.forEach(p => actualizarStamina(p));
+}
+
+// Función para generar la tienda del día (si la usas)
+function generarTienda() {
+    const shuffle = [...personajes].sort(() => 0.5 - Math.random());
+    return shuffle.slice(0, 5);
 }
 
 // ==========================================
-// 9. HELPERS DE PROBABILIDAD
+// 7. SECCIÓN: LÓGICA DE PERSONAJES Y EVOLUCIÓN
 // ==========================================
 
-function personajeRandom(listaPersonajes) {
-    const filtrados = listaPersonajes.filter(p => p.nombre !== 'Deadpool');
-    if (filtrados.length === 0) return null;
+/**
+ * Procesa la evolución de un personaje si cumple los requisitos.
+ * @param {Object} p - El objeto del personaje en el harem.
+ * @returns {Object} - Objeto con el resultado (si evolucionó o no).
+ */
+function procesarEvolucion(p) {
+    if (!p.evolucion || !p.nivelEvo) return { evoluciono: false };
 
-    const total = filtrados.reduce((sum, p) => sum + (100000 - Number(p.valor || 0)), 0);
-    let rnd = Math.random() * total;
-
-    for (let p of filtrados) {
-        rnd -= (100000 - Number(p.valor || 0));
-        if (rnd <= 0) return p;
+    if (p.level >= p.nivelEvo) {
+        // Buscamos los datos del nuevo personaje en nuestro array global 'personajes'
+        const datosEvo = personajes.find(pe => pe.nombre.toLowerCase() === p.evolucion.toLowerCase());
+        
+        if (datosEvo) {
+            const nombreAnterior = p.nombre;
+            p.nombre = datosEvo.nombre;
+            p.imagen = datosEvo.imagen;
+            p.valor = datosEvo.valor;
+            p.fuente = datosEvo.fuente || p.fuente;
+            // Si la nueva forma tiene otra evolución, la seteamos, si no, null
+            p.evolucion = datosEvo.evolucion || null;
+            p.nivelEvo = datosEvo.nivelEvo || null;
+            
+            return { 
+                evoluciono: true, 
+                anterior: nombreAnterior, 
+                actual: p.nombre 
+            };
+        }
     }
-    return filtrados[filtrados.length - 1];
+    return { evoluciono: false };
+}
+
+/**
+ * Busca un personaje en el harem de un usuario por nombre y grupo.
+ */
+function buscarPjEnHarem(user, nombre, grupoId) {
+    return user.harem.find(p => 
+        p.nombre.toLowerCase() === nombre.toLowerCase() && 
+        p.grupoId === grupoId
+    );
 }
 
 // ==========================================
-// 10. ÚNICO MANEJADOR DE MENSAJES
+// 9. SECCIÓN: HELPERS DE PROBABILIDAD
 // ==========================================
-client.on('message_create', async (message) => {
-    if (message.fromMe) return;
-    const prefix = '?';
-    if (!message.body.startsWith(prefix)) return;
+function obtenerPersonajeRandom() {
+    const listaPesos = personajes.map(p => {
+        const v = parseInt(p.valor) || 1000;
+        let pesoFinal = (v >= 17000) ? 100 / Math.pow(v / 17000, 2.5) : 100;
+        return { p, peso: pesoFinal };
+    });
 
-    try {
-        const args = message.body.slice(prefix.length).trim().split(/\s+/);
-        const comando = args.shift().toLowerCase();
-        
-        const userId = message.author || message._data.participant || message.from;
-        const grupoId = message.from;
-        const pushname = message._data.notifyName || "Usuario";
-		const targetId = message.mentionedIds[0] || (message.hasQuotedMsg ? (await message.getQuotedMessage()).author : null);
+    const sumaPesosTotal = listaPesos.reduce((s, i) => s + i.peso, 0);
+    let randomNum = Math.random() * sumaPesosTotal;
 
-        let user = await User.findOne({ userId });
-        if (!user) {
-            user = new User({ userId });
-            await user.save();
-        }
+    for (const item of listaPesos) {
+        randomNum -= item.peso;
+        if (randomNum <= 0) return item.p;
+    }
+    return personajes[Math.floor(Math.random() * personajes.length)];
+}
 
-        user.mensajes += 1;
-        user.xp += 2;
-        user.comandos += 1;
-        
-        const xpNecesaria = user.level * 100;
-        if (user.xp >= xpNecesaria) {
-            user.xp -= xpNecesaria;
-            user.level += 1;
-            message.reply(`⭐ ¡Subiste al nivel *${user.level}*!`);
-        }
-		
+// ==========================================
+// 10. SECCIÓN: MANEJADOR DE MENSAJES
+// ==========================================
+function escuchadorMensajes(sock) {
+    sock.ev.on('messages.upsert', async (chatUpdate) => {
+        try {
+            const m = chatUpdate.messages[0];
+            if (!m.message) return;
+
+            const jid = m.key.remoteJid;
+            // Captura quién envía: el bot (fromMe) o cualquier participante
+            const userId = decodeJid(m.key.participant || m.key.remoteJid);
+            const authorName = m.pushName || 'Usuario';
+            const isGroup = jid.endsWith('@g.us');
+            
+            // Extraer el tipo de contenido y el texto del mensaje
+            const type = getContentType(m.message);
+            const content = type === 'conversation' ? m.message.conversation : 
+                            type === 'extendedTextMessage' ? m.message.extendedTextMessage.text : 
+                            type === 'imageMessage' ? m.message.imageMessage.caption : 
+                            type === 'videoMessage' ? m.message.videoMessage.caption : '';
+
+            // Filtro de prefijo
+            if (!content.startsWith(prefix)) return;
+
+            // Preparación de argumentos y comando
+            const args = content.slice(prefix.length).trim().split(/ +/);
+            const comando = args.shift().toLowerCase();
+
+            // Cargar o crear el perfil del usuario en MongoDB
+            let user = await User.findOne({ userId });
+            if (!user) {
+                user = new User({ userId });
+                await user.save();
+            }
+
+            // --- HELPERS DE RESPUESTA ---
+            // Responde citando el mensaje original (quoted)
+            const reply = (texto) => sock.sendMessage(jid, { text: texto }, { quoted: m });
+
+            // Detectar objetivos (Menciones o Respuestas a otros mensajes)
+            const getTarget = () => {
+                let ment = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+                let quot = m.message?.extendedTextMessage?.contextInfo?.participant;
+                return decodeJid(ment || quot || null);
+            };
+            const targetId = getTarget();
+
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
 // ==========================================
