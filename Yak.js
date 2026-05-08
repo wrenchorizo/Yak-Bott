@@ -738,58 +738,68 @@ function escuchadorMensajes(sock) {
 
 	//====================== E C O N O M I A  ==========================
 			
-//------------------------------------------------W (TRABAJAR)--------------------------------------------------------
+        //------------------------------------------------W (TRABAJAR)--------------------------------------------------------
         case 'w':
-		case 'trabajar':
-		case 'chambear':
-		case 'work': {
+        case 'trabajar':
+        case 'chambear':
+        case 'work': {
             const ahora = Date.now();
             const cooldown = 60 * 1000; // 1 minuto
 
+            // user ya lo tenemos cargado desde el inicio del switch
             if (ahora - (user.lastWork || 0) < cooldown) {
                 const restante = cooldown - (ahora - (user.lastWork || 0));
-                return message.reply(`◔ Espera *${msToTime(restante)}* para volver a trabajar.`);
+                return reply(`◔ Espera *${msToTime(restante)}* para volver a trabajar.`);
             }
 
             const ganancia = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
             user.dinero += ganancia;
             user.lastWork = ahora;
-            user.comandos += 1; // Para el sistema de logros
+            
+            // Si usas un contador de comandos para logros, lo mantenemos:
+            if (user.comandos !== undefined) {
+                user.comandos += 1;
+            }
 
             await user.save();
-            return message.reply(`⌨️ Has trabajado con éxito.\n\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance Total: *$${user.dinero.toLocaleString()}*`);
+            
+            return reply(`⌨️ Has trabajado con éxito.\n\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance Total: *$${user.dinero.toLocaleString()}*`);
         }
         break;
-
+			
         //------------------------------------------------CRIME (CRIMEN)--------------------------------------------------------
         case 'crime':
-		case 'crimen': {
+        case 'crimen': {
             const ahora = Date.now();
             const cooldown = 5 * 60 * 1000; // 5 minutos
 
+            // Verificamos el cooldown usando user.lastCrime
             if (ahora - (user.lastCrime || 0) < cooldown) {
                 const restante = cooldown - (ahora - (user.lastCrime || 0));
-                return message.reply(`◔ Espera *${msToTime(restante)}* para intentar otro crimen.`);
+                return reply(`◔ Espera *${msToTime(restante)}* para intentar otro crimen.`);
             }
 
+            // Probabilidad del 50%
             const exito = Math.random() < 0.5;
             user.lastCrime = ahora;
-            user.comandos += 1;
+            
+            if (user.comandos !== undefined) user.comandos += 1;
 
             if (exito) {
                 const ganancia = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000;
                 user.dinero += ganancia;
                 await user.save();
-                return message.reply(`✪ *¡CRIMEN EXITOSO!* ✪\n\n🕵️‍♂️ Lograste el golpe perfecto.\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`);
+                return reply(`✪ *¡CRIMEN EXITOSO!* ✪\n\n🕵️‍♂️ Lograste el golpe perfecto.\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`);
             } else {
                 const perdida = Math.floor(Math.random() * (6000 - 4000 + 1)) + 4000;
+                // Math.max para que el dinero no sea negativo
                 user.dinero = Math.max(0, user.dinero - perdida);
                 await user.save();
-                return message.reply(`👮‍♂️ *¡TE ATRAPARON!* 👮‍♂️\n\nLa policía te confiscó el equipo.\n📉 Perdiste: *$${perdida.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`);
+                return reply(`👮‍♂️ *¡TE ATRAPARON!* 👮‍♂️\n\nLa policía te confiscó el equipo.\n📉 Perdiste: *$${perdida.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`);
             }
         }
         break;
-
+			
         //------------------------------------------------DAILY (RECOMPENSA)--------------------------------------------------------
         case 'daily': {
             const ahora = new Date();
@@ -798,6 +808,7 @@ function escuchadorMensajes(sock) {
             // Calculamos el último hito de las 9:00 PM (21:00)
             let ultimoHito9PM = new Date();
             ultimoHito9PM.setHours(21, 0, 0, 0);
+            
             if (ahora < ultimoHito9PM) {
                 ultimoHito9PM.setTime(ultimoHito9PM.getTime() - msPorDia);
             }
@@ -808,11 +819,11 @@ function escuchadorMensajes(sock) {
             if (lastDailyTime > ultimoHito9PM.getTime()) {
                 let proximoReset = new Date(ultimoHito9PM.getTime() + msPorDia);
                 const faltante = proximoReset - ahora;
-                return message.reply(`⏳ Ya reclamaste tu daily.\nRegresa en *${msToTime(faltante)}* (9:00 PM).`);
+                // Cambio: message.reply -> reply
+                return reply(`⏳ Ya reclamaste tu daily.\nRegresa en *${msToTime(faltante)}* (9:00 PM).`);
             }
 
             // 2. Lógica de Racha (Streak)
-            // Si el último reclamo fue hace más de 48h desde el hito anterior, se pierde la racha
             const limiteRacha = ultimoHito9PM.getTime() - msPorDia;
             if (lastDailyTime < limiteRacha) {
                 user.rachaDaily = 1;
@@ -820,124 +831,143 @@ function escuchadorMensajes(sock) {
                 user.rachaDaily = Math.min(50, (user.rachaDaily || 0) + 1);
             }
 
-            // 3. Cálculo de Premio (Día 1: 10k -> Día 50: 200k)
-            // Fórmula: 10,000 + (racha-1) * (190,000 / 49)
+            // 3. Cálculo de Premio
             const base = 10000;
             const incremento = Math.floor((user.rachaDaily - 1) * (190000 / 49));
             const premioFinal = base + incremento;
 
             user.dinero += premioFinal;
             user.lastDaily = ahora.getTime();
+            
+            // Guardamos cambios en MongoDB
             await user.save();
 
             let rachaMsg = user.rachaDaily === 50 ? "🔥 ¡RACHA MÁXIMA ALCANZADA! 🔥" : `📈 Racha actual: *Día ${user.rachaDaily}*`;
 
-            return message.reply(`『 🎁 *RECOMPENSA DIARIA* 』\n\n${rachaMsg}\n💰 Has recibido: *$${premioFinal.toLocaleString()}*\n\n_Vuelve mañana después de las 9:00 PM_`);
+            // Cambio: message.reply -> reply
+            return reply(`『 🎁 *RECOMPENSA DIARIA* 』\n\n${rachaMsg}\n💰 Has recibido: *$${premioFinal.toLocaleString()}*\n\n_Vuelve mañana después de las 9:00 PM_`);
         }
         break;
 
         //------------------------------------------------BAL (BILLETERA)--------------------------------------------------------
         case 'bal':
-		case 'balance':
-		case 'cartera':
-		case 'billetera':
-		case 'dinero': {
+        case 'balance':
+        case 'cartera':
+        case 'billetera':
+        case 'dinero': {
             const idVer = targetId || userId;
             let targetUser = await User.findOne({ userId: idVer });
-            if (!targetUser) targetUser = new User({ userId: idVer });
+            
+            // Si el usuario no existe en la DB, lo creamos para que no de error
+            if (!targetUser) {
+                targetUser = new User({ userId: idVer });
+                await targetUser.save();
+            }
 
             const nombre = idVer === userId ? "TU BILLETERA" : "BILLETERA DEL USUARIO";
-            return message.reply(`💰 *${nombre}*\n━━━━━━━━━━━━━━\n» Balance actual: *$${targetUser.dinero.toLocaleString()}*`);
+            
+            // Si es la billetera de otro, mencionamos al usuario para que sepa de quién es
+            const mencion = idVer === userId ? "" : `\n👤 *Usuario:* @${idVer.split('@')[0]}`;
+
+            const textoBal = `💰 *${nombre}*\n━━━━━━━━━━━━━━${mencion}\n» Balance actual: *$${targetUser.dinero.toLocaleString()}*`;
+
+            // Usamos sock.sendMessage para que la mención funcione si idVer es otro usuario
+            return sock.sendMessage(jid, { 
+                text: textoBal, 
+                mentions: [idVer] 
+            }, { quoted: m });
         }
         break;
+			
 
 // ==========================================
 //           SISTEMA DE TIENDA (SHOP)
 // ==========================================
 
-//------------------------------------------------SHOP (TIENDA DE OBJETOS)--------------------------------------------------------
+        //------------------------------------------------SHOP (TIENDA DE OBJETOS)--------------------------------------------------------
         case 'shop':
-		case 'tienda':
-		case 'itemshop': {
+        case 'tienda':
+        case 'itemshop': {
             let tabla = `🛒 *TIENDA DE LUJO YAKBOT*\n`;
             tabla += `━━━━━━━━━━━━━━━━━━━━\n\n`;
             
             tabla += `1️⃣ *Poción de Energía* (⚡+50)\n`;
             tabla += `    ╰┈─ ➤ Precio: $15,000\n`;
-            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 1 Nombre\n\n`;
+            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 1 [Nombre del PJ]\n\n`;
             
             tabla += `2️⃣ *Amuleto Maestro* (✨+100 XP)\n`;
             tabla += `    ╰┈─ ➤ Precio: $35,000\n`;
-            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 2 Nombre\n\n`;
+            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 2 [Nombre del PJ]\n\n`;
             
             tabla += `3️⃣ *Piedra de Evolución* (⭐ +1 Nivel)\n`;
             tabla += `    ╰┈─ ➤ Precio: $80,000\n`;
-            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 3 Nombre\n\n`;
+            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 3 [Nombre del PJ]\n\n`;
             
             tabla += `4️⃣ *Bendición del Admin* (💖 +2 Niveles y Full Stamina)\n`;
             tabla += `    ╰┈─ ➤ Precio: $150,000\n`;
-            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 4 Nombre\n\n`;
+            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 4 [Nombre del PJ]\n\n`;
             
             tabla += `5️⃣ *Contrato Eterno* (📜 +50% Valor Base)\n`;
             tabla += `    ╰┈─ ➤ Precio: $300,000\n`;
-            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 5 Nombre\n\n`;
+            tabla += `    ╰┈─ ➤ Uso: ${prefix}buy 5 [Nombre del PJ]\n\n`;
             
             tabla += `━━━━━━━━━━━━━━━━━━━━\n`;
+            // user ya viene definido desde el inicio del switch
             tabla += `⌬ Tu Balance: *$${user.dinero.toLocaleString()}*`;
             
-            return message.reply(tabla);
+            // Cambio: message.reply -> reply
+            return reply(tabla);
         }
         break;
 
         //------------------------------------------------BUY (COMPRAR OBJETOS)--------------------------------------------------------
         case 'buy':
-		case 'comprar': {
+        case 'comprar': {
             const itemNum = args[0];
             const targetName = args.slice(1).join(' ').toLowerCase().trim();
 
-            if (!itemNum || !targetName) return message.reply(`❌ Uso: *${prefix}buy [número] [nombre del personaje]*`);
+            if (!itemNum || !targetName) return reply(`❌ Uso: *${prefix}buy [número] [nombre del personaje]*`);
 
-            // Buscamos al personaje en el harem del usuario (MongoDB)
+            // Buscamos al personaje en el harem del usuario (user ya viene de MongoDB)
             const personaje = user.harem.find(p => p.nombre.toLowerCase() === targetName);
-            if (!personaje) return message.reply(`❌ No tienes a **${targetName}** en tu harem.`);
+            if (!personaje) return reply(`❌ No tienes a **${targetName}** en tu harem.`);
 
             const precios = { "1": 15000, "2": 35000, "3": 80000, "4": 150000, "5": 300000 };
             const costo = precios[itemNum];
 
-            if (!costo) return message.reply("❌ Número de objeto inválido.");
-            if (user.dinero < costo) return message.reply(`💸 No tienes suficiente dinero. Necesitas *$${costo.toLocaleString()}*.`);
+            if (!costo) return reply("❌ Número de objeto inválido.");
+            if (user.dinero < costo) return reply(`💸 No tienes suficiente dinero. Necesitas *$${costo.toLocaleString()}*.`);
 
             // Procesar el efecto del item
             user.dinero -= costo;
 
             if (itemNum === '1') {
                 personaje.stamina = Math.min(100, (personaje.stamina || 0) + 50);
-                message.reply(`🧪 *Poción* usada en ${personaje.nombre}. Stamina: ${personaje.stamina}%`);
+                reply(`🧪 *Poción* usada en ${personaje.nombre}. Stamina: ${personaje.stamina}%`);
             } 
             else if (itemNum === '2') {
-                personaje.exp += 100;
+                personaje.exp = (personaje.exp || 0) + 100;
                 while (personaje.exp >= (personaje.level || 1) * 100) {
                     personaje.exp -= (personaje.level || 1) * 100;
-                    personaje.level += 1;
+                    personaje.level = (personaje.level || 1) + 1;
                 }
-                message.reply(`✨ *Amuleto* usado. ${personaje.nombre} subió al nivel ${personaje.level}.`);
+                reply(`✨ *Amuleto* usado. ${personaje.nombre} subió al nivel ${personaje.level}.`);
             } 
             else if (itemNum === '3') {
-                personaje.level += 1;
-                message.reply(`⭐ ¡${personaje.nombre} subió al nivel ${personaje.level} con la Piedra!`);
+                personaje.level = (personaje.level || 1) + 1;
+                reply(`⭐ ¡${personaje.nombre} subió al nivel ${personaje.level} con la Piedra!`);
             } 
             else if (itemNum === '4') {
                 personaje.stamina = 100;
-                personaje.level += 2;
-                message.reply(`💖 ¡${personaje.nombre} bendecido!\n🆙 +2 Niveles (Nivel: ${personaje.level})\n⚡ Energía al 100%`);
+                personaje.level = (personaje.level || 1) + 2;
+                reply(`💖 ¡${personaje.nombre} bendecido!\n🆙 +2 Niveles (Nivel: ${personaje.level})\n⚡ Energía al 100%`);
             } 
             else if (itemNum === '5') {
-                personaje.valor = Math.floor(personaje.valor * 1.5);
-                message.reply(`📜 *Contrato Eterno* firmado.\n📈 Valor de ${personaje.nombre} subió a *$${personaje.valor.toLocaleString()}*.`);
+                personaje.valor = Math.floor((personaje.valor || 0) * 1.5);
+                reply(`📜 *Contrato Eterno* firmado.\n📈 Valor de ${personaje.nombre} subió a *$${personaje.valor.toLocaleString()}*.`);
             }
 
             // --- LÓGICA DE EVOLUCIÓN AUTOMÁTICA ---
-            // Buscamos si el personaje original en el JSON tiene evolución
             const dataOriginal = personajes.find(p => p.nombre.toLowerCase() === personaje.nombre.toLowerCase());
             
             if (dataOriginal && dataOriginal.evolucion && personaje.level >= dataOriginal.nivelEvo) {
@@ -947,23 +977,25 @@ function escuchadorMensajes(sock) {
                     personaje.nombre = datosEvo.nombre;
                     personaje.imagen = datosEvo.imagen;
                     personaje.valor = datosEvo.valor;
-                    // No reseteamos nivel/exp a menos que tú lo quieras así
-                    message.reply(`✨ ¡INCREÍBLE! *${nombreViejo}* ha evolucionado a... ¡*${personaje.nombre}*! 🎉`);
+                    reply(`✨ ¡INCREÍBLE! *${nombreViejo}* ha evolucionado a... ¡*${personaje.nombre}*! 🎉`);
                 }
             }
 
+            // IMPORTANTE: Avisar a Mongoose que el array 'harem' cambió
+            user.markModified('harem');
             await user.save();
         }
         break;
 
-        //------------------------------------------------CHARSHOP (MERCADO ROTATIVO)--------------------------------------------------------
- 		case 'charshop':
+         //------------------------------------------------CHARSHOP (MERCADO ROTATIVO)--------------------------------------------------------
+        case 'charshop':
         case 'mercado':
         case 'm': {
-            // Llamamos a la función asíncrona y esperamos el resultado de Mongo
-            const shopDelGrupo = await actualizarCharShop(grupoId); 
+            // En Baileys usamos 'jid' que es el ID del chat actual
+            const shopDelGrupo = await actualizarCharShop(jid); 
             
             const ahora = Date.now();
+            // 3,000,000 ms son 50 minutos exactos
             const tiempoRestante = 3000000 - (ahora - shopDelGrupo.ultimaActualizacion);
             
             let msg = `『 🏪 *MERCADO DE PERSONAJES* 』\n`;
@@ -980,34 +1012,38 @@ function escuchadorMensajes(sock) {
                 msg += `_Usa *?bchar [número]* para comprar._\n`;
             }
 
-            msg += `━━━━━━━━━━━━━━━━━━━━\n⌬ Tu Saldo: *$${user.dinero.toLocaleString()}*`;
-            return message.reply(msg);
+            msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+            // 'user' ya está cargado desde el inicio del switch
+            msg += `⌬ Tu Saldo: *$${user.dinero.toLocaleString()}*`;
+            
+            // Cambio: message.reply -> reply
+            return reply(msg);
         }
         break;
-
+			
         //------------------------------------------------BCHAR (COMPRAR PERSONAJE)--------------------------------------------------------
         case 'bchar':
         case 'buychar':
         case 'buycharacter': {
-            // Obtenemos la tienda de la DB
-            const shopDelGrupo = await actualizarCharShop(grupoId);
+            // En Baileys usamos 'jid' para identificar el chat/grupo
+            const shopDelGrupo = await actualizarCharShop(jid);
             const num = parseInt(args[0]);
             const indice = num - 1;
 
             if (isNaN(num) || !shopDelGrupo.personajes[indice]) {
-                return message.reply("❌ Número inválido. Mira el mercado con *?m*.");
+                return reply("❌ Número inválido. Mira el mercado con *?m*.");
             }
 
             const item = shopDelGrupo.personajes[indice];
 
             if (user.dinero < item.precio) {
-                return message.reply(`❌ Dinero insuficiente. Te faltan *$${(item.precio - user.dinero).toLocaleString()}*.`);
+                return reply(`❌ Dinero insuficiente. Te faltan *$${(item.precio - user.dinero).toLocaleString()}*.`);
             }
 
             // Transacción
             user.dinero -= item.precio;
             
-            // Añadir al harem con todos los datos necesarios para evolución/XP
+            // Añadir al harem con los campos necesarios para tu sistema de RPG
             user.harem.push({
                 nombre: item.nombre,
                 fuente: item.fuente,
@@ -1016,34 +1052,38 @@ function escuchadorMensajes(sock) {
                 level: 1,
                 exp: 0,
                 stamina: 100,
-				grupoId: grupoId,
+                grupoId: jid,
                 lastUpdate: Date.now(),
-                evolucion: item.evolucion || null, // Importante para que puedan evolucionar luego
+                evolucion: item.evolucion || null,
                 nivelEvo: item.nivelEvo || null
             });
 
-            // Quitar de la tienda y guardar en la base de datos de la tienda
+            // Quitar de la tienda para que nadie más lo compre en esta rotación
             shopDelGrupo.personajes.splice(indice, 1);
             
-            // Guardamos ambos: el usuario y la tienda actualizada
+            // Marcamos el array harem como modificado para que Mongoose guarde los cambios internos
+            user.markModified('harem');
+            
+            // Guardamos ambos documentos en MongoDB
             await user.save();
-            await shopDelGrupo.save(); // ¡Vital! Para que el personaje desaparezca para todos
+            await shopDelGrupo.save();
 
-            return message.reply(`🎉 ¡COMPRA EXITOSA!\n\nHas adquirido a: *${item.nombre}*\n💰 Saldo restante: *$${user.dinero.toLocaleString()}*`);
+            return reply(`🎉 ¡COMPRA EXITOSA!\n\nHas adquirido a: *${item.nombre}*\n💰 Saldo restante: *$${user.dinero.toLocaleString()}*`);
         }
         break;
 
-//------------------------------------------------BALTOP (RANKING DE RIQUEZA)--------------------------------------------------------
+
+        //------------------------------------------------BALTOP (RANKING DE RIQUEZA)--------------------------------------------------------
         case 'baltop':
-		case 'topricos': {
+        case 'topricos': {
             try {
-                // Buscamos los 10 usuarios con más dinero en la base de datos
+                // Buscamos los 10 usuarios con más dinero en MongoDB
                 const topUsuarios = await User.find({})
-                    .sort({ dinero: -1 }) // Ordenar de mayor a menor (-1)
-                    .limit(10);           // Solo los primeros 10
+                    .sort({ dinero: -1 }) 
+                    .limit(10);           
 
                 if (!topUsuarios || topUsuarios.length === 0) {
-                    return message.reply("❌ No hay registros de economía todavía.");
+                    return reply("❌ No hay registros de economía todavía.");
                 }
 
                 let textoTop = "『 🏆 *RANKING DE RIQUEZA* 』\n";
@@ -1055,7 +1095,6 @@ function escuchadorMensajes(sock) {
                     const idLimpia = u.userId;
                     const numero = idLimpia.split('@')[0];
                     
-                    // Iconos de posición
                     let medalla = "👤";
                     if (index === 0) medalla = "🥇";
                     else if (index === 1) medalla = "🥈";
@@ -1070,12 +1109,15 @@ function escuchadorMensajes(sock) {
                 textoTop += "━━━━━━━━━━━━━━━━━━━━\n";
                 textoTop += `_¡Sigue trabajando para subir en el top!_`;
 
-                // Enviamos el mensaje al grupo con las menciones activas
-                return client.sendMessage(grupoId, textoTop, { mentions });
+                // En Baileys usamos sock.sendMessage enviando un objeto con 'text' y 'mentions'
+                return sock.sendMessage(jid, { 
+                    text: textoTop, 
+                    mentions 
+                }, { quoted: m });
 
             } catch (err) {
                 console.error("ERROR EN BALTOP:", err);
-                return message.reply("⚠️ No se pudo cargar el ranking en este momento.");
+                return reply("⚠️ No se pudo cargar el ranking en este momento.");
             }
         }
         break;
