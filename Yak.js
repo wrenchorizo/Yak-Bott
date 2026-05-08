@@ -308,8 +308,8 @@ function escuchadorMensajes(sock) {
 		}
 		break;
 
-//------------------------------------------------MENU / HELP--------------------------------------------------------
-case 'menu':
+        //------------------------------------------------MENU / HELP (TOTALMENTE COMPLETO)--------------------------------------------------------
+        case 'menu':
         case 'help':
         case 'ayuda': {
             let menuText = `◢◤ *YAK-BOT SYSTEM* ◢◤\n`;
@@ -432,17 +432,17 @@ case 'menu':
             menuText += `⌬ _Prefijo: [ ${prefix} ]_ | *YakBot v2.5*\n`;
             menuText += `_Usa ${prefix}ayuda [comando] para más info._`;
 
-            return message.reply(menuText);
-        }
-        break;
+            return reply(menuText);
+		}
 
-
-//------------------------------------------------CALCULATOR--------------------------------------------------------
+        //------------------------------------------------CALCULATOR--------------------------------------------------------
         case 'cal':
-		case 'calculadora': {
-            const operacionRaw = message.body.slice(prefix.length + 3).trim();
+        case 'calculadora': {
+            // Cambio: Usamos 'content' en lugar de 'message.body'
+            const operacionRaw = content.slice(prefix.length + comando.length).trim();
+            
             if (!operacionRaw) {
-                return message.reply(`『 🧮 *CALCULADORA* 』\n\nUso: *${prefix}cal [operación]*\n\n*Soportados:* \n√ , π , ÷ , × , ± , %\nExponentes: ² , ³ , ⁴ ... ⁿ\nFracciones: ½ , ¼ , ¾\n\n_Ejemplo: ${prefix}cal √64 + ½_`);
+                return reply(`『 🧮 *CALCULADORA* 』\n\nUso: *${prefix}cal [operación]*\n\n*Soportados:* \n√ , π , ÷ , × , ± , %\nExponentes: ² , ³ , ⁴ ... ⁿ\nFracciones: ½ , ¼ , ¾\n\n_Ejemplo: ${prefix}cal √64 + ½_`);
             }
 
             try {
@@ -469,7 +469,7 @@ case 'menu':
                 // Seguridad: Solo permitimos caracteres matemáticos básicos
                 const validacion = operacion.replace(/[0-9+\-*/().\s]|Math\.(sqrt|PI)/g, '');
                 if (validacion.trim().length > 0) {
-                    return message.reply("❌ *Error:* Caracteres no permitidos detectados.");
+                    return reply("❌ *Error:* Caracteres no permitidos detectados.");
                 }
 
                 const resultado = eval(operacion);
@@ -477,37 +477,55 @@ case 'menu':
                     ? resultado.toLocaleString() 
                     : parseFloat(resultado.toFixed(4)).toLocaleString();
 
-                return message.reply(`『 🧮 *RESULTADO* 』\n\n✨ *Entrada:* ${operacionRaw}\n✅ *Cálculo:* ${resultadoFinal}`);
+                // Cambio: 'message.reply' -> 'reply'
+                return reply(`『 🧮 *RESULTADO* 』\n\n✨ *Entrada:* ${operacionRaw}\n✅ *Cálculo:* ${resultadoFinal}`);
             } catch (e) {
-                return message.reply("❌ *Error:* Operación inválida.");
+                return reply("❌ *Error:* Operación inválida.");
             }
         }
-			break;
-//------------------------------------------------GAY--------------------------------------------------------
+        break;
+
+        //------------------------------------------------GAY--------------------------------------------------------
         case 'gay':
         case 'homo': {
-            if (!targetId) return message.reply(`Uso: ${prefix}gay @usuario o responde a su mensaje.`);
+            // targetId ya está limpio en el Bloque 10
+            if (!targetId) return reply(`Uso: ${prefix}gay @usuario o responde a su mensaje.`);
+
             const usuarioMencionado = `@${targetId.split('@')[0]}`;
-            message.reply("ꕤ Calculando nivel de gay...");
-            setTimeout(() => {
+            
+            // Usamos reply para el mensaje inicial
+            reply("ꕤ Calculando nivel de gay...");
+
+            // El setTimeout se mantiene igual, pero el envío cambia
+            setTimeout(async () => {
                 let porcentaje = Math.random() < 0.15 
                     ? Math.floor(Math.random() * 1000000000) 
                     : Math.floor(Math.random() * 100) + 1;
-                client.sendMessage(message.from, `🏳️‍🌈 Resultado:\n${usuarioMencionado} es *${porcentaje}%* gay`, { 
+
+                // En Baileys usamos sock.sendMessage
+                await sock.sendMessage(jid, { 
+                    text: `🏳️‍🌈 Resultado:\n${usuarioMencionado} es *${porcentaje}%* gay`, 
                     mentions: [targetId] 
-                });
+                }, { quoted: m });
+
             }, 2500);
         }
         break;
 
-        //------------------------------------------------PROFILE--------------------------------------------------------
+                //------------------------------------------------PROFILE--------------------------------------------------------
         case 'profile':
         case 'perfil': {
             const idParaVer = targetId || userId;
             let p = await User.findOne({ userId: idParaVer });
-            if (!p) p = new User({ userId: idParaVer });
-            const contacto = await client.getContactById(idParaVer);
-            const nombre = contacto.pushname || contacto.name || "Usuario";
+            if (!p) {
+                p = new User({ userId: idParaVer });
+                await p.save();
+            }
+
+            // En Baileys el nombre del autor ya lo tenemos en 'authorName'. 
+            // Si es otra persona, intentamos sacar su nombre del mensaje o usamos su número.
+            const nombre = idParaVer === userId ? authorName : (m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] ? 'Usuario' : idParaVer.split('@')[0]);
+            
             const xpNecesaria = p.level * 100;
             let texto = `👤 *PERFIL DE ${nombre.toUpperCase()}*\n\n`;
             texto += `⭐ *Nivel:* ${p.level}\n`;
@@ -515,67 +533,71 @@ case 'menu':
             texto += `💬 *Mensajes:* ${p.mensajes}\n`;
             texto += `💰 *Dinero:* $${p.dinero.toLocaleString()}\n`;
             texto += `🏆 *Logros:* ${p.logros.length}\n`;
+
             try {
-                const fotoUrl = await contacto.getProfilePicUrl();
+                // Intentamos obtener la URL de la foto de perfil con el socket de Baileys
+                const fotoUrl = await sock.profilePictureUrl(idParaVer, 'image').catch(() => null);
+
                 if (fotoUrl) {
-                    const media = await MessageMedia.fromUrl(fotoUrl);
-                    await client.sendMessage(message.from, media, { caption: texto });
+                    // En Baileys enviamos la imagen directamente por URL
+                    await sock.sendMessage(jid, { 
+                        image: { url: fotoUrl }, 
+                        caption: texto,
+                        mentions: [idParaVer]
+                    }, { quoted: m });
                 } else {
-                    await message.reply(texto);
+                    await reply(texto);
                 }
             } catch (err) {
-                await message.reply(texto);
+                await reply(texto);
             }
         }
         break;
 
-        //------------------------------------------------LOGROS--------------------------------------------------------
+                //------------------------------------------------LOGROS--------------------------------------------------------
         case 'logros':
         case 'platino': {
             const idParaVer = targetId || userId;
             let p = await User.findOne({ userId: idParaVer });
-            if (!p || p.logros.length === 0) {
-                return message.reply(targetId ? "Este usuario no tiene logros." : "No tienes logros todavía.");
+
+            // Verificamos si existe el usuario o si tiene logros
+            if (!p || !p.logros || p.logros.length === 0) {
+                return reply(targetId ? "❌ Este usuario no tiene logros." : "❌ No tienes logros todavía.");
             }
+
             let texto = "🏆 *TUS LOGROS*\n\n";
             p.logros.forEach(l => {
+                // Usamos tu objeto logrosInfo que ya tienes definido en otra parte del código
                 texto += `• ${logrosInfo[l] || l}\n`;
             });
-            message.reply(texto);
-        }
-        break; // <-- AQUÍ FALTABA EL CIERRE Y EL BREAK ESTABA MAL
-	
-//------------------------------------------------SAY (REPETIDOR)--------------------------------------------------------
-        case 'say':
-		case 'repetir': {
-            const loQueDijo = message.body.slice(prefix.length + 3).trim();
 
-            if (!loQueDijo) {
-                return message.reply("❌ Debes escribir algo para que yo lo repita. Ejemplo: *?say hola*");
-            }
-
-            return client.sendMessage(grupoId, loQueDijo);
+            // Cambiamos message.reply por nuestra función reply
+            return reply(texto);
         }
         break;
-
-        //------------------------------------------------PING (ESTADO)--------------------------------------------------------
+			
+                //------------------------------------------------PING (ESTADO)--------------------------------------------------------
         case 'ping': {
-            const latencia = Date.now() - (message.timestamp * 1000);
+            // En Baileys usamos m.messageTimestamp. Si no existe, usamos Date.now() como respaldo.
+            const timestamp = m.messageTimestamp || Math.floor(Date.now() / 1000);
+            const latencia = Date.now() - (timestamp * 1000);
             const memoria = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2); 
             
-            return message.reply(`¡Pong!\n\n> *Latencia:* ${latencia}ms\n> *RAM:* ${memoria} MB\n> *Estado:* Online`);
+            // Cambiamos message.reply por nuestra función reply
+            return reply(`¡Pong!\n\n> *Latencia:* ${latencia}ms\n> *RAM:* ${memoria} MB\n> *Estado:* Online`);
         }
         break;
 
-        //------------------------------------------------CHARLIST (ENCICLOPEDIA)--------------------------------------------------------
+                //------------------------------------------------CHARLIST--------------------------------------------------------
         case 'charlist':
-		case 'enciclopedia': {
+        case 'enciclopedia': {
             const filtroFuente = args.join(" ").trim();
 
             // Si NO escribe fuente → mostrar resumen de series disponibles
             if (!filtroFuente) {
                 const fuentes = {};
 
+                // Mantenemos tu lógica de conteo por serie
                 personajes.forEach(p => {
                     if (!fuentes[p.fuente]) {
                         fuentes[p.fuente] = 0;
@@ -592,16 +614,17 @@ case 'menu':
 
                 respuesta += `\n_Usa *${prefix}charlist [Fuente]* para ver los nombres._`;
 
-                return message.reply(respuesta);
+                // Cambio: message.reply -> reply
+                return reply(respuesta);
             }
 
-            // Si SÍ escribe fuente → mostrar personajes de esa serie
+            // Si SÍ escribe fuente → filtrar personajes
             const filtrados = personajes.filter(p =>
                 p.fuente.toLowerCase() === filtroFuente.toLowerCase()
             );
 
             if (filtrados.length === 0) {
-                return message.reply("❌ No se encontró esa fuente en la base de datos.");
+                return reply("❌ No se encontró esa fuente en la base de datos.");
             }
 
             let respuesta = `『 📜 *${filtroFuente.toUpperCase()}* 』\n\n`;
@@ -612,35 +635,38 @@ case 'menu':
                 respuesta += `• ${p.nombre}\n`;
             });
 
-            return message.reply(respuesta);
+            // Cambio: message.reply -> reply
+            return reply(respuesta);
         }
         break;
-
-//------------------------------------------------PAY (TRANSFERENCIA)--------------------------------------------------------
+			
+        //------------------------------------------------PAY (TRANSFERENCIA)--------------------------------------------------------
         case 'pay':
-		case 'transferencia':
-		case 'pagar': {
+        case 'transferencia':
+        case 'pagar': {
             try {
-                if (!message.isGroup) {
-                    return message.reply("❌ Este comando solo funciona en grupos.");
+                // En Baileys m.isGroup es un booleano que ya extrajimos
+                if (!m.isGroup) {
+                    return reply("❌ Este comando solo funciona en grupos.");
                 }
 
-                const partes = message.body.trim().split(/\s+/);
-                if (partes.length < 3) {
-                    return message.reply(`💡 Uso: *${prefix}pay cantidad @usuario*`);
+                // Usamos 'args' que ya tenemos definido del Bloque 10
+                if (args.length < 2) {
+                    return reply(`💡 Uso: *${prefix}pay [cantidad] @usuario*`);
                 }
 
-                const cantidad = parseInt(partes[1]);
+                const cantidad = parseInt(args[0]);
                 if (isNaN(cantidad) || cantidad <= 0) {
-                    return message.reply("❌ Cantidad inválida.");
+                    return reply("❌ Cantidad inválida.");
                 }
 
+                // targetId ya viene resuelto (mención o quote) del Bloque 10
                 if (!targetId) {
-                    return message.reply("❌ Debes mencionar a alguien o responder a su mensaje.");
+                    return reply("❌ Debes mencionar a alguien o responder a su mensaje.");
                 }
 
                 if (targetId === userId) {
-                    return message.reply("😂 No puedes pagarte a ti mismo, genio.");
+                    return reply("😂 No puedes pagarte a ti mismo, genio.");
                 }
 
                 let receptor = await User.findOne({ userId: targetId });
@@ -649,10 +675,12 @@ case 'menu':
                     await receptor.save();
                 }
 
+                // 'user' es el documento del emisor que cargamos al inicio del switch
                 if (user.dinero < cantidad) {
-                    return message.reply("💸 No tienes suficiente dinero para esta transferencia.");
+                    return reply("💸 No tienes suficiente dinero para esta transferencia.");
                 }
 
+                // Proceso de transferencia
                 user.dinero -= cantidad;
                 receptor.dinero += cantidad;
 
@@ -660,31 +688,35 @@ case 'menu':
                 await receptor.save();
 
                 const numero = targetId.split("@")[0];
-                return message.reply(
-                    `『 💸 *TRANSFERENCIA EXITOSA* 』\n\n` +
-                    `✅ Enviaste *$${cantidad.toLocaleString()}* a @${numero}\n` +
-                    `💰 Tu balance actual: *$${user.dinero.toLocaleString()}*`,
-                    { mentions: [targetId] }
-                );
+                const textoFinal = `『 💸 *TRANSFERENCIA EXITOSA* 』\n\n` +
+                                 `✅ Enviaste *$${cantidad.toLocaleString()}* a @${numero}\n` +
+                                 `💰 Tu balance actual: *$${user.dinero.toLocaleString()}*`;
+
+                // Para que el @numero brille en azul, usamos sock.sendMessage con mentions
+                return sock.sendMessage(jid, { 
+                    text: textoFinal, 
+                    mentions: [targetId] 
+                }, { quoted: m });
 
             } catch (err) {
-                console.log("ERROR EN PAY:", err);
-                return message.reply("❌ Ocurrió un error al procesar el pago.");
+                console.error("ERROR EN PAY:", err);
+                return reply("❌ Ocurrió un error al procesar el pago.");
             }
         }
         break;
 
-        //------------------------------------------------COOLDOWNS (SISTEMA PERSISTENTE)--------------------------------------------------------
- 		case 'cooldowns':
+                //------------------------------------------------COOLDOWNS--------------------------------------------------------
+        case 'cooldowns':
         case 'esperas': {
             const ahora = Date.now();
-            // Obtenemos los cooldowns específicos de este grupo
-            const cd = user.cooldowns?.[grupoId] || {};
+            
+            // Usamos user (que cargamos en el Bloque 10) y grupoId (que es jid en Baileys)
+            const cd = user.cooldowns?.[jid] || {};
 
             const tiempoRW = 15 * 60 * 1000;    // 15 min
             const tiempoC = 20 * 60 * 1000;     // 20 min
-            const tiempoW = 1 * 60 * 1000;      // 1 min (ejemplo)
-            const tiempoCrime = 5 * 60 * 1000;  // 5 min (ejemplo)
+            const tiempoW = 1 * 60 * 1000;      // 1 min
+            const tiempoCrime = 5 * 60 * 1000;  // 5 min
 
             const rRestante = Math.max(0, tiempoRW - (ahora - (cd.lastRW || 0)));
             const cRestante = Math.max(0, tiempoC - (ahora - (cd.lastClaim || 0)));
@@ -698,9 +730,11 @@ case 'menu':
             msg += `💼 *Trabajo:* ${wRestante > 0 ? msToTime(wRestante) : '✅ LISTO'}\n`;
             msg += `🕶️ *Crimen:* ${crRestante > 0 ? msToTime(crRestante) : '✅ LISTO'}\n`;
 
-            return message.reply(msg);
+            // Cambio: message.reply -> reply
+            return reply(msg);
         }
         break;
+			
 
 	//====================== E C O N O M I A  ==========================
 			
@@ -2317,6 +2351,18 @@ default: {
         console.error("❌ Error en la lógica de comandos:", e);
     }
 }); // 2. Cierre del client.on('message_create')
+
+	function msToTime(duration) {
+    let seconds = Math.floor((duration / 1000) % 60),
+        minutes = Math.floor((duration / (1000 * 60)) % 60),
+        hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+    hours = (hours < 10) ? "0" + hours : hours;
+    minutes = (minutes < 10) ? "0" + minutes : minutes;
+    seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+    return (hours !== "00" ? hours + "h " : "") + minutes + "m " + seconds + "s";
+	}
 
 // ==========================================
 // EL ANTÍDOTO: CIERRES DE BLOQUES GLOBALES
