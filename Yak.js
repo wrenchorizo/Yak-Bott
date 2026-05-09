@@ -301,7 +301,7 @@ function escuchadorMensajes(sock) {
             const isGroup = jid.endsWith('@g.us');
             const botNumber = decodeJid(sock.user.id);
             
-            // Extraer el texto del mensaje (Soporta texto, botones, listas y leyendas de multimedia)
+            // Extraer el texto del mensaje
             const type = getContentType(m.message);
             const content = type === 'conversation' ? m.message.conversation : 
                             type === 'extendedTextMessage' ? m.message.extendedTextMessage.text : 
@@ -311,15 +311,19 @@ function escuchadorMensajes(sock) {
                             type === 'listResponseMessage' ? m.message.listResponseMessage.singleSelectReply.selectedRowId : 
                             type === 'templateButtonReplyMessage' ? m.message.templateButtonReplyMessage.selectedId : '';
 
-            // Detectar si es un comando (empieza con el prefijo ?)
+            // Detectar comando
             const isCmd = content.startsWith(prefix);
             if (!isCmd) return;
+
+            // REGLA DE ORO: Si el mensaje es mío, solo sigo si es un comando
+            // Esto evita que el bot se responda a sí mismo infinitamente
+            if (m.key.fromMe && !content.startsWith(prefix)) return;
 
             // Preparar comando y argumentos
             const args = content.slice(prefix.length).trim().split(/ +/);
             const comando = args.shift().toLowerCase();
 
-            // --- METADATOS DE GRUPO (PARA ADMINS Y MODERACIÓN) ---
+            // --- METADATOS DE GRUPO ---
             const groupMetadata = isGroup ? await sock.groupMetadata(jid) : null;
             const participants = isGroup ? groupMetadata.participants : [];
             const pushname = m.pushName || 'Usuario';
@@ -334,10 +338,8 @@ function escuchadorMensajes(sock) {
 
             const admins = isGroup ? getAdmins(participants) : [];
             const isAdmins = isGroup ? admins.includes(userId) : false;
-            const isBotAdmins = isGroup ? admins.includes(botNumber) : false;
 
             // --- RESOLVER OBJETIVO (TARGET) ---
-            // Esta función detecta a quién te refieres si etiquetas a alguien o respondes a su mensaje
             const getTarget = () => {
                 let ment = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
                 let quot = m.message?.extendedTextMessage?.contextInfo?.participant;
@@ -345,27 +347,26 @@ function escuchadorMensajes(sock) {
             };
             const targetId = getTarget();
 
-            // --- HELPER DE DESCARGA (PARA STICKERS Y MULTIMEDIA) ---
-            // Añadimos la función .download() al mensaje para que el comando 's' funcione
-            const { downloadMediaMessage } = require('@whiskeysockets/baileys');
-            m.download = () => downloadMediaMessage(m, 'buffer', {}, { logger: P({ level: 'silent' }), reuploadRequest: sock.updateMediaMessage });
-            if (m.quoted) {
-                m.quoted.download = () => downloadMediaMessage(m.quoted, 'buffer', {}, { logger: P({ level: 'silent' }), reuploadRequest: sock.updateMediaMessage });
-            }
-
             // --- CARGA DE PERFIL DESDE MONGODB ---
-            let user = await User.findOne({ userId });
-            if (!user) {
-                user = new User({ userId });
-                await user.save();
+            let user;
+            try {
+                user = await User.findOne({ userId }).maxTimeMS(5000); // Timeout de 5 seg para no congelar
+                if (!user) {
+                    user = new User({ userId });
+                    await user.save();
+                }
+            } catch (mongoErr) {
+                console.error("⚠️ Error al cargar usuario de Mongo (Revisa IP Whitelist):", mongoErr.message);
+                // Si Mongo falla, enviamos un aviso y no seguimos para evitar crasheos
+                return sock.sendMessage(jid, { text: "❌ Error: No se pudo conectar a la base de datos. Verifica el acceso IP en MongoDB Atlas." }, { quoted: m });
             }
 
-            // Actualizar stamina antes de cualquier comando
+            // Actualizar stamina
             if (user.harem) user.harem.forEach(p => actualizarStamina(p));
 
             // --- HELPER DE RESPUESTA RÁPIDA ---
             const reply = (texto) => sock.sendMessage(jid, { text: texto }, { quoted: m });
-
+			
 // ==========================================
 // --------- COMANDOS BÁSICOS ---------
 // ==========================================
