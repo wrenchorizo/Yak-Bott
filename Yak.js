@@ -35,7 +35,7 @@ const { exec } = require('child_process');
 
 // Almacén de datos en memoria para Baileys (contactos, chats, etc.)
 const store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
-
+console.log("DEBUG: La URL de Mongo empieza con:", process.env.MONGODB_URL ? process.env.MONGODB_URL.substring(0, 10) : "NADA");
 
 // ==========================================
 // 2. SECCIÓN: ESQUEMAS DE MONGODB
