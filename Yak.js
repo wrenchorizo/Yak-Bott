@@ -33,8 +33,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const { exec } = require('child_process');
 
-// Almacén de datos en memoria para Baileys (contactos, chats, etc.)
-const store = Baileys.makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
+// Usamos la importación directa desde el require para asegurar que encuentre la función
+const store = require('@whiskeysockets/baileys').makeInMemoryStore({ 
+    logger: P().child({ level: 'silent', stream: 'store' }) 
+});
+
 // ==========================================
 // 2. SECCIÓN: ESQUEMAS DE MONGODB
 // ==========================================
