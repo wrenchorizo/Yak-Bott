@@ -125,79 +125,79 @@ const decodeJid = (jid) => {
 
 
 // ==========================================
-// 5. SECCIÓN: DONDE ARRANCA EL BOT
+// 5. SECCIÓN: ARRANQUE CON SESIÓN EN NUBE (MONGO)
 // ==========================================
+const { useMongoDBAuthState } = require('@rinaoki/baileys-mongodb');
+
 async function iniciarBot() {
-    // 1. Gestión de sesión (Multi-File Auth) - Usamos la ruta que ya tienes
-    const { state, saveCreds } = await useMultiFileAuthState('./Data/session_baileys');
-    const { version } = await fetchLatestBaileysVersion();
-
-    const sock = makeWASocket({
-        version,
-        logger: P({ level: 'silent' }),
-        printQRInTerminal: false, // Desactivado para que no rompa el log de Render
-        auth: state,
-        browser: ['Ubuntu', 'Chrome', '20.0.0'], // Crucial para Pairing Code
-        getMessage: async (key) => {
-            if (store) {
-                const msg = await store.loadMessage(key.remoteJid, key.id);
-                return msg?.message || undefined;
-            }
-            return { conversation: "YakBot Online" };
-        }
-    });
-
-    // Enlazar el store al socket
-    if (store && store.bind) store.bind(sock.ev);
-
-    // --- LÓGICA DE PAIRING CODE MEJORADA ---
-    if (!sock.authState.creds.registered) {
-        const phoneNumber = '5214772025939'; // Tu número ya configurado
-        
-        console.log(`⏳ Generando código de vinculación para: ${phoneNumber}...`);
-        
-        // Esperamos 6 segundos para que el socket esté "caliente" y no suelte 'Connection Closed'
-        setTimeout(async () => {
-            try {
-                const codigo = await sock.requestPairingCode(phoneNumber);
-                console.log(`\n=========================================`);
-                console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
-                console.log(`=========================================\n`);
-            } catch (err) {
-                console.error("❌ Error al pedir pairing code:", err);
-            }
-        }, 6000);
-    }
-
-    sock.ev.on('creds.update', saveCreds);
-
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-            const code = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
-            const shouldReconnect = code !== DisconnectReason.loggedOut;
-            console.log(`📡 Conexión cerrada (${code}). Reconectando: ${shouldReconnect}`);
-            if (shouldReconnect) iniciarBot();
-        } else if (connection === 'open') {
-            console.log('✅ YakBot Baileys: CONECTADO Y LISTO');
-        }
-    });
-
-    // 2. Conexión a MongoDB (Usando la variable de Render)
-    // Movido aquí abajo para que no bloquee el arranque del socket
     const mongoURI = process.env.MONGODB_URL;
-    if (mongoURI) {
-        mongoose.connect(mongoURI)
-            .then(() => console.log("✅ Conectado a MongoDB Atlas"))
-            .catch(err => {
-                console.error("❌ Error Mongo (Verifica el link en Render):", err.message);
-            });
-    } else {
-        console.error("❌ ERROR: La variable MONGODB_URL no está definida en Render.");
+    
+    if (!mongoURI) {
+        return console.error("❌ ERROR: Falta MONGODB_URL en las variables de entorno.");
     }
 
-    // Pasamos el socket al Bloque 10
-    escuchadorMensajes(sock);
+    try {
+        // Conectamos a Mongo antes de pedir la sesión
+        await mongoose.connect(mongoURI);
+        console.log("✅ Conexión exitosa a MongoDB Atlas");
+
+        // Configuramos la sesión directamente en la colección 'sessions'
+        const collection = mongoose.connection.db.collection('sessions');
+        const { state, saveCreds } = await useMongoDBAuthState(collection);
+        const { version } = await fetchLatestBaileysVersion();
+
+        const sock = makeWASocket({
+            version,
+            logger: P({ level: 'silent' }),
+            printQRInTerminal: false,
+            auth: state, 
+            browser: ['Ubuntu', 'Chrome', '20.0.0'],
+            getMessage: async (key) => {
+                if (store) {
+                    const msg = await store.loadMessage(key.remoteJid, key.id);
+                    return msg?.message || undefined;
+                }
+                return { conversation: "YakBot Online" };
+            }
+        });
+
+        if (store && store.bind) store.bind(sock.ev);
+
+        // --- TU LÓGICA DE PAIRING CODE (SIN TOCAR UNA COMA) ---
+        if (!sock.authState.creds.registered) {
+            const phoneNumber = '5214772025939'; 
+            console.log(`⏳ Generando código de vinculación para: ${phoneNumber}...`);
+            setTimeout(async () => {
+                try {
+                    const codigo = await sock.requestPairingCode(phoneNumber);
+                    console.log(`\n=========================================`);
+                    console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
+                    console.log(`=========================================\n`);
+                } catch (err) {
+                    console.error("❌ Error al pedir pairing code:", err);
+                }
+            }, 6000);
+        }
+
+        sock.ev.on('creds.update', saveCreds);
+
+        sock.ev.on('connection.update', (update) => {
+            const { connection, lastDisconnect } = update;
+            if (connection === 'close') {
+                const code = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
+                const shouldReconnect = code !== DisconnectReason.loggedOut;
+                console.log(`📡 Conexión cerrada (${code}). Reconectando: ${shouldReconnect}`);
+                if (shouldReconnect) iniciarBot();
+            } else if (connection === 'open') {
+                console.log('✅ YakBot Baileys: CONECTADO Y SESIÓN ASEGURADA EN MONGO');
+            }
+        });
+
+        escuchadorMensajes(sock);
+
+    } catch (err) {
+        console.error("❌ ERROR CRÍTICO EN EL ARRANQUE:", err);
+    }
 }
 
 // ==========================================
@@ -769,22 +769,24 @@ function escuchadorMensajes(sock) {
         break;
 
                 //------------------------------------------------COOLDOWNS--------------------------------------------------------
-        case 'cooldowns':
+case 'cooldowns':
         case 'esperas': {
             const ahora = Date.now();
             
-            // Usamos user (que cargamos en el Bloque 10) y grupoId (que es jid en Baileys)
-            const cd = user.cooldowns?.[jid] || {};
+            // Si no hay cooldowns, creamos un objeto vacío para que no explote
+            if (!user.cooldowns) user.cooldowns = {};
+            const cd = user.cooldowns[jid] || {};
 
             const tiempoRW = 15 * 60 * 1000;    // 15 min
             const tiempoC = 20 * 60 * 1000;     // 20 min
-            const tiempoW = 1 * 60 * 1000;      // 1 min
+            const tiempoW = 1 * 60 * 1000;      // 1 min (ajusta según tu ?work)
             const tiempoCrime = 5 * 60 * 1000;  // 5 min
 
+            // REVISIÓN: Todos leen ahora de 'cd' (el objeto del grupo actual)
             const rRestante = Math.max(0, tiempoRW - (ahora - (cd.lastRW || 0)));
             const cRestante = Math.max(0, tiempoC - (ahora - (cd.lastClaim || 0)));
-            const wRestante = Math.max(0, tiempoW - (ahora - (user.lastWork || 0)));
-            const crRestante = Math.max(0, tiempoCrime - (ahora - (user.lastCrime || 0)));
+            const wRestante = Math.max(0, tiempoW - (ahora - (cd.lastWork || 0)));
+            const crRestante = Math.max(0, tiempoCrime - (ahora - (cd.lastCrime || 0)));
 
             let msg = `『 ⏱️ *TUS TIEMPOS EN ESTE GRUPO* 』\n\n`;
             msg += `🎰 *Roll (?rw):* ${rRestante > 0 ? msToTime(rRestante) : '✅ LISTO'}\n`;
@@ -793,7 +795,6 @@ function escuchadorMensajes(sock) {
             msg += `💼 *Trabajo:* ${wRestante > 0 ? msToTime(wRestante) : '✅ LISTO'}\n`;
             msg += `🕶️ *Crimen:* ${crRestante > 0 ? msToTime(crRestante) : '✅ LISTO'}\n`;
 
-            // Cambio: message.reply -> reply
             return reply(msg);
         }
         break;
@@ -1500,13 +1501,11 @@ case 'rpj': {
 break;
 			
 //------------------------------------------------C (CLAIM)--------------------------------------------------------
-        case 'c':
+case 'c':
         case 'claim':
         case 'reclamar': {
-            // En Baileys, verificamos si m.quoted existe (definido en el Bloque 10)
             if (!m.quoted) return reply('⌦ Responde al mensaje del personaje que quieres reclamar.');
 
-            // El ID del mensaje citado en Baileys es m.quoted.id
             const tirada = tiradasTemporales[m.quoted.id];
 
             if (!tirada || tirada.reclamado || tirada.grupoId !== jid) {
@@ -1514,14 +1513,18 @@ break;
             }
 
             const ahora = Date.now();
-            const lastClaimGrupo = user.cooldowns?.[jid]?.lastClaim || 0;
+            
+            // ASEGURAMOS QUE EL OBJETO COOLDOWNS EXISTA
+            if (!user.cooldowns) user.cooldowns = {};
+            if (!user.cooldowns[jid]) user.cooldowns[jid] = {};
+
+            const lastClaimGrupo = user.cooldowns[jid].lastClaim || 0;
 
             if (ahora - lastClaimGrupo < (20 * 60 * 1000)) {
                 const restante = (20 * 60 * 1000) - (ahora - lastClaimGrupo);
                 return reply(`◔ Espera *${msToTime(restante)}* para volver a reclamar un personaje.`);
             }
 
-            // Verificar si alguien más ya tiene a este personaje en ESTE grupo específico
             const dueñoExistente = await User.findOne({ 
                 "harem.nombre": tirada.personaje.nombre, 
                 "harem.grupoId": jid 
@@ -1529,33 +1532,29 @@ break;
             
             if (dueñoExistente) return reply('⌦ Este personaje ya fue reclamado por alguien más en este grupo.');
 
-            // Guardar en el harem con los datos de RPG
             user.harem.push({
                 ...tirada.personaje,
                 level: 1, 
                 exp: 0, 
                 stamina: 100, 
-                grupoId: jid, // Mantenemos la separación por grupos
+                grupoId: jid,
                 lastUpdate: ahora
             });
 
-            // Actualizar cooldown de reclamo
-            if (!user.cooldowns[jid]) user.cooldowns[jid] = {};
+            // GUARDADO CORRECTO EN EL OBJETO
             user.cooldowns[jid].lastClaim = ahora;
             
-            // Marcar como reclamado para que nadie más lo use en memoria
             tirada.reclamado = true;
 
-            // Avisar a Mongoose que los objetos internos cambiaron para que se guarden en MongoDB
             user.markModified('harem');
-            user.markModified('cooldowns');
+            user.markModified('cooldowns'); // CRUCIAL PARA MONGO
             
             await user.save();
             
             return reply(`꧁¡Reclamaste a *${tirada.personaje.nombre}*!꧂`);
         }
         break;
-
+			
         //------------------------------------------------HAREM (COLECCIÓN)--------------------------------------------------------
         case 'harem':
         case 'coleccion': {
