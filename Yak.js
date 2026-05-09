@@ -65,7 +65,7 @@ let personajes = [];
 let mobsData = [];
 try {
     personajes = JSON.parse(fs.readFileSync('./personajes.json', 'utf-8'));
-    mobsData = JSON.parse(fs.readFileSync('./Mobs.json', 'utf-8'));
+    mobsData = JSON.parse(fs.readFileSync('./mobs.json', 'utf-8'));
     console.log(`✅ Recursos listos: ${personajes.length} PJs y ${mobsData.length} Mobs.`);
 } catch (e) {
     console.error("❌ Error en carga de JSON:", e);
