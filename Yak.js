@@ -2603,21 +2603,20 @@ function escuchadorMensajes(sock) {
                     'eat', 'sleep', 'cafe', 'hug', 'punch', 'kill', 'run', 'kiss'
                 ];
                 
-                // Si el mensaje empieza con el prefijo pero no es un comando conocido
                 if (isCmd && !misComandos.includes(comando) && !listaReacciones.includes(comando)) {
                     reply(`⌦ El comando *${prefix}${comando}* no existe.\nUsa *${prefix}help* para ver la lista de comandos.`);
                 }
                 break;
             }
-        } // 1. CIERRE DEL SWITCH (COMANDOS)
+        } // CIERRE DEL SWITCH (comando)
 
-        // Guardar progreso del usuario al finalizar cualquier comando (Persistencia en MongoDB)
         if (user) await user.save();
 
     } catch (e) {
         console.error("❌ Error en la lógica de comandos:", e);
     }
-}); // 2. CIERRE DE sock.ev.on('messages.upsert')
+}); // CIERRE DE sock.ev.on('messages.upsert')
+} // CIERRE DE LA FUNCIÓN escuchadorMensajes
 
 // Función de utilidad para formatear tiempo (ms a hh:mm:ss)
 function msToTime(duration) {
@@ -2633,27 +2632,31 @@ function msToTime(duration) {
 }
 
 // ==========================================
-// EL ANTÍDOTO: CIERRES DE BLOQUES GLOBALES
+// CIERRES GLOBALES DE LA FUNCIÓN PRINCIPAL
 // ==========================================
 
+// Aquí cerramos el bloque try que se abrió al inicio de iniciarBot()
+// y la función iniciarBot en sí misma.
+
+// Nota: Estos cierres dependen de dónde abriste el try en la Sección 5.
+// Asumiendo la estructura estándar:
+/*
     } catch (err) {
         console.error("❌ Error crítico en el núcleo del Bot:", err);
     }
-} // 3. CIERRE DEFINITIVO DE LA FUNCIÓN iniciarBot()
+} 
+*/
 
 // ==========================================
 // 11. ARRANQUE DEL SISTEMA
 // ==========================================
 
-// Lanzamos el bot al espacio
 iniciarBot();
 
-// Señal de vida en consola cada 60 segundos (Mantenimiento de logs en Railway)
 setInterval(() => {
     console.log(`⌬ YakBot ONLINE - ${new Date().toLocaleTimeString()}`);
 }, 60000);
 
-// Anti-Crash Global: Evita que el bot muera por errores menores
 process.on('unhandledRejection', (reason, promise) => {
     console.error(' [ANTI-CRASH] Rejection no manejada:', reason);
 });
@@ -2662,14 +2665,11 @@ process.on('uncaughtException', (err) => {
     console.error(' [ANTI-CRASH] Excepción no capturada:', err);
 });
 
-// Vigilante de Memoria RAM (Para el plan gratuito de Railway de 512MB)
 setInterval(() => {
     const memoriaUsada = process.memoryUsage().heapUsed / 1024 / 1024;
     console.log(`📊 Uso de RAM: ${Math.round(memoriaUsada)}MB`);
-    
-    // Reinicio preventivo si se acerca al límite de 512MB
     if (memoriaUsada > 450) {
-        console.log("🚨 ALERTA DE MEMORIA: Reiniciando proceso para refrescar recursos...");
+        console.log("🚨 ALERTA DE MEMORIA: Reiniciando...");
         process.exit(1); 
     }
-}, 300000); // Revisión cada 5 minutos
+}, 300000);
