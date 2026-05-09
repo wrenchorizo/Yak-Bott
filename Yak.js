@@ -124,7 +124,7 @@ const decodeJid = (jid) => {
 };
 
 // ==========================================
-// 5. SECCIÓN: ARRANQUE POR ETAPAS (COMPATIBILIDAD TOTAL)
+// 5. SECCIÓN: ARRANQUE CON IDENTIDAD WINDOWS
 // ==========================================
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
@@ -133,6 +133,7 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
+        // LIMPIEZA ABSOLUTA: Si hay rastro viejo, WhatsApp rechazará el nuevo
         if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
         fs.mkdirSync(sessionPath, { recursive: true });
 
@@ -145,7 +146,7 @@ async function iniciarBot() {
         const doc = await collection.findOne({ _id: 'yakbot_session' });
         if (doc) {
             fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
-            console.log("📥 Sesión encontrada en Atlas. Conectando...");
+            console.log("📥 Sesión previa encontrada. Intentando entrar...");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -156,12 +157,12 @@ async function iniciarBot() {
             logger: P({ level: 'silent' }),
             auth: state,
             printQRInTerminal: false,
-            // CAMBIO: Usamos una cadena de navegador que WA prefiere para vinculaciones
-            browser: ["Ubuntu", "Chrome", "20.0.04"], 
+            // CAMBIO CLAVE: Fingimos ser WhatsApp Web en Windows (es más aceptado)
+            browser: ["Windows", "Chrome", "121.0.6167.184"], 
             connectTimeoutMs: 120000,
-            defaultQueryTimeoutMs: 90000,
-            syncFullHistory: false,
-            markOnlineOnConnect: false, // Evita saturar la red al inicio
+            defaultQueryTimeoutMs: 0,
+            syncFullHistory: false, // Menos datos = Menos errores de vinculación
+            generateHighQualityLinkPreview: false,
         });
 
         if (store && store.bind) store.bind(sock.ev);
@@ -170,7 +171,7 @@ async function iniciarBot() {
             const { connection, lastDisconnect } = update;
 
             if (connection === 'open') {
-                console.log('✅ YakBot: ¡VINCULACIÓN EXITOSA!');
+                console.log('✅ YakBot: ¡VINCULADO CON ÉXITO!');
                 
                 sock.ev.on('creds.update', async () => {
                     await saveCreds();
@@ -181,42 +182,42 @@ async function iniciarBot() {
                             { $set: { data: credsData, updatedAt: new Date() } },
                             { upsert: true }
                         );
-                        console.log("💾 Sesión guardada en Atlas. Ya puedes redeployear sin miedo.");
+                        console.log("💾 Sesión guardada en Atlas.");
                     } catch (e) {}
                 });
             }
 
             if (connection === 'close') {
                 const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-                console.log(`📡 Conexión cerrada (${code}). Reintentando...`);
+                console.log(`📡 Conexión cerrada (${code}).`);
                 
                 if (code === 401 || code === DisconnectReason.loggedOut) {
                     await collection.deleteOne({ _id: 'yakbot_session' });
                 }
-                setTimeout(iniciarBot, 5000);
+                setTimeout(iniciarBot, 7000); // Espera un poco más para reintentar
             }
         });
 
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
-            // Aumentamos a 15 segundos para que Baileys esté 100% listo antes de pedir el code
+            // Le damos 20 segundos para que Render estabilice la red antes de pedir el code
             setTimeout(async () => {
                 try {
                     if (sock.user) return; 
                     const codigo = await sock.requestPairingCode(phoneNumber);
                     console.log(`\n=========================================`);
-                    console.log(`🔑 CÓDIGO NUEVO: ${codigo}`);
+                    console.log(`🔑 CÓDIGO: ${codigo}`);
                     console.log(`=========================================\n`);
                 } catch (err) {
-                    console.error("❌ Error al pedir código:", err.message);
+                    console.error("❌ Error:", err.message);
                 }
-            }, 15000); 
+            }, 20000); 
         }
 
         escuchadorMensajes(sock);
 
     } catch (err) {
-        console.error("❌ ERROR:", err.message);
+        console.error("❌ ERROR CRÍTICO:", err.message);
         setTimeout(iniciarBot, 10000);
     }
 }
