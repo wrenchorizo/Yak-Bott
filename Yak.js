@@ -12,19 +12,20 @@ app.listen(port, () => {
     console.log(`✅ Servidor de validación escuchando en el puerto ${port}`);
 });
 
-// Importamos Baileys y la tienda por separado (la forma moderna)
-const makeWASocket = require('@whiskeysockets/baileys').default;
+// Importación única y total
+const Baileys = require('@whiskeysockets/baileys');
+
+// Extraemos todo del objeto principal
+const makeWASocket = Baileys.default || Baileys;
 const { 
     useMultiFileAuthState, 
     DisconnectReason, 
     fetchLatestBaileysVersion, 
     jidDecode, 
     getContentType,
-    downloadContentFromMessage 
-} = require('@whiskeysockets/baileys');
-
-// AQUÍ ESTÁ EL TRUCO: Importamos la tienda desde su propia ruta interna
-const { makeInMemoryStore } = require('@whiskeysockets/baileys/lib/Store');
+    downloadContentFromMessage,
+    makeInMemoryStore // <--- Baileys suele exportarlo aquí
+} = Baileys;
 
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
@@ -36,8 +37,12 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const { exec } = require('child_process');
 
-// Ahora sí, la función existirá porque la trajimos directo de /lib/Store
-const store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
+// Si makeInMemoryStore no se extrajo arriba, lo buscamos en el objeto raíz
+const finalStoreFunc = makeInMemoryStore || Baileys.makeInMemoryStore;
+
+const store = finalStoreFunc({ 
+    logger: P().child({ level: 'silent', stream: 'store' }) 
+});
 
 console.log("DEBUG: La URL de Mongo empieza con:", process.env.MONGODB_URL ? process.env.MONGODB_URL.substring(0, 10) : "NADA");
 // ==========================================
