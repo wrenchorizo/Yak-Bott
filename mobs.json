@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Slime de Pantano",
+    "hp": 50,
+    "maxHp": 50,
+    "level": 1,
+    "exp": 15,
+    "coin": 10,
+    "msg": "Un moco verde y pegajoso aparece..."
+  },
+  {
+    "id": 2,
+    "name": "Goblin Asaltante",
+    "hp": 120,
+    "maxHp": 120,
+    "level": 5,
+    "exp": 45,
+    "coin": 35,
+    "msg": "¡Un Goblin intenta robar tu mochila!"
+  },
+  {
+    "id": 3,
+    "name": "Lobo Alfa",
+    "hp": 300,
+    "maxHp": 300,
+    "level": 12,
+    "exp": 150,
+    "coin": 80,
+    "msg": "Un aullido estremece el lugar..."
+  },
+  {
+    "id": 4,
+    "name": "Dragón de Humo",
+    "hp": 2500,
+    "maxHp": 2500,
+    "level": 50,
+    "exp": 2000,
+    "coin": 5000,
+    "msg": "¡El cielo se oscurece! Un Dragón desciende sobre ti."
+  }
+]
