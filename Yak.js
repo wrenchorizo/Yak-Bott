@@ -135,21 +135,16 @@ const decodeJid = (jid) => {
 // 5. SECCIÓN: DONDE ARRANCA EL BOT
 // ==========================================
 async function iniciarBot() {
-    // 1. Conexión a MongoDB
-    await mongoose.connect('TU_MONGO_URI_AQUÍ')
-        .then(() => console.log("✅ Conectado a MongoDB Atlas"))
-        .catch(err => console.error("❌ Error Mongo:", err));
-
-    // 2. Gestión de sesión (Multi-File Auth)
+    // 1. Gestión de sesión (Multi-File Auth) - Usamos la ruta que ya tienes
     const { state, saveCreds } = await useMultiFileAuthState('./Data/session_baileys');
     const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
         version,
         logger: P({ level: 'silent' }),
-        printQRInTerminal: true, // Cambia a false si solo quieres usar Pairing Code
+        printQRInTerminal: false, // Desactivado para que no rompa el log de Render
         auth: state,
-        browser: ['Ubuntu', 'Chrome', '20.0.0'], // Necesario para que el Pairing funcione
+        browser: ['Ubuntu', 'Chrome', '20.0.0'], // Crucial para Pairing Code
         getMessage: async (key) => {
             if (store) {
                 const msg = await store.loadMessage(key.remoteJid, key.id);
@@ -159,13 +154,26 @@ async function iniciarBot() {
         }
     });
 
-    store.bind(sock.ev);
+    // Enlazar el store al socket
+    if (store && store.bind) store.bind(sock.ev);
 
-    // --- LÓGICA DE PAIRING CODE (OPCIONAL) ---
-    // Si quieres vincular por código de 8 dígitos, descomenta y pon tu número:
-	if (!sock.authState.creds.registered) {
-        const codigo = await sock.requestPairingCode('5214772025939'); 
-        console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
+    // --- LÓGICA DE PAIRING CODE MEJORADA ---
+    if (!sock.authState.creds.registered) {
+        const phoneNumber = '5214772025939'; // Tu número ya configurado
+        
+        console.log(`⏳ Generando código de vinculación para: ${phoneNumber}...`);
+        
+        // Esperamos 6 segundos para que el socket esté "caliente" y no suelte 'Connection Closed'
+        setTimeout(async () => {
+            try {
+                const codigo = await sock.requestPairingCode(phoneNumber);
+                console.log(`\n=========================================`);
+                console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
+                console.log(`=========================================\n`);
+            } catch (err) {
+                console.error("❌ Error al pedir pairing code:", err);
+            }
+        }, 6000);
     }
 
     sock.ev.on('creds.update', saveCreds);
@@ -182,11 +190,22 @@ async function iniciarBot() {
         }
     });
 
+    // 2. Conexión a MongoDB (Usando la variable de Render)
+    // Movido aquí abajo para que no bloquee el arranque del socket
+    const mongoURI = process.env.MONGODB_URL;
+    if (mongoURI) {
+        mongoose.connect(mongoURI)
+            .then(() => console.log("✅ Conectado a MongoDB Atlas"))
+            .catch(err => {
+                console.error("❌ Error Mongo (Verifica el link en Render):", err.message);
+            });
+    } else {
+        console.error("❌ ERROR: La variable MONGODB_URL no está definida en Render.");
+    }
+
     // Pasamos el socket al Bloque 10
     escuchadorMensajes(sock);
 }
-
-
 
 // ==========================================
 // 6. SECCIÓN: LÓGICA DE PERSONAJES Y TIENDA
