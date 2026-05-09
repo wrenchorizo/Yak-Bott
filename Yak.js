@@ -125,8 +125,10 @@ const decodeJid = (jid) => {
 
 
 // ==========================================
-// 5. SECCIÓN: ARRANQUE CON AUTO-REPARACIÓN DE SESIÓN
+// 5. SECCIÓN: ARRANQUE CON AUTO-REPARACIÓN
 // ==========================================
+let forzarNuevoCodigo = false; 
+
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
     const sessionPath = './Data/session_baileys';
@@ -134,21 +136,28 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
+        // 1. LIMPIEZA TOTAL DE RASTROS LOCALES
+        if (fs.existsSync(sessionPath)) {
+            fs.rmSync(sessionPath, { recursive: true, force: true });
+        }
+        fs.mkdirSync(sessionPath, { recursive: true });
+
+        // Conexión a Mongo (si no está activa)
         if (mongoose.connection.readyState !== 1) {
             await mongoose.connect(mongoURI);
             console.log("✅ Conectado a MongoDB Atlas");
         }
         const collection = mongoose.connection.db.collection('sessions');
 
-        // 1. LIMPIEZA LOCAL PREVENTIVA
-        if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
-        fs.mkdirSync(sessionPath, { recursive: true });
-
-        // 2. CARGA DE SESIÓN CON VALIDACIÓN
-        const doc = await collection.findOne({ _id: 'yakbot_session' });
-        if (doc) {
-            fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
-            console.log("📥 Sesión recuperada de Atlas.");
+        // 2. INTENTO DE CARGA INTELIGENTE
+        if (!forzarNuevoCodigo) {
+            const doc = await collection.findOne({ _id: 'yakbot_session' });
+            if (doc) {
+                fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
+                console.log("📥 Sesión recuperada de Atlas.");
+            }
+        } else {
+            console.log("⚠️ Modo 'Cero Confianza' activo: Ignorando Atlas para generar código limpio.");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -157,38 +166,17 @@ async function iniciarBot() {
         const sock = makeWASocket({
             version,
             logger: P({ level: 'silent' }),
-            printQRInTerminal: false,
             auth: state,
+            printQRInTerminal: false,
             browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            connectTimeoutMs: 60000, // Damos más tiempo para evitar 'Connection Closed'
+            connectTimeoutMs: 60000,
             defaultQueryTimeoutMs: 0,
-            getMessage: async (key) => ({ conversation: "YakBot Online" })
+            keepAliveIntervalMs: 10000
         });
 
         if (store && store.bind) store.bind(sock.ev);
 
-        // 3. MANEJO DE CONEXIÓN
-        sock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect } = update;
-
-            if (connection === 'close') {
-                const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-                console.log(`📡 Conexión cerrada (Código: ${code || 'Desconocido'})`);
-
-                // Si la sesión es rechazada (401) o da error raro, limpiamos Atlas
-                if (code === 401 || code === DisconnectReason.loggedOut) {
-                    console.log("🗑️ Sesión inválida detectada en la nube. Borrando...");
-                    await collection.deleteOne({ _id: 'yakbot_session' });
-                }
-                
-                setTimeout(iniciarBot, 5000);
-            } 
-            else if (connection === 'open') {
-                console.log('✅ YakBot: ¡CONECTADO Y LISTO!');
-            }
-        });
-
-        // 4. GUARDADO DE CREDENCIALES
+        // 3. ACTUALIZACIÓN DE CREDENCIALES EN LA NUBE
         sock.ev.on('creds.update', async () => {
             await saveCreds();
             try {
@@ -198,14 +186,37 @@ async function iniciarBot() {
                     { $set: { data: credsData, updatedAt: new Date() } },
                     { upsert: true }
                 );
-            } catch (e) {}
+            } catch (e) { /* Error silencioso de lectura FS */ }
         });
 
-        // 5. GENERACIÓN DE CÓDIGO CON AUTO-LIMPIEZA SI FALLA
+        // 4. GESTIÓN DE CONEXIÓN Y ERRORES DE SESIÓN
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect } = update;
+
+            if (connection === 'close') {
+                const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
+                console.log(`📡 Conexión cerrada. Código: ${code || 'Desconocido'}`);
+                
+                // Si la sesión fue rechazada o cerrada, limpiamos Atlas y forzamos reinicio
+                if (code === 401 || code === DisconnectReason.loggedOut) {
+                    console.log("🗑️ Sesión inválida. Limpiando nube...");
+                    await collection.deleteOne({ _id: 'yakbot_session' });
+                    forzarNuevoCodigo = true;
+                }
+                
+                setTimeout(iniciarBot, 5000);
+            } 
+            else if (connection === 'open') {
+                console.log('✅ YakBot: ¡CONECTADO Y LISTO!');
+                forzarNuevoCodigo = false; // Reset al conectar con éxito
+            }
+        });
+
+        // 5. SOLICITUD DE CÓDIGO (PAIRING CODE)
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
             console.log(`⏳ Solicitando código para ${phoneNumber}...`);
-
+            
             setTimeout(async () => {
                 try {
                     const codigo = await sock.requestPairingCode(phoneNumber);
@@ -213,24 +224,23 @@ async function iniciarBot() {
                     console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
                     console.log(`=========================================\n`);
                 } catch (err) {
-                    console.error("❌ Error fatal al generar código:", err.message);
+                    console.error("❌ Error al generar código:", err.message);
                     
-                    // SI DA ERROR DE CONEXIÓN CERRADA, ES PORQUE LA SESIÓN DE ATLAS NO SIRVE
-                    if (err.message.includes('Closed') || err.message.includes('not-authorized')) {
-                        console.log("🧹 Limpiando rastro corrupto de Atlas para reintentar...");
+                    // Si el error es por conexión cerrada al pedir el código, activamos modo limpieza
+                    if (err.message.includes('Closed')) {
+                        console.log("🧹 Detectado bloqueo por sesión corrupta. Reintentando limpio...");
+                        forzarNuevoCodigo = true;
                         await collection.deleteOne({ _id: 'yakbot_session' });
-                        if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
-                        // Forzamos un reinicio limpio
-                        process.exit(1); 
+                        setTimeout(iniciarBot, 2000);
                     }
                 }
-            }, 10000);
+            }, 10000); // Espera estratégica de 10s para estabilizar la red
         }
 
         escuchadorMensajes(sock);
 
     } catch (err) {
-        console.error("❌ ERROR CRÍTICO:", err.message);
+        console.error("❌ ERROR CRÍTICO EN ARRANQUE:", err.message);
         setTimeout(iniciarBot, 10000);
     }
 }
