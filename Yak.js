@@ -124,7 +124,7 @@ const decodeJid = (jid) => {
 };
 
 // ==========================================
-// 5. SECCIÓN: ARRANQUE POR ETAPAS (ALTO RENDIMIENTO)
+// 5. SECCIÓN: ARRANQUE POR ETAPAS (COMPATIBILIDAD TOTAL)
 // ==========================================
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
@@ -133,7 +133,6 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
-        // 1. Limpieza local para asegurar un inicio fresco
         if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
         fs.mkdirSync(sessionPath, { recursive: true });
 
@@ -143,46 +142,36 @@ async function iniciarBot() {
         }
         const collection = mongoose.connection.db.collection('sessions');
 
-        // 2. ¿EXISTE SESIÓN EN MONGO?
         const doc = await collection.findOne({ _id: 'yakbot_session' });
-        
         if (doc) {
             fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
             console.log("📥 Sesión encontrada en Atlas. Conectando...");
-        } else {
-            console.log("🆕 No hay sesión en Atlas. Preparando vinculación...");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
         const { version } = await fetchLatestBaileysVersion();
 
-        // --- CONFIGURACIÓN OPTIMIZADA PARA RENDER ---
         const sock = makeWASocket({
             version,
             logger: P({ level: 'silent' }),
             auth: state,
             printQRInTerminal: false,
-            // Navegador más estable para evitar bloqueos
-            browser: ['Mac OS', 'Chrome', '121.0.6167.85'],
-            // Tiempos de espera extendidos para procesadores lentos
-            connectTimeoutMs: 120000, 
+            // CAMBIO: Usamos una cadena de navegador que WA prefiere para vinculaciones
+            browser: ["Ubuntu", "Chrome", "20.0.04"], 
+            connectTimeoutMs: 120000,
             defaultQueryTimeoutMs: 90000,
-            // CLAVE: No descargar historial viejo para entrar rápido
-            syncFullHistory: false, 
-            markOnlineOnConnect: true,
-            keepAliveIntervalMs: 30000
+            syncFullHistory: false,
+            markOnlineOnConnect: false, // Evita saturar la red al inicio
         });
 
         if (store && store.bind) store.bind(sock.ev);
 
-        // 3. MANEJO DE CONEXIÓN
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
 
             if (connection === 'open') {
-                console.log('✅ YakBot: ¡CONECTADO EXITOSAMENTE!');
+                console.log('✅ YakBot: ¡VINCULACIÓN EXITOSA!');
                 
-                // Una vez conectado con éxito, activamos el guardado en la nube
                 sock.ev.on('creds.update', async () => {
                     await saveCreds();
                     try {
@@ -192,45 +181,42 @@ async function iniciarBot() {
                             { $set: { data: credsData, updatedAt: new Date() } },
                             { upsert: true }
                         );
-                        console.log("💾 Sesión sincronizada con Atlas.");
+                        console.log("💾 Sesión guardada en Atlas. Ya puedes redeployear sin miedo.");
                     } catch (e) {}
                 });
             }
 
             if (connection === 'close') {
                 const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-                console.log(`📡 Conexión cerrada (${code})...`);
+                console.log(`📡 Conexión cerrada (${code}). Reintentando...`);
                 
                 if (code === 401 || code === DisconnectReason.loggedOut) {
-                    console.log("🗑️ Sesión inválida. Borrando Atlas...");
                     await collection.deleteOne({ _id: 'yakbot_session' });
                 }
                 setTimeout(iniciarBot, 5000);
             }
         });
 
-        // 4. GENERACIÓN DE CÓDIGO
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
-            console.log(`⏳ Generando código para ${phoneNumber}...`);
-            
+            // Aumentamos a 15 segundos para que Baileys esté 100% listo antes de pedir el code
             setTimeout(async () => {
                 try {
                     if (sock.user) return; 
                     const codigo = await sock.requestPairingCode(phoneNumber);
                     console.log(`\n=========================================`);
-                    console.log(`🔑 TU CÓDIGO DE VINCULACIÓN: ${codigo}`);
+                    console.log(`🔑 CÓDIGO NUEVO: ${codigo}`);
                     console.log(`=========================================\n`);
                 } catch (err) {
                     console.error("❌ Error al pedir código:", err.message);
                 }
-            }, 10000);
+            }, 15000); 
         }
 
         escuchadorMensajes(sock);
 
     } catch (err) {
-        console.error("❌ ERROR CRÍTICO:", err.message);
+        console.error("❌ ERROR:", err.message);
         setTimeout(iniciarBot, 10000);
     }
 }
