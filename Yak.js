@@ -124,7 +124,7 @@ const decodeJid = (jid) => {
 };
 
 // ==========================================
-// 5. SECCIÓN: ARRANQUE CON IDENTIDAD WINDOWS
+// 5. SECCIÓN: ARRANQUE DEFINITIVO (POST-BLOQUEO)
 // ==========================================
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
@@ -133,20 +133,18 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
-        // LIMPIEZA ABSOLUTA: Si hay rastro viejo, WhatsApp rechazará el nuevo
         if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
         fs.mkdirSync(sessionPath, { recursive: true });
 
         if (mongoose.connection.readyState !== 1) {
             await mongoose.connect(mongoURI);
-            console.log("✅ Conectado a MongoDB Atlas");
         }
         const collection = mongoose.connection.db.collection('sessions');
 
         const doc = await collection.findOne({ _id: 'yakbot_session' });
         if (doc) {
             fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
-            console.log("📥 Sesión previa encontrada. Intentando entrar...");
+            console.log("📥 Sesión recuperada. Intentando entrar...");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -156,70 +154,46 @@ async function iniciarBot() {
             version,
             logger: P({ level: 'silent' }),
             auth: state,
-            printQRInTerminal: false,
-            // CAMBIO CLAVE: Fingimos ser WhatsApp Web en Windows (es más aceptado)
-            browser: ["Windows", "Chrome", "121.0.6167.184"], 
+            browser: ["Ubuntu", "Chrome", "20.0.04"], 
             connectTimeoutMs: 120000,
-            defaultQueryTimeoutMs: 0,
-            syncFullHistory: false, // Menos datos = Menos errores de vinculación
-            generateHighQualityLinkPreview: false,
+            syncFullHistory: false, 
+            qrTimeout: 40000,
         });
 
-        if (store && store.bind) store.bind(sock.ev);
+        sock.ev.on('creds.update', async () => {
+            await saveCreds();
+            const credsData = fs.readFileSync(path.join(sessionPath, 'creds.json'), 'utf-8');
+            await collection.updateOne(
+                { _id: 'yakbot_session' },
+                { $set: { data: credsData, updatedAt: new Date() } },
+                { upsert: true }
+            );
+        });
 
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
-
             if (connection === 'open') {
-                console.log('✅ YakBot: ¡VINCULADO CON ÉXITO!');
-                
-                sock.ev.on('creds.update', async () => {
-                    await saveCreds();
-                    try {
-                        const credsData = fs.readFileSync(path.join(sessionPath, 'creds.json'), 'utf-8');
-                        await collection.updateOne(
-                            { _id: 'yakbot_session' },
-                            { $set: { data: credsData, updatedAt: new Date() } },
-                            { upsert: true }
-                        );
-                        console.log("💾 Sesión guardada en Atlas.");
-                    } catch (e) {}
-                });
+                console.log('✅ YakBot: ¡VINCULADO EXITOSAMENTE!');
             }
-
             if (connection === 'close') {
                 const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-                console.log(`📡 Conexión cerrada (${code}).`);
-                
-                if (code === 401 || code === DisconnectReason.loggedOut) {
-                    await collection.deleteOne({ _id: 'yakbot_session' });
-                }
-                setTimeout(iniciarBot, 7000); // Espera un poco más para reintentar
+                if (code === 401) await collection.deleteOne({ _id: 'yakbot_session' });
+                setTimeout(iniciarBot, 10000);
             }
         });
 
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
-            // Le damos 20 segundos para que Render estabilice la red antes de pedir el code
             setTimeout(async () => {
                 try {
-                    if (sock.user) return; 
+                    if (sock.user) return;
                     const codigo = await sock.requestPairingCode(phoneNumber);
-                    console.log(`\n=========================================`);
-                    console.log(`🔑 CÓDIGO: ${codigo}`);
-                    console.log(`=========================================\n`);
-                } catch (err) {
-                    console.error("❌ Error:", err.message);
-                }
+                    console.log(`\n🔑 CÓDIGO: ${codigo}\n`);
+                } catch (err) { console.error("Error:", err.message); }
             }, 20000); 
         }
-
         escuchadorMensajes(sock);
-
-    } catch (err) {
-        console.error("❌ ERROR CRÍTICO:", err.message);
-        setTimeout(iniciarBot, 10000);
-    }
+    } catch (err) { setTimeout(iniciarBot, 10000); }
 }
 
 // ==========================================
