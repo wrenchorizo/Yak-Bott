@@ -12,20 +12,16 @@ app.listen(port, () => {
     console.log(`✅ Servidor de validación escuchando en el puerto ${port}`);
 });
 
-// Importación única y total
 const Baileys = require('@whiskeysockets/baileys');
 
-// Extraemos todo del objeto principal
+// Definimos las funciones con validación individual
 const makeWASocket = Baileys.default || Baileys;
-const { 
-    useMultiFileAuthState, 
-    DisconnectReason, 
-    fetchLatestBaileysVersion, 
-    jidDecode, 
-    getContentType,
-    downloadContentFromMessage,
-    makeInMemoryStore // <--- Baileys suele exportarlo aquí
-} = Baileys;
+const useMultiFileAuthState = Baileys.useMultiFileAuthState;
+const DisconnectReason = Baileys.DisconnectReason;
+const fetchLatestBaileysVersion = Baileys.fetchLatestBaileysVersion;
+const jidDecode = Baileys.jidDecode;
+const getContentType = Baileys.getContentType;
+const downloadContentFromMessage = Baileys.downloadContentFromMessage;
 
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
@@ -37,10 +33,8 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const { exec } = require('child_process');
 
-// Si makeInMemoryStore no se extrajo arriba, lo buscamos en el objeto raíz
-const finalStoreFunc = makeInMemoryStore || Baileys.makeInMemoryStore;
-
-const store = finalStoreFunc({ 
+// CREACIÓN DIRECTA DEL STORE (Sin variables intermedias)
+const store = (Baileys.makeInMemoryStore || require('@whiskeysockets/baileys/lib/Store').makeInMemoryStore)({ 
     logger: P().child({ level: 'silent', stream: 'store' }) 
 });
 
