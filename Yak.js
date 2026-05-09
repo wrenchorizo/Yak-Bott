@@ -64,7 +64,7 @@ const procesandoRW = new Set();
 let personajes = [];
 let mobsData = [];
 try {
-    personajes = JSON.parse(fs.readFileSync('./Personajes.json', 'utf-8'));
+    personajes = JSON.parse(fs.readFileSync('./personajes.json', 'utf-8'));
     mobsData = JSON.parse(fs.readFileSync('./Mobs.json', 'utf-8'));
     console.log(`✅ Recursos listos: ${personajes.length} PJs y ${mobsData.length} Mobs.`);
 } catch (e) {
