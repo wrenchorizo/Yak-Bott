@@ -1,7 +1,7 @@
 // ==========================================
 // 1. SECCIÓN: NÚCLEO (MÓDULOS BAILEYS)
 // ==========================================
-const crypto = require('crypto');
+const crypto = require('crypto'); // Línea 1 para evitar ReferenceError
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,12 +12,16 @@ app.listen(port, () => {
     console.log(`✅ Servidor de validación escuchando en el puerto ${port}`);
 });
 
+// Importación robusta de Baileys
 const Baileys = require('@whiskeysockets/baileys');
+
+// Extraemos las funciones incluyendo makeInMemoryStore desde la raíz del módulo
 const { 
     default: makeWASocket, 
     useMultiFileAuthState, 
     DisconnectReason, 
     fetchLatestBaileysVersion, 
+    makeInMemoryStore, // Lo extraemos aquí directamente
     jidDecode, 
     getContentType,
     downloadContentFromMessage 
@@ -33,9 +37,13 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const { exec } = require('child_process');
 
-// Opción más compatible con versiones recientes de Baileys
-const { makeInMemoryStore } = require('@whiskeysockets/baileys');
-const store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
+// Almacén de datos en memoria (Corregido)
+// Si falla como función, usamos la exportación directa del paquete
+const store = typeof makeInMemoryStore === 'function' 
+    ? makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) }) 
+    : Baileys.makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
+
+console.log("DEBUG: La URL de Mongo empieza con:", process.env.MONGODB_URL ? process.env.MONGODB_URL.substring(0, 10) : "NADA");
 
 // ==========================================
 // 2. SECCIÓN: ESQUEMAS DE MONGODB
