@@ -125,79 +125,79 @@ const decodeJid = (jid) => {
 
 
 // ==========================================
-// 5. SECCIÓN: ARRANQUE CON SESIÓN EN NUBE (MONGO)
+// 5. SECCIÓN: ARRANQUE CON SESIÓN MANUAL EN MONGO
 // ==========================================
-const { useMongoDBAuthState } = require('@rinaoki/baileys-mongodb');
-
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
-    
-    if (!mongoURI) {
-        return console.error("❌ ERROR: Falta MONGODB_URL en las variables de entorno.");
-    }
+    if (!mongoURI) return console.error("❌ MONGODB_URL no definida.");
 
     try {
-        // Conectamos a Mongo antes de pedir la sesión
         await mongoose.connect(mongoURI);
-        console.log("✅ Conexión exitosa a MongoDB Atlas");
+        console.log("✅ Conectado a MongoDB Atlas");
 
-        // Configuramos la sesión directamente en la colección 'sessions'
+        // --- SISTEMA DE SESIÓN MANUAL ---
         const collection = mongoose.connection.db.collection('sessions');
-        const { state, saveCreds } = await useMongoDBAuthState(collection);
-        const { version } = await fetchLatestBaileysVersion();
+        
+        // Intentamos cargar la sesión guardada
+        const doc = await collection.findOne({ _id: 'yakbot_session' });
+        let initialAuth = null;
+        if (doc) {
+            // Convertimos de vuelta el String de Mongo a objeto de Baileys
+            initialAuth = JSON.parse(doc.data, (key, value) => {
+                if (value && value.type === 'Buffer') return Buffer.from(value.data);
+                return value;
+            });
+        }
 
+        const { state, saveCreds } = await useMultiFileAuthState('./Data/session_baileys');
+        
+        // Si teníamos algo en Mongo, lo inyectamos al estado inicial
+        if (initialAuth) {
+            state.creds = initialAuth.creds;
+        }
+
+        const { version } = await fetchLatestBaileysVersion();
         const sock = makeWASocket({
             version,
             logger: P({ level: 'silent' }),
             printQRInTerminal: false,
-            auth: state, 
+            auth: state,
             browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            getMessage: async (key) => {
-                if (store) {
-                    const msg = await store.loadMessage(key.remoteJid, key.id);
-                    return msg?.message || undefined;
-                }
-                return { conversation: "YakBot Online" };
-            }
+            getMessage: async (key) => ({ conversation: "YakBot Online" })
         });
 
-        if (store && store.bind) store.bind(sock.ev);
+        // CADA VEZ QUE LAS CREDS CAMBIEN, SUBIMOS A MONGO
+        sock.ev.on('creds.update', async () => {
+            await saveCreds();
+            const sessionData = JSON.stringify(state.creds);
+            await collection.updateOne(
+                { _id: 'yakbot_session' },
+                { $set: { data: sessionData, updatedAt: new Date() } },
+                { upsert: true }
+            );
+            console.log("💾 Sesión respaldada en Atlas");
+        });
 
-        // --- TU LÓGICA DE PAIRING CODE (SIN TOCAR UNA COMA) ---
+        // --- TU LÓGICA DE PAIRING CODE (INTACTA) ---
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939'; 
-            console.log(`⏳ Generando código de vinculación para: ${phoneNumber}...`);
             setTimeout(async () => {
                 try {
                     const codigo = await sock.requestPairingCode(phoneNumber);
-                    console.log(`\n=========================================`);
-                    console.log(`🔑 TU CÓDIGO DE VINCULACIÓN ES: ${codigo}`);
-                    console.log(`=========================================\n`);
-                } catch (err) {
-                    console.error("❌ Error al pedir pairing code:", err);
-                }
+                    console.log(`\n🔑 CÓDIGO: ${codigo}\n`);
+                } catch (err) { console.error("Error pairing:", err); }
             }, 6000);
         }
 
-        sock.ev.on('creds.update', saveCreds);
-
         sock.ev.on('connection.update', (update) => {
-            const { connection, lastDisconnect } = update;
-            if (connection === 'close') {
-                const code = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
-                const shouldReconnect = code !== DisconnectReason.loggedOut;
-                console.log(`📡 Conexión cerrada (${code}). Reconectando: ${shouldReconnect}`);
-                if (shouldReconnect) iniciarBot();
-            } else if (connection === 'open') {
-                console.log('✅ YakBot Baileys: CONECTADO Y SESIÓN ASEGURADA EN MONGO');
-            }
+            const { connection } = update;
+            if (connection === 'close') iniciarBot();
+            else if (connection === 'open') console.log('✅ YakBot: CONECTADO');
         });
 
         escuchadorMensajes(sock);
 
-    } catch (err) {
-        console.error("❌ ERROR CRÍTICO EN EL ARRANQUE:", err);
-    }
+    } catch (err) { console.error("❌ ERROR:", err); }
 }
 
 // ==========================================
