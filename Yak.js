@@ -123,11 +123,10 @@ const decodeJid = (jid) => {
     } else return jid;
 };
 
-
 // ==========================================
-// 5. SECCIÓN: ARRANQUE CON AUTO-REPARACIÓN
+// 5. SECCIÓN: PURGA Y ARRANQUE DEFINITIVO
 // ==========================================
-let forzarNuevoCodigo = false; 
+let reintentosFallidos = 0;
 
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
@@ -136,28 +135,30 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
-        // 1. LIMPIEZA TOTAL DE RASTROS LOCALES (Evita conflictos en Render)
+        // 1. LIMPIEZA AGRESIVA LOCAL
         if (fs.existsSync(sessionPath)) {
             fs.rmSync(sessionPath, { recursive: true, force: true });
         }
         fs.mkdirSync(sessionPath, { recursive: true });
 
-        // Conexión a Mongo (si no está activa)
         if (mongoose.connection.readyState !== 1) {
             await mongoose.connect(mongoURI);
             console.log("✅ Conectado a MongoDB Atlas");
         }
         const collection = mongoose.connection.db.collection('sessions');
 
-        // 2. INTENTO DE CARGA INTELIGENTE
-        if (!forzarNuevoCodigo) {
-            const doc = await collection.findOne({ _id: 'yakbot_session' });
-            if (doc) {
-                fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
-                console.log("📥 Sesión recuperada de Atlas.");
-            }
+        // 2. LÓGICA DE PURGA: Si ya fallamos una vez, borramos Atlas sin preguntar
+        if (reintentosFallidos > 0) {
+            console.log("🚨 Purga de emergencia: Borrando sesión de Atlas para desbloquear...");
+            await collection.deleteOne({ _id: 'yakbot_session' });
+        }
+
+        const doc = await collection.findOne({ _id: 'yakbot_session' });
+        if (doc && reintentosFallidos === 0) {
+            fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
+            console.log("📥 Sesión recuperada de Atlas.");
         } else {
-            console.log("⚠️ Modo 'Cero Confianza' activo: Ignorando Atlas para generar código limpio.");
+            console.log("🆕 Iniciando rastro limpio (No se usará sesión previa).");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -169,14 +170,12 @@ async function iniciarBot() {
             auth: state,
             printQRInTerminal: false,
             browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            connectTimeoutMs: 60000, // Margen amplio para evitar 'Connection Closed'
-            defaultQueryTimeoutMs: 0,
-            keepAliveIntervalMs: 10000
+            connectTimeoutMs: 60000,
+            defaultQueryTimeoutMs: 0
         });
 
         if (store && store.bind) store.bind(sock.ev);
 
-        // 3. ACTUALIZACIÓN DE CREDENCIALES EN LA NUBE
         sock.ev.on('creds.update', async () => {
             await saveCreds();
             try {
@@ -186,33 +185,32 @@ async function iniciarBot() {
                     { $set: { data: credsData, updatedAt: new Date() } },
                     { upsert: true }
                 );
-            } catch (e) { /* Error silencioso de lectura FS */ }
+            } catch (e) {}
         });
 
-        // 4. GESTIÓN DE CONEXIÓN Y ERRORES DE SESIÓN
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
 
             if (connection === 'close') {
                 const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-                console.log(`📡 Conexión cerrada. Código: ${code || 'Desconocido'}`);
+                console.log(`📡 Conexión cerrada. Razón: ${code || 'Desconocido'}`);
                 
-                // Si la sesión fue rechazada o cerrada, limpiamos Atlas y forzamos reinicio
-                if (code === 401 || code === DisconnectReason.loggedOut) {
-                    console.log("🗑️ Sesión inválida. Limpiando nube...");
+                // Si falla por cualquier motivo que no sea un logout manual, sumamos reintento
+                if (code !== DisconnectReason.loggedOut) {
+                    reintentosFallidos++;
+                } else {
                     await collection.deleteOne({ _id: 'yakbot_session' });
-                    forzarNuevoCodigo = true;
                 }
                 
                 setTimeout(iniciarBot, 5000);
             } 
             else if (connection === 'open') {
                 console.log('✅ YakBot: ¡CONECTADO Y LISTO!');
-                forzarNuevoCodigo = false; // Reset al conectar con éxito
+                reintentosFallidos = 0; 
             }
         });
 
-        // 5. SOLICITUD DE CÓDIGO (PAIRING CODE)
+        // 3. GENERACIÓN DE CÓDIGO
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
             console.log(`⏳ Solicitando código para ${phoneNumber}...`);
@@ -225,22 +223,17 @@ async function iniciarBot() {
                     console.log(`=========================================\n`);
                 } catch (err) {
                     console.error("❌ Error al generar código:", err.message);
-                    
-                    // Si el error es por conexión cerrada al pedir el código, activamos modo limpieza
-                    if (err.message.includes('Closed') || err.message.includes('not-authorized')) {
-                        console.log("🧹 Detectado bloqueo por sesión corrupta. Reintentando limpio...");
-                        forzarNuevoCodigo = true;
-                        await collection.deleteOne({ _id: 'yakbot_session' });
-                        setTimeout(iniciarBot, 2000);
-                    }
+                    reintentosFallidos++;
+                    setTimeout(iniciarBot, 2000);
                 }
-            }, 10000); // Espera estratégica de 10s para estabilizar la red antes de pedir código
+            }, 10000);
         }
 
         escuchadorMensajes(sock);
 
     } catch (err) {
-        console.error("❌ ERROR CRÍTICO EN ARRANQUE:", err.message);
+        console.error("❌ ERROR CRÍTICO:", err.message);
+        reintentosFallidos++;
         setTimeout(iniciarBot, 10000);
     }
 }
