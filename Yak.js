@@ -136,7 +136,7 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
-        // 1. LIMPIEZA TOTAL DE RASTROS LOCALES
+        // 1. LIMPIEZA TOTAL DE RASTROS LOCALES (Evita conflictos en Render)
         if (fs.existsSync(sessionPath)) {
             fs.rmSync(sessionPath, { recursive: true, force: true });
         }
@@ -169,7 +169,7 @@ async function iniciarBot() {
             auth: state,
             printQRInTerminal: false,
             browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            connectTimeoutMs: 60000,
+            connectTimeoutMs: 60000, // Margen amplio para evitar 'Connection Closed'
             defaultQueryTimeoutMs: 0,
             keepAliveIntervalMs: 10000
         });
@@ -227,14 +227,14 @@ async function iniciarBot() {
                     console.error("❌ Error al generar código:", err.message);
                     
                     // Si el error es por conexión cerrada al pedir el código, activamos modo limpieza
-                    if (err.message.includes('Closed')) {
+                    if (err.message.includes('Closed') || err.message.includes('not-authorized')) {
                         console.log("🧹 Detectado bloqueo por sesión corrupta. Reintentando limpio...");
                         forzarNuevoCodigo = true;
                         await collection.deleteOne({ _id: 'yakbot_session' });
                         setTimeout(iniciarBot, 2000);
                     }
                 }
-            }, 10000); // Espera estratégica de 10s para estabilizar la red
+            }, 10000); // Espera estratégica de 10s para estabilizar la red antes de pedir código
         }
 
         escuchadorMensajes(sock);
