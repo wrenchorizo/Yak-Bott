@@ -124,7 +124,7 @@ const decodeJid = (jid) => {
 };
 
 // ==========================================
-// 5. SECCIÓN: ARRANQUE POR ETAPAS (PERSISTENCIA TOTAL)
+// 5. SECCIÓN: ARRANQUE POR ETAPAS (ALTO RENDIMIENTO)
 // ==========================================
 async function iniciarBot() {
     const mongoURI = process.env.MONGODB_URL;
@@ -133,7 +133,7 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
-        // 1. Limpieza local para que no haya archivos corruptos
+        // 1. Limpieza local para asegurar un inicio fresco
         if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
         fs.mkdirSync(sessionPath, { recursive: true });
 
@@ -147,25 +147,30 @@ async function iniciarBot() {
         const doc = await collection.findOne({ _id: 'yakbot_session' });
         
         if (doc) {
-            // SI HAY SESIÓN: La ponemos en local y arrancamos normal
             fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
             console.log("📥 Sesión encontrada en Atlas. Conectando...");
         } else {
-            // NO HAY SESIÓN: Iniciamos rastro limpio para pedir código
-            console.log("🆕 No hay sesión en Atlas. Preparando vinculación por código...");
+            console.log("🆕 No hay sesión en Atlas. Preparando vinculación...");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
         const { version } = await fetchLatestBaileysVersion();
 
+        // --- CONFIGURACIÓN OPTIMIZADA PARA RENDER ---
         const sock = makeWASocket({
             version,
             logger: P({ level: 'silent' }),
             auth: state,
             printQRInTerminal: false,
-            browser: ['Ubuntu', 'Chrome', '20.0.0'],
-            connectTimeoutMs: 60000,
-            defaultQueryTimeoutMs: 0
+            // Navegador más estable para evitar bloqueos
+            browser: ['Mac OS', 'Chrome', '121.0.6167.85'],
+            // Tiempos de espera extendidos para procesadores lentos
+            connectTimeoutMs: 120000, 
+            defaultQueryTimeoutMs: 90000,
+            // CLAVE: No descargar historial viejo para entrar rápido
+            syncFullHistory: false, 
+            markOnlineOnConnect: true,
+            keepAliveIntervalMs: 30000
         });
 
         if (store && store.bind) store.bind(sock.ev);
@@ -177,7 +182,7 @@ async function iniciarBot() {
             if (connection === 'open') {
                 console.log('✅ YakBot: ¡CONECTADO EXITOSAMENTE!');
                 
-                // Una vez conectado, activamos el guardado automático
+                // Una vez conectado con éxito, activamos el guardado en la nube
                 sock.ev.on('creds.update', async () => {
                     await saveCreds();
                     try {
@@ -196,7 +201,6 @@ async function iniciarBot() {
                 const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
                 console.log(`📡 Conexión cerrada (${code})...`);
                 
-                // Si la sesión es inválida (ej. cerraste sesión en el cel), borramos Atlas
                 if (code === 401 || code === DisconnectReason.loggedOut) {
                     console.log("🗑️ Sesión inválida. Borrando Atlas...");
                     await collection.deleteOne({ _id: 'yakbot_session' });
@@ -205,17 +209,14 @@ async function iniciarBot() {
             }
         });
 
-        // 4. EL CÓDIGO SOLO SE PIDE SI NO ESTAMOS REGISTRADOS
-        // Esto evita que pida código si ya cargamos la sesión de Mongo exitosamente
+        // 4. GENERACIÓN DE CÓDIGO
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
             console.log(`⏳ Generando código para ${phoneNumber}...`);
             
             setTimeout(async () => {
                 try {
-                    // Si ya se conectó por sesión en estos 10 seg, esto fallará y no pasa nada
                     if (sock.user) return; 
-                    
                     const codigo = await sock.requestPairingCode(phoneNumber);
                     console.log(`\n=========================================`);
                     console.log(`🔑 TU CÓDIGO DE VINCULACIÓN: ${codigo}`);
