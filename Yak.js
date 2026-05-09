@@ -12,16 +12,20 @@ app.listen(port, () => {
     console.log(`✅ Servidor de validación escuchando en el puerto ${port}`);
 });
 
+// Importación única y total de la librería
 const Baileys = require('@whiskeysockets/baileys');
 
-// Definimos las funciones con validación individual
-const makeWASocket = Baileys.default || Baileys;
-const useMultiFileAuthState = Baileys.useMultiFileAuthState;
-const DisconnectReason = Baileys.DisconnectReason;
-const fetchLatestBaileysVersion = Baileys.fetchLatestBaileysVersion;
-const jidDecode = Baileys.jidDecode;
-const getContentType = Baileys.getContentType;
-const downloadContentFromMessage = Baileys.downloadContentFromMessage;
+// Extraemos las funciones directamente del objeto Baileys
+const { 
+    default: makeWASocket, 
+    useMultiFileAuthState, 
+    DisconnectReason, 
+    fetchLatestBaileysVersion, 
+    makeInMemoryStore, // <--- Baileys lo exporta directamente aquí en versiones nuevas
+    jidDecode, 
+    getContentType,
+    downloadContentFromMessage 
+} = Baileys;
 
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
@@ -33,10 +37,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const { exec } = require('child_process');
 
-// CREACIÓN DIRECTA DEL STORE (Sin variables intermedias)
-const store = (Baileys.makeInMemoryStore || require('@whiskeysockets/baileys/lib/Store').makeInMemoryStore)({ 
-    logger: P().child({ level: 'silent', stream: 'store' }) 
-});
+// CREACIÓN DEL STORE
+// Si por algún motivo no existe en Baileys, usamos un objeto vacío para que el bot no crashee
+const store = typeof makeInMemoryStore === 'function' 
+    ? makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) }) 
+    : { bind: () => {}, writeToFile: () => {}, readFromFile: () => {} };
 
 console.log("DEBUG: La URL de Mongo empieza con:", process.env.MONGODB_URL ? process.env.MONGODB_URL.substring(0, 10) : "NADA");
 // ==========================================
