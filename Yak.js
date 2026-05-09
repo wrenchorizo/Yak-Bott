@@ -1,6 +1,7 @@
 // ==========================================
 // 1. SECCIÓN: NÚCLEO (MÓDULOS BAILEYS)
 // ==========================================
+const crypto = require('crypto');
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -11,21 +12,20 @@ app.listen(port, () => {
     console.log(`✅ Servidor de validación escuchando en el puerto ${port}`);
 });
 
+const Baileys = require('@whiskeysockets/baileys');
 const { 
-    makeWASocket, 
+    default: makeWASocket, 
     useMultiFileAuthState, 
     DisconnectReason, 
     fetchLatestBaileysVersion, 
-    makeInMemoryStore, 
     jidDecode, 
     getContentType,
     downloadContentFromMessage 
-} = require('@whiskeysockets/baileys');
+} = Baileys;
 
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
 const fs = require('fs');
-const crypto = require('crypto');
 const path = require('path');
 const axios = require('axios');
 const mongoose = require('mongoose');
@@ -34,9 +34,7 @@ const ffmpegPath = require('ffmpeg-static');
 const { exec } = require('child_process');
 
 // Almacén de datos en memoria para Baileys (contactos, chats, etc.)
-const store = makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
-console.log("DEBUG: La URL de Mongo empieza con:", process.env.MONGODB_URL ? process.env.MONGODB_URL.substring(0, 10) : "NADA");
-
+const store = Baileys.makeInMemoryStore({ logger: P().child({ level: 'silent', stream: 'store' }) });
 // ==========================================
 // 2. SECCIÓN: ESQUEMAS DE MONGODB
 // ==========================================
