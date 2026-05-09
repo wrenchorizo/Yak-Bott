@@ -1,6 +1,16 @@
 // ==========================================
 // 1. SECCIÓN: NÚCLEO (MÓDULOS BAILEYS)
 // ==========================================
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => res.send('YakBot está vivo y operando 🚀'));
+
+app.listen(port, () => {
+    console.log(`✅ Servidor de validación escuchando en el puerto ${port}`);
+});
+
 const { 
     makeWASocket, 
     useMultiFileAuthState, 
