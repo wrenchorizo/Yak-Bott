@@ -104,13 +104,6 @@ categorias.forEach(cat => {
 // 4. SECCIÓN: FUNCIONES DE APOYO
 // ==========================================
 
-function msToTime(duration) {
-    let seconds = Math.floor((duration / 1000) % 60),
-        minutes = Math.floor((duration / (1000 * 60)) % 60),
-        hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-    return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-}
-
 function actualizarStamina(personaje) {
     const ahora = Date.now();
     const tiempoPasado = ahora - (personaje.lastUpdate || ahora);
@@ -808,7 +801,7 @@ function escuchadorMensajes(sock) {
 
 	//====================== E C O N O M I A  ==========================
 			
-        //------------------------------------------------W (TRABAJAR)--------------------------------------------------------
+//------------------------------------------------W (TRABAJAR)--------------------------------------------------------
         case 'w':
         case 'trabajar':
         case 'chambear':
@@ -816,57 +809,67 @@ function escuchadorMensajes(sock) {
             const ahora = Date.now();
             const cooldown = 60 * 1000; // 1 minuto
 
-            // user ya lo tenemos cargado desde el inicio del switch
-            if (ahora - (user.lastWork || 0) < cooldown) {
-                const restante = cooldown - (ahora - (user.lastWork || 0));
+            // Verificamos el cooldown dentro del objeto cooldowns
+            if (ahora - (user.cooldowns.lastWork || 0) < cooldown) {
+                const restante = cooldown - (ahora - (user.cooldowns.lastWork || 0));
                 return reply(`◔ Espera *${msToTime(restante)}* para volver a trabajar.`);
             }
 
             const ganancia = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
             user.dinero += ganancia;
-            user.lastWork = ahora;
             
-            // Si usas un contador de comandos para logros, lo mantenemos:
+            // Guardamos el tiempo en el objeto cooldowns
+            user.cooldowns.lastWork = ahora;
+            
             if (user.comandos !== undefined) {
                 user.comandos += 1;
             }
 
+            // IMPORTANTE: Avisar a Mongoose que el objeto cambió para que lo guarde
+            user.markModified('cooldowns');
             await user.save();
             
             return reply(`⌨️ Has trabajado con éxito.\n\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance Total: *$${user.dinero.toLocaleString()}*`);
         }
         break;
 			
-        //------------------------------------------------CRIME (CRIMEN)--------------------------------------------------------
+//------------------------------------------------CRIME (CRIMEN)--------------------------------------------------------
         case 'crime':
         case 'crimen': {
             const ahora = Date.now();
             const cooldown = 5 * 60 * 1000; // 5 minutos
 
-            // Verificamos el cooldown usando user.lastCrime
-            if (ahora - (user.lastCrime || 0) < cooldown) {
-                const restante = cooldown - (ahora - (user.lastCrime || 0));
+            // Verificamos el cooldown dentro del objeto cooldowns
+            if (ahora - (user.cooldowns.lastCrime || 0) < cooldown) {
+                const restante = cooldown - (ahora - (user.cooldowns.lastCrime || 0));
                 return reply(`◔ Espera *${msToTime(restante)}* para intentar otro crimen.`);
             }
 
             // Probabilidad del 50%
             const exito = Math.random() < 0.5;
-            user.lastCrime = ahora;
+            
+            // Guardamos el tiempo en el objeto cooldowns
+            user.cooldowns.lastCrime = ahora;
             
             if (user.comandos !== undefined) user.comandos += 1;
+
+            let mensajeFinal = "";
 
             if (exito) {
                 const ganancia = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000;
                 user.dinero += ganancia;
-                await user.save();
-                return reply(`✪ *¡CRIMEN EXITOSO!* ✪\n\n🕵️‍♂️ Lograste el golpe perfecto.\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`);
+                mensajeFinal = `✪ *¡CRIMEN EXITOSO!* ✪\n\n🕵️‍♂️ Lograste el golpe perfecto.\n💵 Ganaste: *$${ganancia.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`;
             } else {
                 const perdida = Math.floor(Math.random() * (6000 - 4000 + 1)) + 4000;
-                // Math.max para que el dinero no sea negativo
                 user.dinero = Math.max(0, user.dinero - perdida);
-                await user.save();
-                return reply(`👮‍♂️ *¡TE ATRAPARON!* 👮‍♂️\n\nLa policía te confiscó el equipo.\n📉 Perdiste: *$${perdida.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`);
+                mensajeFinal = `👮‍♂️ *¡TE ATRAPARON!* 👮‍♂️\n\nLa policía te confiscó el equipo.\n📉 Perdiste: *$${perdida.toLocaleString()}*\n💰 Balance actual: *$${user.dinero.toLocaleString()}*`;
             }
+
+            // IMPORTANTE: Avisar a Mongoose que el objeto cambió antes de salvar
+            user.markModified('cooldowns');
+            await user.save();
+            
+            return reply(mensajeFinal);
         }
         break;
 			
@@ -1400,107 +1403,103 @@ function escuchadorMensajes(sock) {
         }
         break;
 
-        //------------------------------------------------RW (ROLL CHARACTER)--------------------------------------------------------
-        case 'rw':
-        case 'roll':
-        case 'tirar':
-        case 'rpj': {
-            // procesandoRW y tiradasTemporales deben estar declarados fuera del evento
-            if (procesandoRW.has(jid)) return;
-            procesandoRW.add(jid);
+      //------------------------------------------------RW (ROLL CHARACTER)--------------------------------------------------------
+case 'rw':
+case 'roll':
+case 'tirar':
+case 'rpj': {
+    if (procesandoRW.has(jid)) return;
+    procesandoRW.add(jid);
 
-            try {
-                const ahora = Date.now();
-                const totalRW = 15 * 60 * 1000; // 15 minutos
+    try {
+        const ahora = Date.now();
+        const totalRW = 15 * 60 * 1000; // 15 minutos
 
-                // user ya viene cargado de la DB
-                if (!user.cooldowns) user.cooldowns = {};
-                
-                // jid es el ID del grupo en Baileys
-                const cooldownGrupo = user.cooldowns[jid] || {};
-                const lastRWGrupo = cooldownGrupo.lastRW || 0;
+        if (!user.cooldowns) user.cooldowns = {};
+        const cooldownGrupo = user.cooldowns[jid] || {};
+        const lastRWGrupo = cooldownGrupo.lastRW || 0;
 
-                if (ahora - lastRWGrupo < totalRW) {
-                    const restante = totalRW - (ahora - lastRWGrupo);
-                    return reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje.`);
-                }
+        if (ahora - lastRWGrupo < totalRW) {
+            const restante = totalRW - (ahora - lastRWGrupo);
+            return reply(`◔ Espera *${msToTime(restante)}* para sacar a otro personaje.`);
+        }
 
-                // --- Lógica de Pesos y Selección ---
-                const listaPesos = personajes.map(p => {
-                    const v = parseInt(p.valor) || 1000;
-                    let pesoFinal = (v >= 17000) ? 100 / Math.pow(v / 17000, 2.5) : 100;
-                    return { p, peso: pesoFinal };
-                });
+        // --- Selección por Pesos ---
+        const listaPesos = personajes.map(p => {
+            const v = parseInt(p.valor) || 1000;
+            let pesoFinal = (v >= 17000) ? 100 / Math.pow(v / 17000, 2.5) : 100;
+            return { p, peso: pesoFinal };
+        });
 
-                const sumaPesosTotal = listaPesos.reduce((s, i) => s + i.peso, 0);
-                let randomNum = Math.random() * sumaPesosTotal;
-                let personajeSeleccionado = personajes[Math.floor(Math.random() * personajes.length)];
+        const sumaPesosTotal = listaPesos.reduce((s, i) => s + i.peso, 0);
+        let randomNum = Math.random() * sumaPesosTotal;
+        let personajeSeleccionado = personajes[Math.floor(Math.random() * personajes.length)];
 
-                for (const item of listaPesos) {
-                    randomNum -= item.peso;
-                    if (randomNum <= 0) {
-                        personajeSeleccionado = item.p;
-                        break;
-                    }
-                }
-
-                // Verificar si ya está reclamado en este grupo en MongoDB
-                const yaReclamado = await User.findOne({ 
-                    "harem.nombre": personajeSeleccionado.nombre, 
-                    "harem.grupoId": jid 
-                });
-                
-                let estado = yaReclamado ? "Ya fue reclamado" : "Libre";
-
-                let avisoRareza = "";
-                const vNum = parseInt(personajeSeleccionado.valor);
-                if (vNum >= 20000) avisoRareza = "\n🌌 *¡ENTIDAD CÓSMICA DETECTADA!* 🌌";
-                else if (vNum >= 17000) avisoRareza = "\n💎 *¡PERSONAJE LEGENDARIO!* 💎";
-
-                const msgTexto = `『 ✪ *¡PERSONAJE AVISTADO!* ✪ 』${avisoRareza}\n\n` +
-                    `⟡ *Nombre:* ${personajeSeleccionado.nombre}\n` +
-                    `⚡︎ *Valor:* ${personajeSeleccionado.valor}\n` +
-                    `⚥ *Género:* ${personajeSeleccionado.genero}\n` +
-                    `⊹ *Estado:* ${estado}\n` +
-                    `➣ *Fuente:* ${personajeSeleccionado.fuente}\n\n` +
-                    `◇ Tienes 1 minuto para reclamar con *${prefix}c*`;
-
-                // En Baileys enviamos imagen así:
-                const sentMsg = await sock.sendMessage(jid, { 
-                    image: { url: personajeSeleccionado.imagen }, 
-                    caption: msgTexto 
-                }, { quoted: m });
-
-                // --- GUARDADO DE COOLDOWN ---
-                if (!user.cooldowns[jid]) user.cooldowns[jid] = {};
-                user.cooldowns[jid].lastRW = ahora;
-
-                user.markModified('cooldowns'); 
-                await user.save();
-
-                // Guardar tirada en memoria para el comando ?c
-                // En Baileys el ID está en sentMsg.key.id
-                tiradasTemporales[sentMsg.key.id] = {
-                    personaje: personajeSeleccionado,
-                    grupoId: jid,
-                    reclamado: false
-                };
-
-                // Eliminar de memoria después de 1 minuto
-                setTimeout(() => {
-                    delete tiradasTemporales[sentMsg.key.id];
-                }, 60000);
-
-            } catch (error) {
-                console.error('Error en RW:', error);
-                reply('⚠️ No se pudo cargar el personaje.');
-            } finally {
-                procesandoRW.delete(jid);
+        for (const item of listaPesos) {
+            randomNum -= item.peso;
+            if (randomNum <= 0) {
+                personajeSeleccionado = item.p;
+                break;
             }
         }
-        break;
+
+        // Verificar dueño en este grupo
+        const yaReclamado = await User.findOne({ 
+            "harem.nombre": personajeSeleccionado.nombre, 
+            "harem.grupoId": jid 
+        });
+        
+        let estado = yaReclamado ? "Ya tiene dueño" : "Libre";
+
+        let avisoRareza = "";
+        const vNum = parseInt(personajeSeleccionado.valor);
+        if (vNum >= 20000) avisoRareza = "\n🌌 *¡ENTIDAD CÓSMICA DETECTADA!* 🌌";
+        else if (vNum >= 17000) avisoRareza = "\n💎 *¡PERSONAJE LEGENDARIO!* 💎";
+
+        const msgTexto = `『 ✪ *¡PERSONAJE AVISTADO!* ✪ 』${avisoRareza}\n\n` +
+            `⟡ *Nombre:* ${personajeSeleccionado.nombre}\n` +
+            `⚡︎ *Valor:* ${personajeSeleccionado.valor}\n` +
+            `⚥ *Género:* ${personajeSeleccionado.genero}\n` +
+            `⊹ *Estado:* ${estado}\n` +
+            `➣ *Fuente:* ${personajeSeleccionado.fuente}\n\n` +
+            `◇ Responde a este mensaje con *${prefix}c* para reclamar.`;
+
+        // Enviamos la imagen
+        const sentMsg = await sock.sendMessage(jid, { 
+            image: { url: personajeSeleccionado.imagen }, 
+            caption: msgTexto 
+        }, { quoted: m });
+
+        // Guardar cooldown
+        if (!user.cooldowns[jid]) user.cooldowns[jid] = {};
+        user.cooldowns[jid].lastRW = ahora;
+        user.markModified('cooldowns'); 
+        await user.save();
+
+        // GUARDADO EN MEMORIA: Usamos el ID del mensaje enviado como llave
+        tiradasTemporales[sentMsg.key.id] = {
+            personaje: personajeSeleccionado,
+            grupoId: jid,
+            reclamado: !!yaReclamado // Si ya tiene dueño, no se puede reclamar
+        };
+
+        // Auto-eliminar después de 1 minuto
+        setTimeout(() => {
+            if (tiradasTemporales[sentMsg.key.id]) {
+                delete tiradasTemporales[sentMsg.key.id];
+            }
+        }, 60000);
+
+    } catch (error) {
+        console.error('Error en RW:', error);
+        // Aquí no hacemos reply de error si la imagen ya salió bien
+    } finally {
+        procesandoRW.delete(jid);
+    }
+}
+break;
 			
-        //------------------------------------------------C (CLAIM)--------------------------------------------------------
+//------------------------------------------------C (CLAIM)--------------------------------------------------------
         case 'c':
         case 'claim':
         case 'reclamar': {
@@ -1544,10 +1543,10 @@ function escuchadorMensajes(sock) {
             if (!user.cooldowns[jid]) user.cooldowns[jid] = {};
             user.cooldowns[jid].lastClaim = ahora;
             
-            // Marcar como reclamado para que nadie más lo use
+            // Marcar como reclamado para que nadie más lo use en memoria
             tirada.reclamado = true;
 
-            // Avisar a Mongoose que los objetos internos cambiaron
+            // Avisar a Mongoose que los objetos internos cambiaron para que se guarden en MongoDB
             user.markModified('harem');
             user.markModified('cooldowns');
             
@@ -1556,7 +1555,6 @@ function escuchadorMensajes(sock) {
             return reply(`꧁¡Reclamaste a *${tirada.personaje.nombre}*!꧂`);
         }
         break;
-
 
         //------------------------------------------------HAREM (COLECCIÓN)--------------------------------------------------------
         case 'harem':
@@ -2686,15 +2684,34 @@ function msToTime(duration) {
 */
 
 // ==========================================
-// 11. ARRANQUE DEL SISTEMA
+// 11. ARRANQUE Y SISTEMAS DE MANTENIMIENTO
 // ==========================================
 
 iniciarBot();
 
+// --- SISTEMA KEEP-ALIVE ULTRA RÁPIDO (Cada 45 segundos) ---
+const https = require('https');
+
+function keepAlive(url) {
+    setInterval(() => {
+        https.get(url, (res) => {
+            // No necesitamos procesar la respuesta, solo enviarla
+            console.log(`📡 Keep-Alive: Ping enviado (Status: ${res.statusCode})`);
+        }).on('error', (err) => {
+            console.error('⚠️ Keep-Alive Error:', err.message);
+        });
+    }, 40000); // 45.000 ms = 45 segundos
+}
+
+// Pon aquí tu URL de Render
+keepAlive('https://yak-bott.onrender.com'); 
+
+// --- MONITOREO DE ESTADO ---
 setInterval(() => {
     console.log(`⌬ YakBot ONLINE - ${new Date().toLocaleTimeString()}`);
 }, 60000);
 
+// --- ANTI-CRASH ---
 process.on('unhandledRejection', (reason, promise) => {
     console.error(' [ANTI-CRASH] Rejection no manejada:', reason);
 });
@@ -2703,11 +2720,12 @@ process.on('uncaughtException', (err) => {
     console.error(' [ANTI-CRASH] Excepción no capturada:', err);
 });
 
+// --- CONTROL DE MEMORIA ---
 setInterval(() => {
     const memoriaUsada = process.memoryUsage().heapUsed / 1024 / 1024;
     console.log(`📊 Uso de RAM: ${Math.round(memoriaUsada)}MB`);
     if (memoriaUsada > 450) {
         console.log("🚨 ALERTA DE MEMORIA: Reiniciando...");
-        process.exit(1); 
+        process.exit(1);
     }
 }, 300000);
