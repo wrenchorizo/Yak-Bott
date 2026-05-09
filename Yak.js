@@ -15,6 +15,7 @@ const {
 const { Boom } = require('@hapi/boom');
 const P = require('pino');
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 const axios = require('axios');
 const mongoose = require('mongoose');
