@@ -133,18 +133,21 @@ async function iniciarBot() {
     const path = require('path');
 
     try {
+        // 1. Limpieza absoluta local para no heredar errores
         if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
         fs.mkdirSync(sessionPath, { recursive: true });
 
         if (mongoose.connection.readyState !== 1) {
             await mongoose.connect(mongoURI);
+            console.log("✅ Conectado a MongoDB Atlas");
         }
         const collection = mongoose.connection.db.collection('sessions');
 
+        // 2. Intentamos recuperar sesión (si es que existe una limpia)
         const doc = await collection.findOne({ _id: 'yakbot_session' });
         if (doc) {
             fs.writeFileSync(path.join(sessionPath, 'creds.json'), doc.data);
-            console.log("📥 Sesión recuperada. Intentando entrar...");
+            console.log("📥 Sesión previa encontrada en Atlas. Intentando entrar...");
         }
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -154,46 +157,77 @@ async function iniciarBot() {
             version,
             logger: P({ level: 'silent' }),
             auth: state,
-            browser: ["Ubuntu", "Chrome", "20.0.04"], 
+            printQRInTerminal: false,
+            // Usamos identidad de Windows para máxima compatibilidad
+            browser: ["Windows", "Chrome", "121.0.6167.184"], 
             connectTimeoutMs: 120000,
-            syncFullHistory: false, 
-            qrTimeout: 40000,
+            defaultQueryTimeoutMs: 90000,
+            syncFullHistory: false, // Entrar rápido sin cargar chats viejos
+            markOnlineOnConnect: true,
         });
 
-        sock.ev.on('creds.update', async () => {
-            await saveCreds();
-            const credsData = fs.readFileSync(path.join(sessionPath, 'creds.json'), 'utf-8');
-            await collection.updateOne(
-                { _id: 'yakbot_session' },
-                { $set: { data: credsData, updatedAt: new Date() } },
-                { upsert: true }
-            );
-        });
+        if (store && store.bind) store.bind(sock.ev);
 
+        // 3. MANEJO DE CONEXIÓN Y GUARDADO
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
+
             if (connection === 'open') {
-                console.log('✅ YakBot: ¡VINCULADO EXITOSAMENTE!');
+                console.log('✅ ✅ ✅ YakBot: ¡VINCULADO Y CONECTADO! ✅ ✅ ✅');
+                
+                // Esperamos 1 minuto antes de activar el guardado en Atlas para asegurar estabilidad
+                setTimeout(() => {
+                    console.log("💾 Activando sincronización con Atlas...");
+                    sock.ev.on('creds.update', async () => {
+                        await saveCreds();
+                        try {
+                            const credsData = fs.readFileSync(path.join(sessionPath, 'creds.json'), 'utf-8');
+                            await collection.updateOne(
+                                { _id: 'yakbot_session' },
+                                { $set: { data: credsData, updatedAt: new Date() } },
+                                { upsert: true }
+                            );
+                        } catch (e) {}
+                    });
+                }, 60000); 
             }
+
             if (connection === 'close') {
                 const code = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-                if (code === 401) await collection.deleteOne({ _id: 'yakbot_session' });
+                console.log(`📡 Conexión cerrada (${code}). Reintentando...`);
+                
+                // Si el error es 401 (No autorizado), limpiamos Atlas
+                if (code === 401 || code === 403) {
+                    await collection.deleteOne({ _id: 'yakbot_session' });
+                }
                 setTimeout(iniciarBot, 10000);
             }
         });
 
+        // 4. GENERACIÓN DE CÓDIGO (Solo si no hay sesión registrada)
         if (!sock.authState.creds.registered) {
             const phoneNumber = '5214772025939';
+            console.log(`⏳ Solicitando código para ${phoneNumber}...`);
+            
             setTimeout(async () => {
                 try {
-                    if (sock.user) return;
+                    if (sock.user) return; // Si ya conectó por sesión, cancelamos el código
                     const codigo = await sock.requestPairingCode(phoneNumber);
-                    console.log(`\n🔑 CÓDIGO: ${codigo}\n`);
-                } catch (err) { console.error("Error:", err.message); }
-            }, 20000); 
+                    console.log(`\n=========================================`);
+                    console.log(`🔑 TU NUEVO CÓDIGO: ${codigo}`);
+                    console.log(`=========================================\n`);
+                } catch (err) {
+                    console.error("❌ Error al pedir código:", err.message);
+                }
+            }, 15000); // 15 segundos para que la red de Render se estabilice
         }
+
         escuchadorMensajes(sock);
-    } catch (err) { setTimeout(iniciarBot, 10000); }
+
+    } catch (err) {
+        console.error("❌ ERROR CRÍTICO:", err.message);
+        setTimeout(iniciarBot, 10000);
+    }
 }
 
 // ==========================================
